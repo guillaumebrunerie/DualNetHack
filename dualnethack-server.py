@@ -137,6 +137,7 @@ def main():
             key = s.recv(1)
             if len(key) < 1:
                 print("Aborting")
+                clients.close()
                 sys.exit()
             if s == client1:
                 p1.push(key)
