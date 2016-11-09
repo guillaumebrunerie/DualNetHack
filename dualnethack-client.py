@@ -7,15 +7,10 @@ import select
 import sys
 import curses
 
-host = "172.56.28.91" #'127.0.0.1'
+host = '127.0.0.1'
 port = 4242
 
-def init():
-    # Initializes curses
-    curses.initscr()
-    curses.noecho()
-    curses.cbreak()
-
+def connect():
     print("Connecting to ", host)
     # Connect to the server
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -23,14 +18,12 @@ def init():
 
     return server
 
-def print_screen(scr,toprint):
-#    scr.clear()
-#    scr.addstr(0,0,toprint)
+def print_screen(toprint):
     os.system("clear")
     print(toprint)
     
 def main(scr):
-    server = init()
+    server = connect()
     
     while True:
         i,o,e = select.select([sys.stdin, server],[],[],60)
@@ -39,10 +32,10 @@ def main(scr):
                 key = sys.stdin.read(1)
                 server.send(key)
             if s == server:
-                screen = server.recv(1966)
-                if len(screen) < 1966:
+                screen = server.recv(24+18*(79+2)-2)
+                if len(screen) < 24+18*(79+2)-2:
                     print("Aborting, bytes received: ", len(screen))
                     sys.exit()
-                print_screen(scr,screen)
+                print_screen(screen)
 
-main(None)
+curses.wrapper(main)
