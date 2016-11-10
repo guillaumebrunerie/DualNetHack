@@ -1,4 +1,5 @@
 #!/usr/bin/python2
+# coding=utf8
 
 from __future__ import print_function
 import os
@@ -6,6 +7,9 @@ import socket
 import select
 import sys
 import curses
+import struct
+import locale
+locale.setlocale(locale.LC_ALL, "")
 
 host = '127.0.0.1'
 if len(sys.argv) > 1:
@@ -22,9 +26,14 @@ def connect():
 
     return server
 
-def print_screen(toprint):
-    os.system("clear")
-    print(toprint)
+def print_screen(toprint, scr):
+    scr.clear()
+    # y = 0
+    # for l in toprint.splitlines():
+    #     scr.addstr(y, 0, l)
+    scr.refresh()
+    # os.system("clear")
+    # print(toprint)
 
 def recvall(sock, count):
     buf = b''
@@ -35,8 +44,19 @@ def recvall(sock, count):
         count -= len(newbuf)
     return buf
 
+def recv_one_message(sock):
+    lengthbuf = recvall(sock, 4)
+    length, = struct.unpack('!I', lengthbuf)
+    return recvall(sock, length)
+
 def main(scr):
     server = connect()
+    curses.curs_set(0)
+    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_BLACK)
+    curses.init_pair(4, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_BLACK)
     
     while True:
         i,o,e = select.select([sys.stdin, server],[],[],60)
@@ -45,10 +65,28 @@ def main(scr):
                 key = sys.stdin.read(1)
                 server.sendall(key)
             if s == server:
-                screen = recvall(server,24+18*(79+2)-2)
-                if not screen:
+                cmd = recvall(server,3)
+                if not cmd:
                     server.close()
                     sys.exit()
-                print_screen(screen)
+                if cmd == "REF":
+                    scr.refresh()
+                if cmd == "CLR":
+                    scr.clear()
+                if cmd == "TER":
+                    scr.addstr(0,0,recv_one_message(server))
+                if cmd == "MON":
+                    x = ord(recvall(server, 1))
+                    y = ord(recvall(server, 1))
+                    char = recvall(server, 1)
+                    color = ord(recvall(server, 1))
+                    bd = ord(recvall(server, 1))
+                    bold = curses.A_DIM
+                    if bd == 1:
+                        bold = curses.A_BOLD
+                    if bd == 2:
+                        bold = curses.A_REVERSE
+
+                    scr.addstr(y, x, char, bold | curses.color_pair(color))
 
 curses.wrapper(main)
