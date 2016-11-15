@@ -141,7 +141,7 @@ class Monster():
             self.mv_points -= 12
         
 p1 = Player(6,8,12,'@')
-p2 = Player(7,8,12,'h')
+p2 = Player(7,8,18,'h')
 p1.set_other(p2)
 p2.set_other(p1)
 
@@ -258,7 +258,6 @@ def main():
     (clients, client1, client2) = connect()
 
     def upd():
-        print("upd")
         send_screen(p1, client1)
         send_screen(p2, client2)
 
@@ -271,8 +270,7 @@ def main():
                 key = s.recv(1)
                 if len(key) < 1:
                     print("Aborting")
-                    clients.close()
-                    sys.exit()
+                    return
                 if s == client1:
                     p = p1
                 if s == client2:

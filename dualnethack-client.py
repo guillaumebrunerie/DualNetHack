@@ -26,15 +26,6 @@ def connect():
 
     return server
 
-def print_screen(toprint, scr):
-    scr.clear()
-    # y = 0
-    # for l in toprint.splitlines():
-    #     scr.addstr(y, 0, l)
-    scr.refresh()
-    # os.system("clear")
-    # print(toprint)
-
 def recvall(sock, count):
     buf = b''
     while count:
