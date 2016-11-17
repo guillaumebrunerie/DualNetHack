@@ -59,21 +59,26 @@ def connect():
     return (clients, client1, client2)
     
 class Player():
-    def __init__(self, x, y, speed, symbol):
+    def __init__(self, x, y, speed, symbol, parity):
         self.x = x
         self.y = y
-        self.waiting_queue = Queue.Queue(0)
+        self.waitlist = []
         self.speed = speed
         self.symbol = symbol
         self.mv_points = speed
         self.color = 5
+        self.parity = parity
+        self.moncanmove = False
 
     def set_other(self, other):
         self.other = other
 
-    def is_waiting(self):
-        return (not self.waiting_queue.empty())
-        
+    def empty_queue(self):
+        self.waitlist = []
+
+    def remove_last(self):
+        self.waitlist.pop()
+    
     def act(self, key):
         newx = self.x
         newy = self.y
@@ -91,22 +96,15 @@ class Player():
             self.y = newy
             return True
         return False
-            #self.mv_points -= 12
 
     def push(self, key):
-        self.waiting_queue.put(key)
+        self.waitlist.append(key)
 
-    def pop(self):
-        x = self.waiting_queue.get()
-        if self.act(x):
+    def pop(self, for_real):
+        x = self.waitlist.pop(0)
+        if self.act(x) and for_real:
             self.mv_points -= 12
-        return(x)
-
-    def num_wait(self):
-        if self.waiting_queue.qsize() < 10:
-            return('0' + str(self.waiting_queue.qsize()))
-        else:
-            return(str(self.waiting_queue.qsize()))
+        return x
 
 class Monster():
     def __init__(self, speed, symbol, color):
@@ -121,6 +119,7 @@ class Monster():
         self.symbol = symbol
         self.mv_points = speed
         self.color = color
+        self.parity = random.choice([True, False])
 
     def act(self):
         dir = random.randint(1,4)
@@ -140,8 +139,8 @@ class Monster():
             self.y = newy
             self.mv_points -= 12
         
-p1 = Player(6,8,12,'@')
-p2 = Player(7,8,18,'h')
+p1 = Player(6,8,12,'@', False)
+p2 = Player(7,8,12,'h', True)
 p1.set_other(p2)
 p2.set_other(p1)
 
@@ -154,10 +153,25 @@ def send_one_message(sock, data):
     sock.sendall(struct.pack('!I', length))
     sock.sendall(data)
 
-def send_screen(p, client):
+def send_screen(p, client, current_p):
+    global turn_counter
     client.sendall("CLR")
     client.sendall("TER")
-    send_one_message(client, field_str.encode("utf-8"))
+
+    terrain = field_str.encode("utf-8")
+    
+    if p.symbol == '@':
+        terrain += "You are the human, "
+    if p.symbol == 'h':
+        terrain += "You are the dwarf, "
+    if p == current_p:
+        terrain += "it's your turn,     "
+    else:
+        terrain += "it's not your turn, "
+    terrain += "T: " + str(turn_counter)
+
+    # return (init + "\n\r".join("".join(a) for a in screen)).encode("utf-8")
+    send_one_message(client, terrain) #field_str.encode("utf-8"))
 
     def send_monster(m, bold):
         client.sendall("MON")
@@ -175,121 +189,113 @@ def send_screen(p, client):
     def fake_moves(p):
         oldx = p.x
         oldy = p.y
-        q = Queue.Queue()
-        while not p.waiting_queue.empty():
-            x = p.waiting_queue.get()
-            p.act(x)
-            q.put(x)
+        old_waitlist = list(p.waitlist)
+        while p.waitlist:
+            p.pop(False)
             send_monster(p, 0)
-        p.waiting_queue = q
+        p.waitlist = old_waitlist
         p.x = oldx
         p.y = oldy
     fake_moves(p1)
     fake_moves(p2)
 
     client.sendall("REF")
-    
-    # if p.symbol == '@':
-    #     init = "You are the human (" + p.num_wait() + ")  T:" + str(turn_counter) + "\n\r"
-    # if p.symbol == 'h':
-    #     init = "You are the dwarf (" + p.num_wait() + ")  T:" + str(turn_counter) + "\n\r"
 
-    # return (init + "\n\r".join("".join(a) for a in screen)).encode("utf-8")
-
-def check_turn():
-    global turn_counter
-    some_more = False
+def movemon(parity):
+    moncanmove = False
     for m in monsters:
+        if m.parity != parity:
+            continue
         if m.mv_points >= 12:
             m.act()
         if m.mv_points >= 12:
-            some_more = True
-    if some_more and p1.mv_points < 12 and p2.mv_points < 12:
-        check_turn()
-        return
-    if p1.mv_points >= 12 or p2.mv_points >= 12:
-        return
-    p1.mv_points += p1.speed
-    p2.mv_points += p2.speed
-    for m in monsters:
-        m.mv_points += m.speed
-    turn_counter += 1
+            moncanmove = True
+    return moncanmove
 
-# def push(p,key):
-#     if p.mv_points < 12:
-#         # The other player is supposed to play
-#         p.push(key)
-#     else:
-#         if p.other.mv_points < 12:
-#             p.act(key)
-#             check_turn()
-#         else:
-#             if p.other.is_waiting():
-#                 p.act(key)
-#                 p.other.pop()
-#                 check_turn()
-#             else:
-#                 p.push(key)
+current_p = None
+current_client = None
+other_p = None
+other_client = None
 
-def run():
-    wecango = True
-    if not p1.is_waiting() and p1.mv_points >= 12:
-        wecango = False
-    if not p2.is_waiting() and p2.mv_points >= 12:
-        wecango = False
-    if wecango:
-        if p1.mv_points >= 12:
-            p1.pop()
-        if p2.mv_points >= 12:
-            p2.pop()
-        check_turn()
-
-def remove_last(q):
-    r = Queue.Queue()
-    while (not q.empty()):
-        x = q.get()
-        if q.empty():
-            return r
-        else:
-            r.put(x)
-    return r
-        
 def main():
+    global current_p
+    global current_client
+    global other_p
+    global other_client
+    global turn_counter
+    
     (clients, client1, client2) = connect()
 
-    def upd():
-        send_screen(p1, client1)
-        send_screen(p2, client2)
+    def upd(current_p):
+        send_screen(p1, client1, current_p)
+        send_screen(p2, client2, current_p)
 
-    upd()
+    current_p = p1
+    current_client = client1
 
-    try:
-        while True:
-            i,o,e = select.select([client1,client2],[],[],60)
-            for s in i:
-                key = s.recv(1)
-                if len(key) < 1:
-                    print("Aborting")
-                    return
-                if s == client1:
-                    p = p1
-                if s == client2:
-                    p = p2
+    other_p = p2
+    other_client = client2
 
-                if key == "":
-                    p.waiting_queue = remove_last(p.waiting_queue)
-                if key == "":
-                    p.waiting_queue = Queue.Queue()
-                if key != "" and key != "":
-                    p.push(key)
-                    run()
-                upd()
-    finally:
-        client1.shutdown(socket.SHUT_RDWR)
-        client1.close()
-        client2.shutdown(socket.SHUT_RDWR)
-        client2.close()
-        clients.shutdown(socket.SHUT_RDWR)
-        clients.close()
+    def swap_players():
+        global current_p
+        global current_client
+        global other_p
+        global other_client
+        if current_p == p1:
+            current_p = p2
+            current_client = client2
+            other_p = p1
+            other_client = client1
+        else:
+            current_p = p1
+            current_client = client1
+            other_p = p2
+            other_client = client2
+
+    while True:
+        if current_p.mv_points >= 12:
+            while not current_p.waitlist:
+                upd(current_p)
+                i,o,e = select.select([client1,client2],[],[],60)
+                for s in i:
+                    key = s.recv(1)
+                    if len(key) < 1:
+                        print("Aborting")
+                        return
+                    if s == client1:
+                        p = p1
+                    if s == client2:
+                        p = p2
+                        
+                    if key == "":
+                        p.remove_last()
+                    if key == "":
+                        p.empty_queue()
+                    if key != "" and key != "":
+                        p.push(key)
+            current_p.pop(True)
+
+        current_p.moncanmove = movemon(current_p.parity)
+        
+        if other_p.mv_points >= 12 or other_p.moncanmove:
+            swap_players()
+            continue
+        elif current_p.mv_points >= 12 or current_p.moncanmove:
+            continue
+
+        # End of the turn
+
+        p1.mv_points += p1.speed
+        p2.mv_points += p2.speed
+        if current_p == p2:
+            swap_players()
+
+        p1.moncanmove = False
+        p2.moncanmove = False
+            
+        for m in monsters:
+            m.mv_points += m.speed
+
+        turn_counter += 1
 
 main()

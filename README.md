@@ -1,11 +1,12 @@
 # DualNetHack
 
 This document explains the various features a two-player version of NetHack would have. The code
-currently present here is a prototype of how the movement system could look like.
+currently present here is a prototype of how the movement system could look like. Note that it might
+not be in sync with what is described below.
 
 Usage:
-- run the server `./dualnethack-server`,
-- run two clients `./dualnethack-client <IP>` where `<IP>` is the IP address of the server, on two
+- run the server `./dualnethack-server.py`,
+- run two clients `./dualnethack-client.py <IP>` where `<IP>` is the IP address of the server, on two
   different computers,
 - play simultaneously on both.
 
@@ -21,8 +22,8 @@ them. Here are a few general guidelines governing most of the design decisions:
   * the dungeon would contain basically the same items and monsters
   * it should not be possible to exploit the fact that there are two players to avoid the
     difficulties of NetHack
-* consistency is very important to me: the features should all be justified by common sense, not by
-  playability. Afterwards, the game should obviously be made as playable as possible (see section
+* consistency is very important to me: the features should all be justified first by common sense,
+  not by playability. The game should obviously also be made as playable as possible (see section
   **Interface**), but not at the expense of logic.
 
 The first point has various consequences:
@@ -149,6 +150,43 @@ specially. In particular, this might be very helpful in corridors or mazes when 
 but I don’t know if it actually makes sense logically. We should maybe take inspiration on what
 happens with pets.
 
+
+After thinking about it some more, what I described above isn’t good either, because when one of the
+two players is fighting a monster the pattern will be irregular. Here is another attempt: Every
+monster is intrinsically either "odd" or "even" (determined at creation time). Then the turn unrolls
+in the following way: first all odd monsters, then the first player, then all even monsters, then
+the second player. When there are no monsters the turns alternate, and when a player is fighting
+with a monster, their turns alternate as well. When both players are fighting a monster, the turns
+alternate in a predictable way (i.e. asymmetrically), but it is random depending on the
+monster. When both players are fighting two monsters, it could be either M1 P1 M2 P2 or M1 M2 P1 P2
+or P1 M1 M2 P2, which adds some diversity in the fights. Maybe there is some asymmetry that I
+haven’t seen, but so far it seems good to me. I still haven’t really thought about how to factor
+speed into that.
+
+About swapping, here is a proposition: when it’s your turn and you attempt to move where the other
+player is, it gives a message "You attempt to swap places with <your companion>". Then, if the other
+player also attempts to swap places with you, it succeeds. If the other player stays in place or
+even moves away, then the first player stays in place (even if the spot is now free) and get the
+message "You bump into <your companion>". This is similar to what happens when bumping into
+pets. Also, it would make fleeing into corridors nice: suppose we are in the following situation and
+the players want to go left:
+
+    ------
+    ..@@..
+    ------
+    
+If it’s the turn of the first player, no problem. If it the turn of the second player, then he first
+tries to swap places with the first player, but the first player goes left and the second players
+bumps into them, then the second player can go left again and we are in the first situation
+(i.e. there will not be an infinite sequence of bumps, only one at the beginning). Of course it
+would do the same thing if the second player just wait their turn.
+
+### Conflict :question:
+
+When generating conflict or wielding Stormbringer, attempting to swap places with the other player
+will attack them instead (be careful if you wield Mjollnir or Vorper Blade!). Maybe we should still
+be able to swap places using the "m" prefix.
+
 ### Vision :+1:
 
 Should both player always see the other player and see what the other player is seeing?
@@ -270,6 +308,11 @@ both players at the same time and then the other player can keep on hitting on t
 from outside. Unless both get engulfed by different monsters, of course, for instance on the Plane
 of Air. Hitting the engulfing monster should probably not harm the player who is inside.
 
+### Vaults :question:
+
+I guess the guard will have to check that both players are following (in the case both players were
+inside).
+
 ### The Quest :question:
 
 There should be two quests, one for each player. Each quest contains a different Bell of Opening
@@ -304,7 +347,8 @@ the Quest nemesis alone, so this technique does have drawbacks.
 
 ### Gehennom :question:
 
-Maybe entering or leaving Gehennom should always be done together. Not really sure why.
+Maybe entering or leaving Gehennom should always be done together. Maybe all branches can only be
+accessed together? I’m not yet convinced one way or another. 
 
 ### The invocation ritual :question:
 
