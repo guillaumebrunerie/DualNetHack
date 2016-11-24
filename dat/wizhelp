@@ -1,0 +1,28 @@
+Debug-Mode Quick Reference:
+
+^E  ==  detect secret doors and traps.
+^F  ==  map level; reveals traps and secret corridors but not secret doors.
+^G  ==  create monster by name or class.
+^I  ==  identify items in pack.
+^O  ==  tell locations of special levels.
+^T  ==  do intra-level teleport.
+^V  ==  do trans-level teleport.
+^W  ==  make a wish for an item or a trap or a limited subset of terrain.
+^X  ==  show attributes including intrinsic attributes.
+
+#levelchange == change experience level
+#lightsources == show mobile light sources
+#monpolycontrol == control monster polymorphs
+#panic == panic test
+#polyself == polymorph self
+#seenv == show seen vectors
+#stats == show memory statistics
+#timeout == look at timeout queue
+#vision == show vision array
+#vanquished == disclose counts of dead monsters
+#wizmakemap == recreate the current level
+#wizsmell == smell a monster
+#wizintrinsic == set selected intrinsic timeouts
+#wizrumorcheck == validate first and last rumor for true and false set
+#wmode == show wall modes
+
