@@ -52,3 +52,7 @@ Makefile.gcc-orig
 *.lastcodeanalysissucceeded
 # Win32-specific ignores end
 
+# DualNetHack
+src/Sysunix-client
+src/dualnethack-client
+src/dualnethack-server
