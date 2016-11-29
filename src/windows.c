@@ -54,6 +54,9 @@ extern struct chain_procs trace_procs;
 extern void FDECL(trace_procs_init, (int));
 extern void *FDECL(trace_procs_chain, (int, int, void *, void *, void *));
 #endif
+#ifdef TCP_GRAPHICS
+#include "wintcp.h"
+#endif
 
 STATIC_DCL void FDECL(def_raw_print, (const char *s));
 
@@ -107,6 +110,9 @@ static struct win_choices {
 #endif
 #ifdef MSWIN_GRAPHICS
     { &mswin_procs, 0 CHAINR(0) },
+#endif
+#ifdef TCP_GRAPHICS
+    { &tcp_procs, 0 CHAINR(0) },
 #endif
 #ifdef WINCHAIN
     { &chainin_procs, chainin_procs_init, chainin_procs_chain },

@@ -1,8 +1,31 @@
 # DualNetHack
 
-This document explains the various features a two-player version of NetHack would have. The code
-currently present here is a prototype of how the movement system could look like. Note that it might
-not be in sync with what is described below.
+This document explains the various features a two-player version of NetHack would have, and a
+prototype implementation.
+
+## Implemented features
+
+Only the client/server architecture for one player is implemented so far.
+
+## Compilation and usage
+
+Only Linux is supported with the tty interface. Graphics other than IBMGraphics probably won’t work
+either for now. DualNetHack is compiled as follows:
+
+    cd sys/unix
+    sh setup.sh hints/linux
+    cd ../..
+    make all
+    make install
+    
+By default, it will install the client and the server at
+`~/dualnh/install/games/dualnethack-{server,client}`. The IP of the server is current hardcoded in
+`sys/unix/client.c` and the port number (also hardcoded) is `4242`.
+
+## Python prototype
+
+Another prototype in Python is present in `prototype`, it describes how the movement system could
+look like. Note that it might not be in sync with what is described below.
 
 Usage:
 - run the server `./dualnethack-server.py`,

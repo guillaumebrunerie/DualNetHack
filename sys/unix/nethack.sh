@@ -3,7 +3,7 @@
 
 HACKDIR=/usr/games/lib/nethackdir
 export HACKDIR
-HACK=$HACKDIR/nethack
+HACK=$HACKDIR/dualnethack-server
 # NB: MAXNROFPLAYERS is deprecated in favor of MAXPLAYERS in SYSCF.
 MAXNROFPLAYERS=4
 

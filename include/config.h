@@ -48,13 +48,15 @@
 /* #define QT_GRAPHICS */    /* Qt interface */
 /* #define GNOME_GRAPHICS */ /* Gnome interface */
 /* #define MSWIN_GRAPHICS */ /* Windows NT, CE, Graphics */
+#define TCP_GRAPHICS /* DualNetHack’s server */
 
 /*
  * Define the default window system.  This should be one that is compiled
  * into your system (see defines above).  Known window systems are:
  *
- *      tty, X11, mac, amii, BeOS, Qt, Gem, Gnome
+ *      tty, X11, mac, amii, BeOS, Qt, Gem, Gnome, tcp (DualNetHack’s server)
  */
+#define DEFAULT_WINDOW_SYS "tcp"
 
 /* MAC also means MAC windows */
 #ifdef MAC

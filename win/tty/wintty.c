@@ -2505,6 +2505,9 @@ const char *str;
         break;
 
     case NHW_STATUS:
+        /* This is not ideal, it forces redrawing the status line every time,
+           but I haven't found a better solution yet. */
+        context.botlx = 1;
         ob = &cw->data[cw->cury][j = cw->curx];
         if (context.botlx)
             *ob = 0;

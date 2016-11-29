@@ -116,6 +116,7 @@
  *                vertical.
  */
 #include "hack.h"
+#include "extern.h"
 
 STATIC_DCL void FDECL(display_monster,
                       (XCHAR_P, XCHAR_P, struct monst *, int, XCHAR_P));
@@ -1312,12 +1313,13 @@ docrt()
 /* Glyph Buffering (3rd screen) ============================================
  */
 
-typedef struct {
-    xchar new; /* perhaps move this bit into the rm structure. */
-    int glyph;
-} gbuf_entry;
+//// Has been moved to extern.h
+// typedef struct {
+//     xchar new; /* perhaps move this bit into the rm structure. */
+//     int glyph;
+// } gbuf_entry;
 
-static gbuf_entry gbuf[ROWNO][COLNO];
+gbuf_entry gbuf[ROWNO][COLNO];
 static char gbuf_start[ROWNO];
 static char gbuf_stop[ROWNO];
 

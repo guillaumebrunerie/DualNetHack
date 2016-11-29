@@ -18,10 +18,13 @@ NHSROOT=.
 
 # make NetHack
 #PREFIX	 = /usr
-GAME     = nethack
+GAME     = dualnethack-server
 # GAME     = nethack.prg
 #GAMEUID  = games
 #GAMEGRP  = bin
+
+# Client for dualnethack
+CLIENT     = dualnethack-client
 
 # Permissions - some places use setgid instead of setuid, for instance
 # See also the option "SECURE" in include/config.h
@@ -92,7 +95,10 @@ DAT = $(DATNODLB) $(DATDLB)
 $(GAME):
 	( cd src ; $(MAKE) )
 
-all:	$(GAME) recover Guidebook $(VARDAT) dungeon spec_levs check-dlb
+$(CLIENT):
+	( cd src ; $(MAKE) $(CLIENT) )
+
+all:	$(GAME) $(CLIENT) recover Guidebook $(VARDAT) dungeon spec_levs check-dlb
 	true; $(MOREALL)
 	@echo "Done."
 
@@ -202,6 +208,7 @@ dofiles:
 	  	-e '$$s/.*/nodlb/p' < dat/options` ;	\
 	$(MAKE) dofiles-$${target-nodlb}
 	cp src/$(GAME) $(INSTDIR)
+	cp src/$(CLIENT) $(SHELLDIR)
 	cp util/recover $(INSTDIR)
 	-if test -n '$(SHELLDIR)'; then rm -f $(SHELLDIR)/$(GAME); fi
 	if test -n '$(SHELLDIR)'; then \
