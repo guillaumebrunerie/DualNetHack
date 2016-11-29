@@ -2,7 +2,21 @@
 #include "wintcp.h"
 
 #include <arpa/inet.h>
+#include <stdarg.h>
 
+static void
+debug(const char *format, ...)
+{
+#if 0
+     va_list args;
+     va_start(args, format);
+
+     vfprintf(stderr, format, args);
+     (void) fflush(stderr);
+
+     va_end(args);
+#endif
+}
 /* The socket used implicitely by all functions here */
 
 static int sockfd;
@@ -43,13 +57,13 @@ tcp_init_connection()
      if(listen(sock,2)==0)
           fprintf(stderr, "Listening\n");
      else
-          printf("Error\n");
+          fprintf(stderr, "Error\n");
 
      /* Accept call creates a new socket for the incoming connection */
      addr_size = sizeof serverStorage;
      sockfd = accept(sock, (struct sockaddr *) &serverStorage, &addr_size);
 
-     printf("Connected!\n");
+     fprintf(stderr, "Connected!\n");
 }
 
 
@@ -87,7 +101,7 @@ tcp_send_changed_variables()
      struct changed_vars *var;
      for (var = changed_vars; var->name[0]; var++) {
           if (*(var->actual_var) != *(var->old_var)) {
-               fprintf(stderr,"Sending variable %s : %d (was %d)\n", var->name, *(var->actual_var), *(var->old_var));
+               debug(stderr,"Sending variable %s : %d (was %d)\n", var->name, *(var->actual_var), *(var->old_var));
                tcp_send_string(var->name);
                tcp_send_int(*(var->actual_var));
                *(var->old_var) = *(var->actual_var);
@@ -213,8 +227,7 @@ const char *str;
      } else {
           tcp_send_int(-1);
      }
-     fprintf(stderr, "/s:%s\n", str);
-     (void) fflush(stderr);
+     debug("/s:%s\n", str);
 }
 
 void
@@ -224,8 +237,7 @@ int n;
      uint32_t m = htonl(n);
      tcp_sendall(sockfd, &m, sizeof(uint32_t));
 
-     fprintf(stderr, "/i:%d\n", n);
-     (void) fflush(stderr);
+     debug("/i:%d\n", n);
 }
 
 void
@@ -235,8 +247,7 @@ boolean b;
      char b_char = (char) b;
      tcp_sendall(sockfd, &b_char, 1);
 
-     fprintf(stderr, "/b:%d\n", (int) b);
-     (void) fflush(stderr);
+     debug("/b:%d\n", (int) b);
 }
 
 void
@@ -245,8 +256,7 @@ xchar c;
 {
      tcp_sendall(sockfd, &c, sizeof(xchar));
 
-     fprintf(stderr, "/c:%i\n", (int) c);
-     (void) fflush(stderr);
+     debug("/c:%i\n", (int) c);
 }
 
 void
@@ -255,8 +265,7 @@ char c;
 {
      tcp_sendall(sockfd, &c, sizeof(char));
 
-     fprintf(stderr, "/c:%i\n", (int) c);
-     (void) fflush(stderr);
+     debug("/c:%i\n", (int) c);
 }
 
 void
@@ -281,8 +290,7 @@ anything any;
      uint64_t m = (uint64_t) any.a_void;
      tcp_sendall(sockfd, &m, 8);
 
-     fprintf(stderr, "/a:%d\n", m);
-     (void) fflush(stderr);
+     debug("/a:%d\n", m);
 }
 
 /* Not safe at all */
@@ -293,8 +301,7 @@ long n;
      uint64_t m = (uint64_t) n;
      tcp_sendall(sockfd, &m, 8);
 
-     fprintf(stderr, "/l:%ld\n", n);
-     (void) fflush(stderr);
+     debug("/l:%ld\n", n);
 }
 
 /* Not safe at all */
@@ -304,7 +311,7 @@ menu_item *menu_list;
 int len;
 {
      int i;
-     fprintf(stderr, "count=%d\n", len);
+     debug("count=%d\n", len);
      for (i = 0; i<len; i++) {
           tcp_send_anything(menu_list->item);
           tcp_send_long(menu_list->count); /* Why is that a long, seriously? */
@@ -341,13 +348,12 @@ char *buf;
      if (len >= 0) {
           tcp_recvall(sockfd, buf, len);
           buf[len] = '\0';
-          fprintf(stderr, "s:%s\n", buf);
+          debug("s:%s\n", buf);
           return 0;
      } else {
-          fprintf(stderr, "s NULL\n");
+          debug("s NULL\n");
           return 1;
      }
-     (void) fflush(stderr);
 }
 
 int
@@ -357,8 +363,7 @@ tcp_recv_int()
      tcp_recvall(sockfd, &m, sizeof(uint32_t));
 
      int m2 = (int) ntohl(m);
-     fprintf(stderr, "i:%d\n", m2);
-     (void) fflush(stderr);
+     debug("i:%d\n", m2);
      return m2;
 }
 
@@ -368,8 +373,7 @@ tcp_recv_boolean()
      boolean b;
      tcp_recvall(sockfd, &b, 1);
 
-     fprintf(stderr, "b:%d\n", b);
-     (void) fflush(stderr);
+     debug("b:%d\n", b);
      return b;
 }
 
@@ -379,8 +383,7 @@ tcp_recv_xchar()
      xchar c;
      tcp_recvall(sockfd, &c, sizeof(xchar));
 
-     fprintf(stderr, "c:%i\n", (int) c);
-     (void) fflush(stderr);
+     debug("c:%i\n", (int) c);
      return c;
 }
 
@@ -390,8 +393,7 @@ tcp_recv_char()
      char c;
      tcp_recvall(sockfd, &c, sizeof(char));
 
-     fprintf(stderr, "c:%i\n", (int) c);
-     (void) fflush(stderr);
+     debug("c:%i\n", (int) c);
      return c;
 }
 
@@ -419,8 +421,7 @@ anything *any;
      tcp_recvall(sockfd, &m, 8);
      any->a_void = m;
 
-     fprintf(stderr, "a:%d\n", m);
-     (void) fflush(stderr);
+     debug("a:%d\n", m);
 }
 
 /* Not safe at all */
@@ -431,8 +432,7 @@ tcp_recv_long()
      tcp_recvall(sockfd, &m, 8);
      long result = (long) m;
      
-     fprintf(stderr, "l:%d\n", m);
-     (void) fflush(stderr);
+     debug("l:%d\n", m);
      return result;
 }
 
@@ -443,10 +443,10 @@ menu_item **menu_list;
 int n;
 {
      menu_item *mi;
-     fprintf(stderr, "Receiving %d items\n", n);
+     debug("Receiving %d items\n", n);
      *menu_list = (menu_item *) alloc(n * sizeof(menu_item));
      for (mi = *menu_list; n; n--, mi++) {
-          fprintf(stderr, "Receiving item\n");
+          debug("Receiving item\n");
           tcp_recv_anything(&mi->item);
           mi->count = tcp_recv_long();
      }
