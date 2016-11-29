@@ -1,0 +1,11 @@
+OPTIONS=color, IBMgraphics, hilite_pet, lit_corridor
+OPTIONS=standout, showexp, time, msg_window:f, boulder:0
+OPTIONS=pickup_type:$, autoquiver, autodig
+OPTIONS=pettype:cat, catname:Lirya, fruit:raspberry
+OPTIONS=!cmdassist, !bones, menucolors
+OPTIONS=pile_limit:2
+
+MENUCOLOR="blessed"=lightcyan
+MENUCOLOR=" cursed"=orange
+
+SYMBOLS=S_vodoor:-, S_hodoor:|, S_bars:#
