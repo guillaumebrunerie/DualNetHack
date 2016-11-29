@@ -189,6 +189,8 @@ int len;
           str += n;
           len -= n;
      }
+     if (n <= 0)
+          fprintf(stderr, "Error sending bytes.\n");
      return (n <= 0 ? -1 : 0);
 }
 
@@ -318,14 +320,16 @@ int sockfd;
 void *buf;
 int len;
 {
-     int n = 0;
-     int tmp;
-     while (n < len) {
-          tmp = recv(sockfd, buf, len, 0);
-          n += tmp;
-          buf += tmp;
-          len -= tmp;
+     int n;
+     while (len > 0) {
+          n = recv(sockfd, buf, len, 0);
+          if (n <= 0)
+               break;
+          buf += n;
+          len -= n;
      }
+     if (n <= 0)
+          fprintf(stderr, "Error sending bytes.\n");
 }
 
 /* Returns 1 if the string is null */
