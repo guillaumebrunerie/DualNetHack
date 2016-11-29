@@ -93,7 +93,13 @@ boolean blocking;
      tcp_send_name_command("display_nhwindow");
      tcp_send_int(window);
      tcp_send_boolean(blocking);
-     iflags.window_inited = tcp_recv_boolean(); // Hack
+
+     static int window_inited_received = 0;
+     if (!window_inited_received) {
+          iflags.window_inited  = tcp_recv_boolean();
+          if (iflags.window_inited)
+               window_inited_received = 1;
+     }
 }
 
 void

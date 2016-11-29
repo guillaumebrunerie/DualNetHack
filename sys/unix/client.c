@@ -104,7 +104,16 @@ char **argv;
             winid window = tcp_recv_int();
             boolean blocking = tcp_recv_boolean();
             display_nhwindow(window, blocking);
-            tcp_send_boolean(iflags.window_inited);
+
+            /* A bit hacky, the client needs to tell that
+               to the server, but not all the time or it
+               slows down the game a lot */
+            static int window_inited_sent = 0;
+            if (!window_inited_sent) {
+                 tcp_send_boolean(iflags.window_inited);
+                 if (iflags.window_inited)
+                      window_inited_sent = 1;
+            }
 
        } else if (!strcmp(buffer, "destroy_nhwindow")) {
             winid window = tcp_recv_int();

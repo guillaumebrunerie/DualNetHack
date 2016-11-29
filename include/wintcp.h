@@ -15,6 +15,8 @@ extern void tcp_send_char(char);
 extern void tcp_send_d_level(d_level);
 extern void tcp_send_void();
 extern void tcp_send_anything(anything);
+extern void tcp_send_long(long);
+extern void tcp_send_gbuf();
 
 extern void tcp_send_list_menu_item(menu_item*, int);
 
@@ -26,5 +28,10 @@ extern char    tcp_recv_char();
 extern void    tcp_recv_d_level(d_level*);
 extern void    tcp_recv_void();
 extern void    tcp_recv_anything(anything*);
+extern long    tcp_recv_long();
+
+extern void    tcp_recv_list_menu_item(menu_item**, int);
+
+extern void    tcp_recv_update_variable(char*);
 
 #endif /* WINTCP_H */

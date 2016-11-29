@@ -9,8 +9,9 @@ Only the client/server architecture for one player is implemented so far.
 
 ## Compilation and usage
 
-Only Linux is supported with the tty interface. Graphics other than IBMGraphics probably won’t work
-either for now. DualNetHack is compiled as follows:
+Only Linux is supported with the tty interface. A config files is given, other options might or
+might not work (in particular different symbol sets). You need to have `make`, `gcc`, `bison`,
+`flex`, `gdb` (no idea why) and `libncurses5-dev`. DualNetHack is compiled as follows:
 
     cd sys/unix
     sh setup.sh hints/linux
