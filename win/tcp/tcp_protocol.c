@@ -7,15 +7,12 @@
 static void
 debug(const char *format, ...)
 {
-#if 0
      va_list args;
      va_start(args, format);
 
      vfprintf(stderr, format, args);
-     (void) fflush(stderr);
 
      va_end(args);
-#endif
 }
 /* The socket used implicitely by all functions here */
 

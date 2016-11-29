@@ -1438,8 +1438,12 @@ boolean clear;
             cl_eos();
         } else if (clear)
             clear_screen();
-        else
-            docrt();
+        else {
+             clear_screen();
+            /* docrt is bad */
+             /* cls(); */
+             docorner(0, cw->maxrow + 1);
+        }
     else
         docorner((int) cw->offx, cw->maxrow + 1);
 }
