@@ -7,3 +7,8 @@ Sysunix
 nethack
 *.o
 tiles.bmp
+
+# DualNetHack
+Sysunix-client
+dualnethack-client
+dualnethack-server

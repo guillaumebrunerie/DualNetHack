@@ -51,8 +51,3 @@ Makefile.gcc-orig
 # VS2013 extension to auto-whine about questionable code generates these
 *.lastcodeanalysissucceeded
 # Win32-specific ignores end
-
-# DualNetHack
-src/Sysunix-client
-src/dualnethack-client
-src/dualnethack-server
