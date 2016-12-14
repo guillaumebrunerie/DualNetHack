@@ -3,6 +3,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "dualnethack.h"
 #include <limits.h>
 
 extern const char *hu_stat[]; /* defined in eat.c */
@@ -46,7 +47,11 @@ bot1()
     } else
         Strcpy(nb = eos(nb), rank());
 
-    Sprintf(nb = eos(nb), "  ");
+    if (you_player == current_player)
+         Sprintf(nb = eos(nb), " X");
+    else
+         Sprintf(nb = eos(nb), "  ");
+    
     i = mrank_sz + 15;
     j = (int) ((nb + 2) - newbot1); /* strlen(newbot1) but less computation */
     if ((i - j) > 0)

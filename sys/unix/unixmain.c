@@ -6,6 +6,7 @@
 
 #include "hack.h"
 #include "dlb.h"
+#include "dualnethack.h"
 
 #include <ctype.h>
 #include <sys/stat.h>
@@ -14,6 +15,7 @@
 #ifndef O_RDONLY
 #include <fcntl.h>
 #endif
+#include <pthread.h>
 
 #if !defined(_BULL_SOURCE) && !defined(__sgi) && !defined(_M_UNIX)
 #if !defined(SUNOS4) && !(defined(ULTRIX) && defined(__GNUC__))
@@ -44,17 +46,16 @@ static void NDECL(wd_message);
 static boolean wiz_error_flag = FALSE;
 static struct passwd *NDECL(get_unix_pw);
 
+void* per_thread_main(void*);
+
 int
 main(argc, argv)
 int argc;
 char *argv[];
 {
-    register int fd;
 #ifdef CHDIR
     register char *dir;
 #endif
-    boolean exact_username;
-    boolean resuming = FALSE; /* assume new game */
 
     sys_early_init();
 
@@ -173,7 +174,6 @@ char *argv[];
     panictrace_setsignals(TRUE);
 #endif
 #endif
-    exact_username = whoami();
 
     /*
      * It seems you really want to play.
@@ -188,7 +188,53 @@ char *argv[];
 #ifdef WINCHAIN
     commit_windowchain();
 #endif
-    init_nhwindows(&argc, argv); /* now we can set up window system */
+
+    current_player = &player1;
+
+    tcp_init_connection(&player1.sockfd, &player2.sockfd);
+
+    pthread_barrier_init(&barrier, NULL, 2);
+
+    pthread_t p1;
+    int n1 = 1;
+    pthread_create (&p1, NULL, per_thread_main, &n1);
+
+    pthread_t p2;
+    int n2 = 2;
+    pthread_create (&p2, NULL, per_thread_main, &n2);
+
+    pthread_join(p1, NULL);
+    pthread_join(p2, NULL);
+}
+
+void*
+per_thread_main(pid)
+void *pid;
+{
+    register int fd;
+    boolean exact_username;
+    boolean resuming = FALSE; /* assume new game */
+
+    playerid = *((int*) pid);
+
+    exact_username = whoami();
+
+    if (playerid == 1) {
+         you_player = &player1;
+         other_player = &player2;
+    } else {
+         you_player = &player2;
+         other_player = &player1;
+    }
+
+    fprintf(stderr, "Started thread #%d, sockfd: %d\n", (int) pthread_self(), you_player->sockfd);
+
+    tcp_set_sockfd(you_player->sockfd);
+    you_player->tid = pthread_self();
+
+    dualnh_wait();
+
+    init_nhwindows(NULL, NULL); /* now we can set up window system */
 #ifdef _M_UNIX
     init_sco_cons();
 #endif
@@ -249,7 +295,8 @@ char *argv[];
     getlock();
     program_state.preserve_locks = 0; /* after getlock() */
 
-    dlb_init(); /* must be before newgame() */
+    if (playerid == 1)
+         dlb_init(); /* must be before newgame() */
 
     /*
      *  Initialize the vision system.  This must be before mklev() on a
@@ -257,7 +304,32 @@ char *argv[];
      */
     vision_init();
 
+    dualnh_p2_wait();
+
     display_gamewindows();
+
+    dualnh_save_WIN();
+    tcp_send_WIN();
+    dualnh_p1_wait();
+
+    dualnh_wait();
+
+    /* if (playerid == 1) { */
+    /*      dualnh_save_WIN_p1(); */
+    /*      tcp_send_WIN(); */
+    /* } else { */
+    /*      dualnh_save_WIN_p2(); */
+    /*      tcp_send_WIN(); */
+    /*      pthread_barrier_wait(&barrier); */
+    /* } */
+
+    /* pthread_barrier_wait(&barrier); */
+
+    /* Mega hack for now, because I don’t know why it doesn’t work */
+    
+    player1.iflags.window_inited = TRUE;
+    player2.iflags.window_inited = TRUE;
+    iflags.window_inited = TRUE;
 
 /*
  * First, try to find and restore a save file for specified character.
@@ -293,6 +365,8 @@ attempt_restore:
         }
     }
 
+    pthread_barrier_wait(&barrier);
+
     if (!resuming) {
         /* new game:  start by choosing role, race, etc;
            player might change the hero's name while doing that,
@@ -300,6 +374,10 @@ attempt_restore:
            and skip selection this time if that didn't succeed */
         if (!iflags.renameinprogress) {
             player_selection();
+            fprintf(stderr, "Waiting for other player\n");
+            dualnh_wait();
+            fprintf(stderr, "Ok!\n");
+
             if (iflags.renameinprogress) {
                 /* player has renamed the hero while selecting role;
                    if locking alphabetically, the existing lock file
@@ -312,9 +390,20 @@ attempt_restore:
                 goto attempt_restore;
             }
         }
+
+        dualnh_p2_wait();
+        dualnh_switch_to_myself();
+
+        fprintf(stderr, "Player %d here, window_inited: %d\n", playerid, iflags.window_inited);
         newgame();
         wd_message();
+        fprintf(stderr, "Player %d here, role %s and race %s\n", playerid, urole.name.m, urace.noun);
+
+        dualnh_p1_wait();
+        dualnh_wait();
     }
+
+    fprintf(stderr, "Starting the game !\n");
 
     moveloop(resuming);
     exit(EXIT_SUCCESS);

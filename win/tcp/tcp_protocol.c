@@ -1,22 +1,27 @@
 #include "hack.h"
 #include "wintcp.h"
+#include "dualnethack.h"
 
 #include <arpa/inet.h>
 #include <stdarg.h>
+#include <errno.h>
 
 static void
 debug(const char *format, ...)
 {
+#if 1
      va_list args;
      va_start(args, format);
 
+     fprintf(stderr, "%d ", playerid);
      vfprintf(stderr, format, args);
 
      va_end(args);
+#endif
 }
 /* The socket used implicitely by all functions here */
 
-static int sockfd;
+static __thread int sockfd;
 
 void
 tcp_set_sockfd(sfd)
@@ -28,81 +33,107 @@ int sfd;
 /* Initialization */
 
 void
-tcp_init_connection()
+tcp_init_connection(sock1, sock2)
+int *sock1;
+int *sock2;
 {
-     int sock;
-     char buffer[1024];
+     int serverSock;
      struct sockaddr_in serverAddr;
      struct sockaddr_storage serverStorage;
      socklen_t addr_size;
 
      /* Create the socket */
-     sock = socket(PF_INET, SOCK_STREAM, 0);
-  
+     serverSock = socket(PF_INET, SOCK_STREAM, 0);
+
      /* Configure server address */
      serverAddr.sin_family = AF_INET;
      serverAddr.sin_port = htons(4242);
      serverAddr.sin_addr.s_addr = INADDR_ANY;
 
      /* Set all bits of the padding field to 0 */
-     memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);  
+     memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
 
      /* Bind the address to the socket */
-     bind(sock, (struct sockaddr *) &serverAddr, sizeof(serverAddr));
+     bind(serverSock, (struct sockaddr *) &serverAddr, sizeof(serverAddr));
 
      /* Listen on the socket */
-     if(listen(sock,2)==0)
+     if(listen(serverSock,2)==0)
           fprintf(stderr, "Listening\n");
      else
           fprintf(stderr, "Error\n");
 
      /* Accept call creates a new socket for the incoming connection */
      addr_size = sizeof serverStorage;
-     sockfd = accept(sock, (struct sockaddr *) &serverStorage, &addr_size);
 
-     fprintf(stderr, "Connected!\n");
+     *sock1 = accept(serverSock, (struct sockaddr *) &serverStorage, &addr_size);
+     fprintf(stderr, "First player connected!\n");
+
+     *sock2 = accept(serverSock, (struct sockaddr *) &serverStorage, &addr_size);
+     fprintf(stderr, "Second player connected!\n");
 }
 
 
 /* In order to check which variables have changed */
 
-static winid old_WIN_STATUS;
-static winid old_WIN_MESSAGE;
-static winid old_WIN_MAP;
-static winid old_WIN_INVEN;
 static int old_iflags_window_inited;
 static int old_iflags_prevmsg_window;
 static int old_context_rndencode;
 static int old_context_botlx;
 static int old_context_botl;
-static int old_gbuf[ROWNO][COLNO];
 
-struct changed_vars {
+typedef struct {
      const char* name;
      int *actual_var;
-     int *old_var;
-} changed_vars[] = { {"v:WIN_STATUS", &WIN_STATUS, &old_WIN_STATUS},
-                     {"v:WIN_MESSAGE", &WIN_MESSAGE, &old_WIN_MESSAGE},
-                     {"v:WIN_MAP", &WIN_MAP, &old_WIN_MAP},
-                     {"v:WIN_INVEN", &WIN_INVEN, &old_WIN_INVEN},
-                     {"v:iflags_window_inited", (int*) &iflags.window_inited, &old_iflags_window_inited},
-                     {"v:iflags_prevmsg_window", (int*) &iflags.prevmsg_window, &old_iflags_prevmsg_window},
-                     {"v:context_rndencode", &context.rndencode, &old_context_rndencode},
-                     {"v:context_botlx", (int*) &context.botlx, &old_context_botlx},
-                     {"v:context_botl", (int*) &context.botl, &old_context_botl},
-                     {"", NULL, NULL}};
+} changed_vars;
 
-static void
-tcp_send_changed_variables()
+/* The references are client-side */
+changed_vars common_vars[] = {
+     {"v:WIN_STATUS", &WIN_STATUS},
+     {"v:WIN_MESSAGE", &WIN_MESSAGE},
+     {"v:WIN_MAP", &WIN_MAP},
+     {"v:WIN_INVEN", &WIN_INVEN},
+     {"v:iflags_window_inited", (int*) &iflags.window_inited},
+     {"v:iflags_prevmsg_window", (int*) &iflags.prevmsg_window},
+     {"v:context_rndencode", &context.rndencode},
+     {"v:context_botlx", (int*) &context.botlx},
+     {"v:context_botl", (int*) &context.botl},
+     {"", NULL}};
+
+/* static void */
+/* tcp_send_changed_variables() */
+/* { */
+/*      changed_vars *var; */
+/*      for (var = common_vars; var->name[0]; var++) { */
+/*           if (*(var->actual_var) != *(var->old_var)) { */
+/*                debug(stderr,"Sending variable %s : %d (was %d)\n", var->name, *(var->actual_var), *(var->old_var)); */
+/*                tcp_send_string(var->name); */
+/*                tcp_send_int(*(var->actual_var)); */
+/*                *(var->old_var) = *(var->actual_var); */
+/*           } */
+/*      } */
+/* } */
+
+void
+tcp_send_WIN()
 {
-     struct changed_vars *var;
-     for (var = changed_vars; var->name[0]; var++) {
-          if (*(var->actual_var) != *(var->old_var)) {
-               debug(stderr,"Sending variable %s : %d (was %d)\n", var->name, *(var->actual_var), *(var->old_var));
-               tcp_send_string(var->name);
-               tcp_send_int(*(var->actual_var));
-               *(var->old_var) = *(var->actual_var);
-          }
+     if (current_player->WIN_STATUS != -1) {
+          tcp_send_string("v:WIN_STATUS");
+          tcp_send_int(current_player->WIN_STATUS);
+     }
+
+     if (current_player->WIN_MESSAGE != -1) {
+          tcp_send_string("v:WIN_MESSAGE");
+          tcp_send_int(current_player->WIN_MESSAGE);
+     }
+
+     if (current_player->WIN_MAP != -1) {
+          tcp_send_string("v:WIN_MAP");
+          tcp_send_int(current_player->WIN_MAP);
+     }
+
+     if (current_player->WIN_INVEN != -1) {
+          tcp_send_string("v:WIN_INVEN");
+          tcp_send_int(current_player->WIN_INVEN);
      }
 }
 
@@ -115,11 +146,16 @@ tcp_send_gbuf()
      int cstart[ROWNO];
      int cend[ROWNO];
 
+     if (you_player != current_player) {
+       fprintf(stderr, "!!!!!!!!!!!!!!!\n");
+       return;
+     }
+
      for (i = 0; i < ROWNO; i++) {
           cstart[i] = -1;
           cend[i] = -1;
           for (j = 0; j < COLNO; j++) {
-               if (gbuf[i][j].glyph != old_gbuf[i][j]) {
+               if (gbuf[i][j].glyph != you_player->old_gbuf[i][j]) {
                     if (cstart[i] == -1)
                          cstart[i] = j;
                     cend[i] = j;
@@ -140,7 +176,7 @@ tcp_send_gbuf()
      }
 
      tcp_send_string("v:gbuf");
-     
+
      tcp_send_char((char) rstart);
      tcp_send_char((char) rend);
      for (i = rstart; i < rend + 1; i++) {
@@ -148,7 +184,7 @@ tcp_send_gbuf()
           tcp_send_char((char) cend[i]);
           for (j = cstart[i]; j < cend[i] + 1; j++) {
                tcp_send_int(gbuf[i][j].glyph);
-               old_gbuf[i][j] = gbuf[i][j].glyph;
+               you_player->old_gbuf[i][j] = gbuf[i][j].glyph;
           }
      }
 }
@@ -158,10 +194,10 @@ void
 tcp_recv_update_variable(toupdate)
 char *toupdate;
 {
-     struct changed_vars *var;
+     changed_vars *var;
      int i, j;
      char rstart, rend, cstart, cend;
-     
+
      if (!strcmp(toupdate, "v:gbuf")) {
           rstart = tcp_recv_char();
           rend = tcp_recv_char();
@@ -174,8 +210,8 @@ char *toupdate;
           }
           return;
      }
-          
-     for (var = changed_vars; var->name[0]; var++) {
+
+     for (var = common_vars; var->name[0]; var++) {
           if (!strcmp(toupdate, var->name)) {
                *(var->actual_var) = tcp_recv_int();
                break;
@@ -192,7 +228,14 @@ int sockfd;
 const void *str;
 int len;
 {
-     int n;
+     int n = -1;
+
+     if (len < 0) {
+       fprintf(stderr, "Are you trying to send a message of length %d?\n", len);
+       return;
+     }
+     if (len == 0)
+       return;
 
      while (len > 0) {
           n = send(sockfd, str, len, 0);
@@ -201,7 +244,7 @@ int len;
           len -= n;
      }
      if (n <= 0)
-          fprintf(stderr, "Error sending bytes.\n");
+          fprintf(stderr, "Error sending bytes : %d.\n", errno);
      return (n <= 0 ? -1 : 0);
 }
 
@@ -209,7 +252,7 @@ void
 tcp_send_name_command(str)
 const char *str;
 {
-     tcp_send_changed_variables();
+     /* tcp_send_changed_variables(); */
      tcp_send_string(str);
 }
 
@@ -324,7 +367,11 @@ int sockfd;
 void *buf;
 int len;
 {
-     int n;
+     int n = -1;
+
+     if (len <= 0)
+          fprintf(stderr, "Are you trying to receive a message of length %d?\n", len);
+
      while (len > 0) {
           n = recv(sockfd, buf, len, 0);
           if (n <= 0)
@@ -333,7 +380,7 @@ int len;
           len -= n;
      }
      if (n <= 0)
-          fprintf(stderr, "Error sending bytes.\n");
+          fprintf(stderr, "%i Error receiving bytes : %d, %d.\n", playerid, errno, sockfd);
 }
 
 /* Returns 1 if the string is null */
@@ -342,7 +389,11 @@ tcp_recv_string(buf)
 char *buf;
 {
      int len = tcp_recv_int();
-     if (len >= 0) {
+     if (len == 0) {
+          debug("s:[empty]\n");
+          *buf = '\0';
+          return 0;
+     } else if (len > 0) {
           tcp_recvall(sockfd, buf, len);
           buf[len] = '\0';
           debug("s:%s\n", buf);
@@ -357,7 +408,7 @@ int
 tcp_recv_int()
 {
      uint32_t m;
-     tcp_recvall(sockfd, &m, sizeof(uint32_t));
+     tcp_recvall(sockfd, &m, 4);
 
      int m2 = (int) ntohl(m);
      debug("i:%d\n", m2);
@@ -428,7 +479,7 @@ tcp_recv_long()
      uint64_t m;
      tcp_recvall(sockfd, &m, 8);
      long result = (long) m;
-     
+
      debug("l:%d\n", m);
      return result;
 }

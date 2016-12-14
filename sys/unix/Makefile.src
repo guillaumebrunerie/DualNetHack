@@ -417,7 +417,7 @@ HOBJ = $(FIRSTOBJ) allmain.o alloc.o apply.o artifact.o attrib.o ball.o \
 	steal.o steed.o teleport.o timeout.o topten.o track.o trap.o u_init.o \
 	uhitm.o vault.o vision.o vis_tab.o weapon.o were.o wield.o windows.o \
 	wizard.o worm.o worn.o write.o zap.o \
-	$(REGEXOBJ) $(RANDOBJ) $(SYSOBJ) $(WINOBJ) $(HINTOBJ) version.o
+	$(REGEXOBJ) $(RANDOBJ) $(SYSOBJ) $(WINOBJ) $(HINTOBJ) version.o dualnethackdecl.o
 # the .o files from the HACKCSRC, SYSSRC, and WINSRC lists
 
 $(GAME):	$(SYSTEM)
@@ -649,7 +649,7 @@ ioctl.o: ../sys/share/ioctl.c $(HACK_H) ../include/tcap.h
 	$(CC) $(CFLAGS) -c ../sys/share/ioctl.c
 unixtty.o: ../sys/share/unixtty.c $(HACK_H)
 	$(CC) $(CFLAGS) -c ../sys/share/unixtty.c
-unixmain.o: ../sys/unix/unixmain.c $(HACK_H) ../include/dlb.h
+unixmain.o: ../sys/unix/unixmain.c $(HACK_H) ../include/dlb.h ../include/dualnethack.h
 	$(CC) $(CFLAGS) -c ../sys/unix/unixmain.c
 unixunix.o: ../sys/unix/unixunix.c $(HACK_H)
 	$(CC) $(CFLAGS) -c ../sys/unix/unixunix.c
@@ -667,7 +667,7 @@ wintty.o: ../win/tty/wintty.c $(HACK_H) ../include/dlb.h ../include/tcap.h
 	$(CC) $(CFLAGS) -c ../win/tty/wintty.c
 wintcp.o: ../win/tcp/wintcp.c $(HACK_H)
 	$(CC) $(CFLAGS) -c ../win/tcp/wintcp.c
-tcp_protocol.o: ../win/tcp/tcp_protocol.c $(HACK_H)
+tcp_protocol.o: ../win/tcp/tcp_protocol.c $(HACK_H) ../include/dualnethack.h
 	$(CC) $(CFLAGS) -c ../win/tcp/tcp_protocol.c
 Window.o: ../win/X11/Window.c ../include/xwindowp.h ../include/xwindow.h \
 		$(CONFIG_H) ../include/lint.h
@@ -879,6 +879,8 @@ worm.o: worm.c $(HACK_H) ../include/lev.h
 worn.o: worn.c $(HACK_H)
 write.o: write.c $(HACK_H)
 zap.o: zap.c $(HACK_H)
+
+dualnethackdecl.o: dualnethackdecl.c $(HACK_H)
 # DEPENDENCIES MUST END AT END OF FILE
 # IF YOU PUT STUFF HERE IT WILL GO AWAY
 # see make depend above

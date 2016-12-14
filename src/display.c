@@ -117,6 +117,7 @@
  */
 #include "hack.h"
 #include "extern.h"
+#include "dualnethack.h"
 
 STATIC_DCL void FDECL(display_monster,
                       (XCHAR_P, XCHAR_P, struct monst *, int, XCHAR_P));
@@ -1319,9 +1320,9 @@ docrt()
 //     int glyph;
 // } gbuf_entry;
 
-gbuf_entry gbuf[ROWNO][COLNO];
-static char gbuf_start[ROWNO];
-static char gbuf_stop[ROWNO];
+gbuf_entry gbuf[ROWNO][COLNO] = DUMMY;
+char gbuf_start[ROWNO] = DUMMY;
+char gbuf_stop[ROWNO] = DUMMY;
 
 /* FIXME: This is a dirty hack, because newsym() doesn't distinguish
  * between object piles and single objects, it doesn't mark the location
@@ -1443,12 +1444,16 @@ void
 clear_glyph_buffer()
 {
     register int x, y;
-    register gbuf_entry *gptr;
+    register gbuf_entry *gptr, *gptr1, *gptr2;
 
     for (y = 0; y < ROWNO; y++) {
-        gptr = &gbuf[y][0];
+        gptr  = &gbuf[y][0];
+        gptr1 = &player1.gbuf[y][0];
+        gptr2 = &player2.gbuf[y][0];
         for (x = COLNO; x; x--) {
-            *gptr++ = nul_gbuf;
+            *gptr++  = nul_gbuf;
+            *gptr1++ = nul_gbuf;
+            *gptr2++ = nul_gbuf;
         }
     }
     reset_glyph_bbox();

@@ -5,6 +5,9 @@
 /* various code that was replicated in *main.c */
 
 #include "hack.h"
+#include "dualnethack.h"
+
+#include <pthread.h>
 
 #ifndef NO_SIGNAL
 #include <signal.h>
@@ -14,6 +17,11 @@
 STATIC_DCL void NDECL(do_positionbar);
 #endif
 STATIC_DCL void FDECL(interrupt_multi, (const char *));
+
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
 
 void
 moveloop(resuming)
@@ -39,6 +47,9 @@ boolean resuming;
        to use up the save file and require confirmation for explore mode */
     if (resuming && iflags.deferred_X)
         (void) enter_explore_mode();
+
+    dualnh_p2_wait();
+    dualnh_switch_to_myself();
 
     /* side-effects from the real world */
     flags.moonphase = phase_of_the_moon();
@@ -78,6 +89,14 @@ boolean resuming;
     u.uz0.dlevel = u.uz.dlevel;
     youmonst.movement = NORMAL_SPEED; /* give the hero some movement points */
     context.move = 0;
+
+    dualnh_p1_wait();
+    dualnh_wait();
+    clear_glyph_buffer();
+
+    if (current_player != you_player)
+         goto startp2;
+    dualnh_switch_to_myself();
 
     program_state.in_moveloop = 1;
     for (;;) {
@@ -355,6 +374,9 @@ boolean resuming;
                                 deferred_goto();
                         }
                     }
+
+                    /* DualNetHack */
+                    you_player->finished_turn = 1;
                 }
             } while (youmonst.movement
                      < NORMAL_SPEED); /* hero can't move loop */
@@ -402,6 +424,22 @@ boolean resuming;
             bot();
             curs_on_u();
         }
+
+        /* Switching players, if needed */
+    startp2:
+        pthread_mutex_lock(&mutex);
+        if (you_player->finished_turn) {
+             you_player->finished_turn = 0;
+             current_player = other_player;
+             pthread_cond_signal(&cond);
+        }
+        while (you_player != current_player) {
+             pthread_cond_wait(&cond, &mutex);
+             if (you_player == current_player)
+                  dualnh_switch_to_myself();
+        }
+        pthread_mutex_unlock(&mutex);
+
 
         context.move = 1;
 
@@ -557,17 +595,20 @@ newgame()
     for (i = 0; i < NUMMONS; i++)
         mvitals[i].mvflags = mons[i].geno & G_NOCORPSE;
 
-    init_objects(); /* must be before u_init() */
+    if (playerid == 1)
+      init_objects(); /* must be before u_init() */
 
     flags.pantheon = -1; /* role_init() will reset this */
     role_init();         /* must be before init_dungeons(), u_init(),
                           * and init_artifacts() */
 
-    init_dungeons();  /* must be before u_init() to avoid rndmonst()
-                       * creating odd monsters for any tins and eggs
-                       * in hero's initial inventory */
-    init_artifacts(); /* before u_init() in case $WIZKIT specifies
-                       * any artifacts */
+    if (playerid == 1)
+      init_dungeons();  /* must be before u_init() to avoid rndmonst()
+                         * creating odd monsters for any tins and eggs
+                         * in hero's initial inventory */
+    if (playerid == 1)
+      init_artifacts(); /* before u_init() in case $WIZKIT specifies
+                         * any artifacts */
     u_init();
 
 #ifndef NO_SIGNAL
@@ -580,7 +621,9 @@ newgame()
     load_qtlist();          /* load up the quest text info */
     /* quest_init();  --  Now part of role_init() */
 
-    mklev();
+    if (playerid == 1)
+         mklev();
+    dualnh_save_stairs();
     u_on_upstairs();
     if (wizard)
         obj_delivery(FALSE); /* finish wizkit */

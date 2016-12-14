@@ -1,5 +1,6 @@
 #include "hack.h"
 #include "wintcp.h"
+#include "dualnethack.h"
 
 #include <arpa/inet.h>
 
@@ -12,7 +13,7 @@ tcp_init_nhwindows(argcp, argv)
 int *argcp UNUSED;
 char **argv UNUSED;
 {
-     tcp_init_connection();
+     /* tcp_init_connection(); */
      tcp_send_name_command("init_nhwindows");
      tcp_recv_void();
 }
@@ -22,11 +23,11 @@ void
 tcp_player_selection()
 {
      tcp_send_name_command("player_selection");
-     tcp_recv_string(plname);
-     flags.initrole = tcp_recv_int();
-     flags.initrace = tcp_recv_int();
-     flags.initgend = tcp_recv_int();
-     flags.initalign = tcp_recv_int();
+     tcp_recv_string(you_player->plname);
+     you_player->flags.initrole = tcp_recv_int();
+     you_player->flags.initrace = tcp_recv_int();
+     you_player->flags.initgend = tcp_recv_int();
+     you_player->flags.initalign = tcp_recv_int();
 }
 
 void
@@ -94,10 +95,10 @@ boolean blocking;
      tcp_send_int(window);
      tcp_send_boolean(blocking);
 
-     static int window_inited_received = 0;
+     static __thread int window_inited_received = 0;
      if (!window_inited_received) {
-          iflags.window_inited  = tcp_recv_boolean();
-          if (iflags.window_inited)
+          you_player->iflags.window_inited = tcp_recv_boolean();
+          if (you_player->iflags.window_inited)
                window_inited_received = 1;
      }
 }

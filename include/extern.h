@@ -316,6 +316,9 @@ typedef struct {
 } gbuf_entry;
 
 E gbuf_entry gbuf[ROWNO][COLNO];
+E char gbuf_start[ROWNO];
+E char gbuf_stop[ROWNO];
+
 
 E void FDECL(magic_map_background, (XCHAR_P, XCHAR_P, int));
 E void FDECL(map_background, (XCHAR_P, XCHAR_P, int));

@@ -54,6 +54,7 @@ char **argv;
   chdir(HACKDIR);
   /* Initialize options, will probably fail if the server and the client have different symset options */
   initoptions();
+  clear_glyph_buffer();
 
   while (1) {
        /* Read the command */
@@ -68,8 +69,8 @@ char **argv;
        } else if (!strcmp(buffer, "player_selection")) {
             /* We always ask the player for their name */
             askname();
-            player_selection();
             tcp_send_string(plname);
+            player_selection();
             tcp_send_int(flags.initrole);
             tcp_send_int(flags.initrace);
             tcp_send_int(flags.initgend);
