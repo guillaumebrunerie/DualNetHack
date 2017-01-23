@@ -2509,8 +2509,8 @@ const char *str;
         break;
 
     case NHW_STATUS:
-        /* This is not ideal, it forces redrawing the status line every time,
-           but I haven't found a better solution yet. */
+        /* Dualnh: This is not ideal, it forces redrawing the status line every time, but I haven't
+           found a better solution yet. */
         context.botlx = 1;
         ob = &cw->data[cw->cury][j = cw->curx];
         if (context.botlx)
@@ -3204,6 +3204,7 @@ int bkglyph UNUSED;
 #endif
     /* map glyph to character and color */
     (void) mapglyph(glyph, &ch, &color, &special, x, y);
+    fprintf(stderr, "G %i\n", ch)
 
     print_vt_code2(AVTC_SELECT_WINDOW, window);
 
@@ -3330,6 +3331,8 @@ tty_nhgetch()
 #else
     i = tgetch();
 #endif
+    if (i == -42)
+        return i;
     if (!i)
         i = '\033'; /* map NUL to ESC since nethack doesn't expect NUL */
     else if (i == EOF)

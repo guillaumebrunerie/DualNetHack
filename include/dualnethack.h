@@ -4,6 +4,7 @@
 
 typedef struct {
   int sockfd;  /* Socket */
+  int server_socket;
   pthread_t tid;  /* Thread id */
 
   winid WIN_MESSAGE, WIN_STATUS, WIN_MAP, WIN_INVEN;
@@ -52,6 +53,8 @@ typedef struct {
   boolean finished_turn;
 } player;
 
+boolean newsym_table[COLNO][ROWNO];
+
 extern player player1;
 extern player player2;
 extern __thread player* you_player;
@@ -63,11 +66,20 @@ extern __thread int playerid;
 
 extern pthread_barrier_t barrier;
 
+void dualnh_save_options();
 void dualnh_save_WIN();
 void dualnh_save_stairs();
+void dualnh_save_glyphmap();
 
 void dualnh_switch_to_myself();
 
 void dualnh_p1_wait();
 void dualnh_p2_wait();
 void dualnh_wait();
+
+boolean dualnh_is_empty();
+void dualnh_push(int);
+int dualnh_pop();
+char* dualnh_queue_str();
+char* dualnh_queue_tosend();
+void dualnh_zero_queue();

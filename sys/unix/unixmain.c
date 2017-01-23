@@ -7,6 +7,7 @@
 #include "hack.h"
 #include "dlb.h"
 #include "dualnethack.h"
+#include "wintcp.h"
 
 #include <ctype.h>
 #include <sys/stat.h>
@@ -16,6 +17,7 @@
 #include <fcntl.h>
 #endif
 #include <pthread.h>
+#include <arpa/inet.h>
 
 #if !defined(_BULL_SOURCE) && !defined(__sgi) && !defined(_M_UNIX)
 #if !defined(SUNOS4) && !(defined(ULTRIX) && defined(__GNUC__))
@@ -161,6 +163,7 @@ char *argv[];
     chdirx(dir, 1);
 #endif
 
+    
 #ifdef _M_UNIX
     check_sco_console();
 #endif
@@ -184,16 +187,24 @@ char *argv[];
     sethanguphandler((SIG_RET_TYPE) hangup);
 #endif
 
+    /* DualNetHack : TODO, send it to the clients, low priority */
     process_options(argc, argv); /* command line options */
 #ifdef WINCHAIN
     commit_windowchain();
 #endif
 
+    dualnh_save_options();
     current_player = &player1;
 
     tcp_init_connection(&player1.sockfd, &player2.sockfd);
 
     pthread_barrier_init(&barrier, NULL, 2);
+
+    // Creating the server socket
+    int server_sockets_fd[2];
+    socketpair(AF_UNIX, SOCK_STREAM, 0, server_sockets_fd);
+    player1.server_socket = server_sockets_fd[0];
+    player2.server_socket = server_sockets_fd[1];
 
     pthread_t p1;
     int n1 = 1;
@@ -233,46 +244,17 @@ void *pid;
     you_player->tid = pthread_self();
 
     dualnh_wait();
+    dualnh_p2_wait();
+
+    /* Initialize the old_gbuf’s */
+    for (int i = 0; i < ROWNO; i++)
+         for (int j = 0; j < COLNO; j++)
+              you_player->old_gbuf[i][j] = cmap_to_glyph(S_stone);
 
     init_nhwindows(NULL, NULL); /* now we can set up window system */
-#ifdef _M_UNIX
-    init_sco_cons();
-#endif
-#ifdef __linux__
-    init_linux_cons();
-#endif
 
-#ifdef DEF_PAGER
-    if (!(catmore = nh_getenv("HACKPAGER"))
-        && !(catmore = nh_getenv("PAGER")))
-        catmore = DEF_PAGER;
-#endif
-#ifdef MAIL
-    getmailstatus();
-#endif
-
-    /* wizard mode access is deferred until here */
-    set_playmode(); /* sets plname to "wizard" for wizard mode */
-    if (exact_username) {
-        /*
-         * FIXME: this no longer works, ever since 3.3.0
-         * when plnamesuffix() was changed to find
-         * Name-Role-Race-Gender-Alignment.  It removes
-         * all dashes rather than just the last one,
-         * regardless of whether whatever follows each
-         * dash matches role, race, gender, or alignment.
-         */
-        /* guard against user names with hyphens in them */
-        int len = strlen(plname);
-        /* append the current role, if any, so that last dash is ours */
-        if (++len < (int) sizeof plname)
-            (void) strncat(strcat(plname, "-"), pl_character,
-                           sizeof plname - len - 1);
-    }
-    /* strip role,race,&c suffix; calls askname() if plname[] is empty
-       or holds a generic user name like "player" or "games" */
-    plnamesuffix();
-
+    /* DualNetHack: wizard? */
+    
     if (wizard) {
         /* use character name rather than lock letter for file names */
         locknum = 0;
@@ -303,8 +285,6 @@ void *pid;
      *  new game or before a level restore on a saved game.
      */
     vision_init();
-
-    dualnh_p2_wait();
 
     display_gamewindows();
 
@@ -365,7 +345,7 @@ attempt_restore:
         }
     }
 
-    pthread_barrier_wait(&barrier);
+    dualnh_wait();
 
     if (!resuming) {
         /* new game:  start by choosing role, race, etc;
@@ -403,8 +383,8 @@ attempt_restore:
         dualnh_wait();
     }
 
-    fprintf(stderr, "Starting the game !\n");
-
+    fprintf(stderr, "Starting the game ! %s %s %s\n", player1.urole.name.m, player2.urole.name.m, urole.name.m);
+    
     moveloop(resuming);
     exit(EXIT_SUCCESS);
     /*NOTREACHED*/

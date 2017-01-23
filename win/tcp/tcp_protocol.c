@@ -19,8 +19,8 @@ debug(const char *format, ...)
      va_end(args);
 #endif
 }
-/* The socket used implicitely by all functions here */
 
+/* The socket used implicitely by all functions here */
 static __thread int sockfd;
 
 void
@@ -28,6 +28,12 @@ tcp_set_sockfd(sfd)
 int sfd;
 {
      sockfd = sfd;
+}
+
+int
+tcp_get_sockfd()
+{
+     return sockfd;
 }
 
 /* Initialization */
@@ -44,6 +50,9 @@ int *sock2;
 
      /* Create the socket */
      serverSock = socket(PF_INET, SOCK_STREAM, 0);
+
+     if (setsockopt(serverSock, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)) < 0)
+          error("setsockopt(SO_REUSEADDR) failed");
 
      /* Configure server address */
      serverAddr.sin_family = AF_INET;
@@ -75,11 +84,11 @@ int *sock2;
 
 /* In order to check which variables have changed */
 
-static int old_iflags_window_inited;
-static int old_iflags_prevmsg_window;
-static int old_context_rndencode;
-static int old_context_botlx;
-static int old_context_botl;
+/* static int old_iflags_window_inited; */
+/* static int old_iflags_prevmsg_window; */
+/* static int old_context_rndencode; */
+/* static int old_context_botlx; */
+/* static int old_context_botl; */
 
 typedef struct {
      const char* name;
@@ -92,11 +101,11 @@ changed_vars common_vars[] = {
      {"v:WIN_MESSAGE", &WIN_MESSAGE},
      {"v:WIN_MAP", &WIN_MAP},
      {"v:WIN_INVEN", &WIN_INVEN},
-     {"v:iflags_window_inited", (int*) &iflags.window_inited},
-     {"v:iflags_prevmsg_window", (int*) &iflags.prevmsg_window},
-     {"v:context_rndencode", &context.rndencode},
-     {"v:context_botlx", (int*) &context.botlx},
-     {"v:context_botl", (int*) &context.botl},
+     /* {"v:iflags_window_inited", (int*) &iflags.window_inited}, */
+     /* {"v:iflags_prevmsg_window", (int*) &iflags.prevmsg_window}, */
+     {"v:rndencode", &context.rndencode},
+     /* {"v:context_botlx", (int*) &context.botlx}, */
+     /* {"v:context_botl", (int*) &context.botl}, */
      {"", NULL}};
 
 /* static void */
@@ -170,10 +179,9 @@ tcp_send_gbuf()
                rend = i;
           }
      }
-     if (rstart == -1) {
-          rstart = 1;
-          rend = 0;
-     }
+     if (rstart == -1)
+          return; /* Nothing changed */
+     
 
      tcp_send_string("v:gbuf");
 
@@ -189,32 +197,44 @@ tcp_send_gbuf()
      }
 }
 
+void
+tcp_send_rndencode()
+{
+     tcp_send_string("v:rndencode");
+     tcp_send_int(context.rndencode);
+}
 
 void
 tcp_recv_update_variable(toupdate)
 char *toupdate;
 {
      changed_vars *var;
-     int i, j;
-     char rstart, rend, cstart, cend;
-
-     if (!strcmp(toupdate, "v:gbuf")) {
-          rstart = tcp_recv_char();
-          rend = tcp_recv_char();
-          for (i = rstart; i < rend + 1; i++) {
-               cstart = tcp_recv_char();
-               cend = tcp_recv_char();
-               for (j = cstart; j < cend + 1; j++) {
-                    gbuf[i][j].glyph = tcp_recv_int();
-               }
-          }
-          return;
-     }
 
      for (var = common_vars; var->name[0]; var++) {
           if (!strcmp(toupdate, var->name)) {
                *(var->actual_var) = tcp_recv_int();
                break;
+          }
+     }
+}
+
+void
+tcp_transfer_all(from)
+int from;
+{
+     char block[100];
+     int n;
+     
+     while (1) {
+          n = recv(from, block, 100, MSG_DONTWAIT);
+          if (n == -1) {
+               if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    break;
+               fprintf(stderr, "ERROR\n");
+          } else if (n == 0) {
+               break;
+          } else {
+               send(sockfd, block, n, 0);
           }
      }
 }
@@ -232,10 +252,10 @@ int len;
 
      if (len < 0) {
        fprintf(stderr, "Are you trying to send a message of length %d?\n", len);
-       return;
+       return (-1);
      }
      if (len == 0)
-       return;
+       return 0;
 
      while (len > 0) {
           n = send(sockfd, str, len, 0);
@@ -257,13 +277,15 @@ const char *str;
 }
 
 void
-tcp_send_string(str)
+tcp_send_string_to(sockfd, str)
+int sockfd;
 const char *str;
 {
      if (str) {
           int len = strlen(str);
-          tcp_send_int(len);
-          tcp_sendall(sockfd, str, len);
+          tcp_send_int_to(sockfd, len);
+          if (len)
+            tcp_sendall(sockfd, str, len);
      } else {
           tcp_send_int(-1);
      }
@@ -271,13 +293,28 @@ const char *str;
 }
 
 void
-tcp_send_int(n)
+tcp_send_string(str)
+const char *str;
+{
+     tcp_send_string_to(sockfd, str);
+}
+
+void
+tcp_send_int_to(sockfd, n)
+int sockfd;
 int n;
 {
      uint32_t m = htonl(n);
      tcp_sendall(sockfd, &m, sizeof(uint32_t));
 
      debug("/i:%d\n", n);
+}
+
+void
+tcp_send_int(n)
+int n;
+{
+     return tcp_send_int_to(sockfd, n);
 }
 
 void
@@ -369,8 +406,10 @@ int len;
 {
      int n = -1;
 
-     if (len <= 0)
+     if (len <= 0) {
           fprintf(stderr, "Are you trying to receive a message of length %d?\n", len);
+          return;
+     }
 
      while (len > 0) {
           n = recv(sockfd, buf, len, 0);
@@ -379,16 +418,37 @@ int len;
           buf += n;
           len -= n;
      }
-     if (n <= 0)
+     if (n == 0)
+          fprintf(stderr, "EOF\n");
+     if (n < 0)
           fprintf(stderr, "%i Error receiving bytes : %d, %d.\n", playerid, errno, sockfd);
+}
+
+int
+tcp_recv_int_from(sockfd)
+int sockfd;
+{
+     uint32_t m;
+     tcp_recvall(sockfd, &m, 4);
+
+     int m2 = (int) ntohl(m);
+     debug("i:%d\n", m2);
+     return m2;
+}
+
+int
+tcp_recv_int()
+{
+     return tcp_recv_int_from(sockfd);
 }
 
 /* Returns 1 if the string is null */
 int
-tcp_recv_string(buf)
+tcp_recv_string_from(sockfd, buf)
+int sockfd;
 char *buf;
 {
-     int len = tcp_recv_int();
+     int len = tcp_recv_int_from(sockfd);
      if (len == 0) {
           debug("s:[empty]\n");
           *buf = '\0';
@@ -404,16 +464,14 @@ char *buf;
      }
 }
 
+/* Returns 1 if the string is null */
 int
-tcp_recv_int()
+tcp_recv_string(buf)
+char *buf;
 {
-     uint32_t m;
-     tcp_recvall(sockfd, &m, 4);
-
-     int m2 = (int) ntohl(m);
-     debug("i:%d\n", m2);
-     return m2;
+     return tcp_recv_string_from(sockfd, buf);
 }
+
 
 boolean
 tcp_recv_boolean()

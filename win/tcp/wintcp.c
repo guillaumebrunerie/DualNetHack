@@ -3,8 +3,21 @@
 #include "dualnethack.h"
 
 #include <arpa/inet.h>
+#include <errno.h>
 
 #ifdef TCP_GRAPHICS
+
+/* The activity mutex. This is locked by a thread whenever it is doing something
+ * and unlocked just before waiting for input.
+ */
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
+
+void
+tcp_lock()
+{
+     pthread_mutex_lock(&mutex);
+     dualnh_switch_to_myself();
+}
 
 /* Functions from the protocol */
 
@@ -28,6 +41,14 @@ tcp_player_selection()
      you_player->flags.initrace = tcp_recv_int();
      you_player->flags.initgend = tcp_recv_int();
      you_player->flags.initalign = tcp_recv_int();
+
+     if (you_player == &player2) {
+          flags.initrole = you_player->flags.initrole;
+          flags.initrace = you_player->flags.initrace;
+          flags.initgend = you_player->flags.initgend;
+          flags.initalign = you_player->flags.initalign;
+          strcpy(plname, you_player->plname);
+     }
 }
 
 void
@@ -327,8 +348,54 @@ const char *str;
 int
 tcp_nhgetch()
 {
+     fd_set set;
+     int nfds;
+     int result;
+     char queue[1000];
+     int x, y;
+     
      tcp_send_name_command("nhgetch");
-     int result = tcp_recv_int();
+     fprintf(stderr, "(%d) Listening %d and %d\n", playerid, you_player->server_socket, you_player->sockfd);
+
+     FD_ZERO(&set);
+     FD_SET(you_player->server_socket, &set);
+     FD_SET(you_player->sockfd, &set);
+     nfds = max(you_player->server_socket, you_player->sockfd) + 1;
+
+     pthread_mutex_unlock(&mutex);
+
+     if (select(nfds, &set, NULL, NULL, NULL) == -1) {
+          fprintf(stderr, "Error %i\n", errno);
+     }
+     // We’re done waiting, we take the lock.
+     tcp_lock();
+     fprintf(stderr, "(%i) Done waiting, taking the lock…\n", playerid);
+     
+     if (FD_ISSET(you_player->server_socket, &set)) {
+          // We have been interrupted. First send the queue, then the commands.
+          fprintf(stderr, "(%i) We have been interrupted\n", playerid);
+          tcp_send_string("QUEUE");
+          tcp_send_string(dualnh_queue_tosend());
+          for (x = 0; x < COLNO; x++)
+               for (y = 0; y < ROWNO; y++)
+                    if (newsym_table[x][y]) {
+                         fprintf(stderr, "Doing newsym at %d %d\n", x, y);
+                         newsym(x,y);
+                         newsym_table[x][y] = 0;
+                         fprintf(stderr, "Done newsym at %d %d\n", x, y);
+                    }
+          tcp_transfer_all(you_player->server_socket);
+          /* tcp_recv_string_from(you_player->server_socket, queue); */
+          /* tcp_send_string(queue); */
+          dualnh_zero_queue();
+          result = 0;
+     } else if (FD_ISSET(you_player->sockfd, &set)) {
+          // The player did something
+          fprintf(stderr, "(%i) The player did something\n", playerid);
+          result = tcp_recv_int();
+     } else
+          fprintf(stderr, "Impossible, no input.\n");
+          
      return result;
 }
 
@@ -341,10 +408,14 @@ tcp_nhgetch()
 int
 tcp_nh_poskey(x, y, mod)
 int *x, *y, *mod;
-{
+{     
      /* We do not support the arguments here */
      tcp_send_name_command("nh_poskey");
+
+     pthread_mutex_unlock(&mutex);
      int result = tcp_recv_int();
+     tcp_lock();
+
      return result;
 }
 

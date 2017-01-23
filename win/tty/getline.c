@@ -3,6 +3,9 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "wintcp.h"
+#include "dualnethack.h"
+#include <errno.h>
 
 #ifdef TTY_GRAPHICS
 
@@ -23,6 +26,8 @@ STATIC_DCL void FDECL(hooked_tty_getlin,
 extern int NDECL(extcmd_via_menu); /* cmd.c */
 
 extern char erase_char, kill_char; /* from appropriate tty.c file */
+
+int tgetch(void);
 
 /*
  * Read a line closed with '\n' into the array char bufp[BUFSZ].
@@ -193,6 +198,7 @@ register const char *s; /* chars allowed besides return */
 {
     register int c, x = ttyDisplay ? (int) ttyDisplay->dismiss_more : '\n';
 
+    dualnh_hide_queueing();
     morc = 0;
     while (
 #ifdef HANGUPHANDLING
@@ -216,6 +222,7 @@ register const char *s; /* chars allowed besides return */
             tty_nhbell();
         }
     }
+    dualnh_show_queueing();
 }
 
 /*
@@ -293,6 +300,57 @@ tty_get_ext_cmd()
     }
 
     return i;
+}
+
+static boolean can_use_queue = TRUE;
+
+void
+dualnh_hide_queueing()
+{
+     can_use_queue = FALSE;
+}
+
+void
+dualnh_show_queueing()
+{
+     can_use_queue = TRUE;
+}
+
+int
+tgetch()
+{
+     fd_set set;
+     int nfds;
+     int result;
+     char queue[1000];
+     int i;
+     int sockfd = tcp_get_sockfd();
+
+     if (!can_use_queue)
+          return getchar();
+     
+     // We use the dualnh queue
+     if (!dualnh_is_empty()) {
+          result = dualnh_pop();
+          fprintf(stderr, "Using the queue : %c (%i)\n", result, result);
+          return result;
+     }
+     
+     FD_ZERO(&set);
+     FD_SET(0, &set);
+     FD_SET(sockfd, &set);
+     nfds = max(0, sockfd) + 1;
+
+     if (select(nfds, &set, NULL, NULL, NULL) == -1) {
+          fprintf(stderr, "Error %i\n", errno);
+     }
+
+     if (FD_ISSET(sockfd, &set)) {
+          /* We don’t do anything here, we leave it to the main loop */
+          return -42;
+     } else if (FD_ISSET(0, &set)) {
+          return getchar();
+     }
 }
 
 #endif /* TTY_GRAPHICS */

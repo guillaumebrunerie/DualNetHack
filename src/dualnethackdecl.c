@@ -9,11 +9,25 @@ player player2 = DUMMY;
 /* Pointers to either [player1] or [player2] */
 __thread player* you_player = NULL;
 __thread player* other_player = NULL;
+player* loaded_player = &player2;
 player* current_player = NULL;
 
 int __thread playerid = 0;
+boolean newsym_table[COLNO][ROWNO] = DUMMY;
 
 pthread_barrier_t barrier;
+
+void
+dualnh_save_options()
+{
+  player1.flags = flags;
+  player1.iflags = iflags;
+  player1.u.uhp = u.uhp;
+
+  player2.flags = flags;
+  player2.iflags = iflags;
+  player2.u.uhp = u.uhp;
+}
 
 void
 dualnh_save_WIN()
@@ -38,6 +52,20 @@ dualnh_save_stairs()
      player2.dnladder = dnladder;
      player2.upladder = upladder;
      player2.sstairs = sstairs;
+}
+
+void
+dualnh_save_glyphmap()
+{
+     int i, j;
+     memcpy(player2.locations, player1.locations, sizeof player1.locations);
+
+     for (i=0; i<COLNO; i++) {
+          for (j=0; j<ROWNO; j++) {
+               levl[i][j].glyph = player2.locations[i][j].glyph;
+               levl[i][j].waslit = player2.locations[i][j].waslit;
+          }
+     }
 }
 
 void
@@ -170,8 +198,11 @@ player p;
 void
 dualnh_switch_to_myself()
 {
+     if (loaded_player == you_player)
+          return;
      dualnh_save_player(other_player);
      dualnh_load_player(*you_player);
+     loaded_player = you_player;
 }
 
 void
@@ -193,4 +224,71 @@ dualnh_wait()
 {
      pthread_barrier_wait(&barrier);
 }
-     
+
+#define QUEUE_SIZE 100
+int __thread queue[QUEUE_SIZE] = DUMMY;
+int __thread queue_start = 0;
+int __thread queue_end = 0;
+
+boolean
+dualnh_is_empty()
+{
+     return (queue_start == queue_end);
+}
+
+void
+dualnh_push(cmd)
+int cmd;
+{
+     // Overflow
+     if ((queue_end + 1) % QUEUE_SIZE == queue_start)
+          return;
+
+     queue[queue_end] = cmd;
+     queue_end = (queue_end + 1) % QUEUE_SIZE;
+}
+
+int
+dualnh_pop()
+{
+     int cmd;
+     // Empty
+     if (queue_start == queue_end)
+          return -1;
+     cmd = queue[queue_start];
+     queue_start = (queue_start + 1) % QUEUE_SIZE;
+     return cmd;
+}
+
+char __thread queue_str[QUEUE_SIZE + 1] = DUMMY;
+
+char*
+dualnh_queue_str()
+{
+     int i, j;
+     for (i = queue_start, j = 0; i != queue_end; (i++) % QUEUE_SIZE, j++) {
+          queue_str[j] = queue[i];
+     }
+     queue_str[j] = '\0';
+     return queue_str;
+}
+
+char __thread queue_ints[QUEUE_SIZE + 1] = DUMMY;
+
+char*
+dualnh_queue_tosend()
+{
+     int i, j;
+     for (i = queue_start, j = 0; i != queue_end; (i++) % QUEUE_SIZE, j++) {
+          queue_ints[j] = queue[i];
+     }
+     queue_ints[j] = 0;
+     return queue_ints;
+}
+
+void
+dualnh_zero_queue()
+{
+     queue_start = 0;
+     queue_end = 0;
+}

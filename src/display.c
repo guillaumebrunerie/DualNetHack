@@ -690,6 +690,8 @@ register int x, y;
     register int see_it;
     register xchar worm_tail;
 
+    newsym_table[x][y] = 1;
+
     if (in_mklev)
         return;
 #ifdef HANGUPHANDLING
@@ -1433,6 +1435,10 @@ int x, y, glyph;
         for (i = 0; i < ROWNO; i++) {  \
             gbuf_start[i] = COLNO - 1; \
             gbuf_stop[i] = 0;          \
+            player1.gbuf_start[i] = COLNO - 1; \
+            player1.gbuf_stop[i] = 0;          \
+            player2.gbuf_start[i] = COLNO - 1; \
+            player2.gbuf_stop[i] = 0;          \
         }                              \
     }
 

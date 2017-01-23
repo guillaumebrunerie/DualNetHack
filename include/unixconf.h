@@ -302,7 +302,8 @@
 
 #define HLOCK "perm" /* an empty file used for locking purposes */
 
-#define tgetch getchar
+/* We need to redefine that in DualNetHack */
+/* #define tgetch getchar */
 
 #ifndef NOSHELL
 #define SHELL /* do not delete the '!' command */

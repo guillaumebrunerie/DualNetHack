@@ -12,24 +12,115 @@
 
 #include "wintcp.h"
 
-/* #ifdef CHDIR */
-/* static void FDECL(chdirx, (const char *, BOOLEAN_P)); */
-/* #endif /\* CHDIR *\/ */
-/* static boolean NDECL(whoami); */
+#ifdef CHDIR
+static void FDECL(chdirx, (const char *, BOOLEAN_P));
+#endif /* CHDIR */
+static boolean NDECL(whoami);
 /* static void FDECL(process_options, (int, char **)); */
 /* static void NDECL(wd_message); */
 
+void
+client_init()
+{
+#ifdef CHDIR
+    register char *dir;
+#endif
+    boolean exact_username;
+
+  /* Use the standard tty window system */
+  choose_windows("tty");
+
+#ifdef CHDIR /* otherwise no chdir() */
+             /*
+              * See if we must change directory to the playground.
+              * (Perhaps hack runs suid and playground is inaccessible
+              *  for the player.)
+              * The environment variable HACKDIR is overridden by a
+              *  -d command line option (must be the first option given)
+              */
+    dir = nh_getenv("NETHACKDIR");
+    if (!dir)
+        dir = nh_getenv("HACKDIR");
+#endif
+
+/*
+ * Change directories before we initialize the window system so
+ * we can find the tile file.
+ */
+#ifdef CHDIR
+    chdirx(dir, 1);
+#endif
+
+#ifdef _M_UNIX
+    check_sco_console();
+#endif
+#ifdef __linux__
+    check_linux_console();
+#endif
+    initoptions();
+#ifdef PANICTRACE
+    /* ARGV0 = argv[0]; /\* save for possible stack trace *\/ */
+#ifndef NO_SIGNAL
+    panictrace_setsignals(TRUE);
+#endif
+#endif
+
+    exact_username = whoami();
+
+#ifdef _M_UNIX
+    init_sco_cons();
+#endif
+#ifdef __linux__
+    init_linux_cons();
+#endif
+
+#ifdef DEF_PAGER
+    if (!(catmore = nh_getenv("HACKPAGER"))
+        && !(catmore = nh_getenv("PAGER")))
+        catmore = DEF_PAGER;
+#endif
+#ifdef MAIL
+    getmailstatus();
+#endif
+
+    /* wizard mode access is deferred until here */
+    set_playmode(); /* sets plname to "wizard" for wizard mode */
+    if (exact_username) {
+        /*
+         * FIXME: this no longer works, ever since 3.3.0
+         * when plnamesuffix() was changed to find
+         * Name-Role-Race-Gender-Alignment.  It removes
+         * all dashes rather than just the last one,
+         * regardless of whether whatever follows each
+         * dash matches role, race, gender, or alignment.
+         */
+        /* guard against user names with hyphens in them */
+        int len = strlen(plname);
+        /* append the current role, if any, so that last dash is ours */
+        if (++len < (int) sizeof plname)
+            (void) strncat(strcat(plname, "-"), pl_character,
+                           sizeof plname - len - 1);
+    }
+    /* strip role,race,&c suffix; calls askname() if plname[] is empty
+       or holds a generic user name like "player" or "games" */
+    plnamesuffix();
+}
+
 int main(argc, argv)
-int *argc;
-char **argv;
+int argc;
+char *argv[];
 {
   int clientSocket;
   char buffer[1024];
   struct sockaddr_in serverAddr;
   socklen_t addr_size;
+  int i;
+  char queue[1000];
 
+  client_init();
+  
   /* Create the socket */
-  clientSocket = socket(PF_INET, SOCK_STREAM, 0);
+  clientSocket = socket(AF_INET, SOCK_STREAM, 0);
   
   /* Configure the server address */
   serverAddr.sin_family = AF_INET;
@@ -48,22 +139,17 @@ char **argv;
   fprintf(stderr, "Connected!\n");
   tcp_set_sockfd(clientSocket);
 
-  /* Use the standard tty window system */
-  choose_windows("tty");
-  /* Change directory in order to find symbol files, for instance */
-  chdir(HACKDIR);
-  /* Initialize options, will probably fail if the server and the client have different symset options */
-  initoptions();
-  clear_glyph_buffer();
-
   while (1) {
        /* Read the command */
+       fprintf(stderr, "Waiting\n");
        tcp_recv_string(buffer);
+       fprintf(stderr, "Parsing %s\n", buffer);
 
        /* Execute the command */
 
        if (!strcmp(buffer, "init_nhwindows")) {
-            init_nhwindows(argc, argv);
+            init_nhwindows(&argc, argv);
+            clear_glyph_buffer();
             tcp_send_void();
 
        } else if (!strcmp(buffer, "player_selection")) {
@@ -102,9 +188,11 @@ char **argv;
             clear_nhwindow(window);
             
        } else if (!strcmp(buffer, "display_nhwindow")) {
+            fprintf(stderr, "Dealing 1\n");
             winid window = tcp_recv_int();
             boolean blocking = tcp_recv_boolean();
             display_nhwindow(window, blocking);
+            fprintf(stderr, "Dealing 2\n");
 
             /* A bit hacky, the client needs to tell that
                to the server, but not all the time or it
@@ -115,6 +203,7 @@ char **argv;
                  if (iflags.window_inited)
                       window_inited_sent = 1;
             }
+            fprintf(stderr, "Dealing 3\n");
 
        } else if (!strcmp(buffer, "destroy_nhwindow")) {
             winid window = tcp_recv_int();
@@ -231,7 +320,8 @@ char **argv;
 
        } else if (!strcmp(buffer, "nhgetch")) {
             int result = nhgetch();
-            tcp_send_int(result);
+            if (result != -42)
+              tcp_send_int(result);
 
        } else if (!strcmp(buffer, "nh_poskey")) {
             /* Mice are not supported */
@@ -291,10 +381,32 @@ char **argv;
             BOOLEAN_P b = tcp_recv_boolean();
             putmsghistory(buf_isnull ? NULL : buf, b);
 
+       } else if (!strcmp(buffer, "v:gbuf")) {
+            int i, j;
+            char rstart, rend, cstart, cend;
+            fprintf(stderr, "Doing stuff with gbuf\n");
+            rstart = tcp_recv_char();
+            rend = tcp_recv_char();
+            for (i = rstart; i < rend + 1; i++) {
+                 cstart = tcp_recv_char();
+                 cend = tcp_recv_char();
+                 for (j = cstart; j < cend + 1; j++) {
+                      gbuf[i][j].glyph = tcp_recv_int();
+                 }
+            }
+
        } else if (!strncmp(buffer, "v:", 2)) {
             /* Change in one of the variables */
             tcp_recv_update_variable(buffer);
-       
+
+       } else if (!strcmp(buffer, "QUEUE")) {
+            tcp_recv_string(queue);
+            fprintf(stderr, "Queue received : %s\n", queue);
+            for (i = 0; queue[i]; i++)
+                 dualnh_push(queue[i]);
+
+       } else if (!strcmp(buffer, "")) {
+            
        } else {
             fprintf(stderr, "Command unknown : %s", buffer);
             break;
@@ -307,6 +419,97 @@ char **argv;
 
 
 /* /\*** Functions copied from unixmain.c ***\/ */
+
+#ifdef CHDIR
+static void
+chdirx(dir, wr)
+const char *dir;
+boolean wr;
+{
+    if (dir /* User specified directory? */
+#ifdef HACKDIR
+        && strcmp(dir, HACKDIR) /* and not the default? */
+#endif
+        ) {
+#ifdef SECURE
+        (void) setgid(getgid());
+        (void) setuid(getuid()); /* Ron Wessels */
+#endif
+    } else {
+/* non-default data files is a sign that scores may not be
+ * compatible, or perhaps that a binary not fitting this
+ * system's layout is being used.
+ */
+#ifdef VAR_PLAYGROUND
+        int len = strlen(VAR_PLAYGROUND);
+
+        fqn_prefix[SCOREPREFIX] = (char *) alloc(len + 2);
+        Strcpy(fqn_prefix[SCOREPREFIX], VAR_PLAYGROUND);
+        if (fqn_prefix[SCOREPREFIX][len - 1] != '/') {
+            fqn_prefix[SCOREPREFIX][len] = '/';
+            fqn_prefix[SCOREPREFIX][len + 1] = '\0';
+        }
+#endif
+    }
+
+#ifdef HACKDIR
+    if (dir == (const char *) 0)
+        dir = HACKDIR;
+#endif
+
+    if (dir && chdir(dir) < 0) {
+        perror(dir);
+        error("Cannot chdir to %s.", dir);
+    }
+
+    /* warn the player if we can't write the record file */
+    /* perhaps we should also test whether . is writable */
+    /* unfortunately the access system-call is worthless */
+    if (wr) {
+#ifdef VAR_PLAYGROUND
+        fqn_prefix[LEVELPREFIX] = fqn_prefix[SCOREPREFIX];
+        fqn_prefix[SAVEPREFIX] = fqn_prefix[SCOREPREFIX];
+        fqn_prefix[BONESPREFIX] = fqn_prefix[SCOREPREFIX];
+        fqn_prefix[LOCKPREFIX] = fqn_prefix[SCOREPREFIX];
+        fqn_prefix[TROUBLEPREFIX] = fqn_prefix[SCOREPREFIX];
+#endif
+        check_recordfile(dir);
+    }
+}
+#endif /* CHDIR */
+
+/* returns True iff we set plname[] to username which contains a hyphen */
+static boolean
+whoami()
+{
+    /*
+     * Who am i? Algorithm: 1. Use name as specified in NETHACKOPTIONS
+     *			2. Use $USER or $LOGNAME	(if 1. fails)
+     *			3. Use getlogin()		(if 2. fails)
+     * The resulting name is overridden by command line options.
+     * If everything fails, or if the resulting name is some generic
+     * account like "games", "play", "player", "hack" then eventually
+     * we'll ask him.
+     * Note that we trust the user here; it is possible to play under
+     * somebody else's name.
+     */
+    if (!*plname) {
+        register const char *s;
+
+        s = nh_getenv("USER");
+        if (!s || !*s)
+            s = nh_getenv("LOGNAME");
+        if (!s || !*s)
+            s = getlogin();
+
+        if (s && *s) {
+            (void) strncpy(plname, s, sizeof plname - 1);
+            if (index(plname, '-'))
+                return TRUE;
+        }
+    }
+    return FALSE;
+}
 
 static boolean wiz_error_flag = FALSE;
 
@@ -416,96 +619,3 @@ char *optstr;
     }
     return FALSE;
 }
-
-/* /\* Those functions are used by the server, so I copy-pasted them from unixmain.c *\/ */
-
-/* #ifdef CHDIR */
-/* static void */
-/* chdirx(dir, wr) */
-/* const char *dir; */
-/* boolean wr; */
-/* { */
-/*     if (dir /\* User specified directory? *\/ */
-/* #ifdef HACKDIR */
-/*         && strcmp(dir, HACKDIR) /\* and not the default? *\/ */
-/* #endif */
-/*         ) { */
-/* #ifdef SECURE */
-/*         (void) setgid(getgid()); */
-/*         (void) setuid(getuid()); /\* Ron Wessels *\/ */
-/* #endif */
-/*     } else { */
-/* /\* non-default data files is a sign that scores may not be */
-/*  * compatible, or perhaps that a binary not fitting this */
-/*  * system's layout is being used. */
-/*  *\/ */
-/* #ifdef VAR_PLAYGROUND */
-/*         int len = strlen(VAR_PLAYGROUND); */
-
-/*         fqn_prefix[SCOREPREFIX] = (char *) alloc(len + 2); */
-/*         Strcpy(fqn_prefix[SCOREPREFIX], VAR_PLAYGROUND); */
-/*         if (fqn_prefix[SCOREPREFIX][len - 1] != '/') { */
-/*             fqn_prefix[SCOREPREFIX][len] = '/'; */
-/*             fqn_prefix[SCOREPREFIX][len + 1] = '\0'; */
-/*         } */
-/* #endif */
-/*     } */
-
-/* #ifdef HACKDIR */
-/*     if (dir == (const char *) 0) */
-/*         dir = HACKDIR; */
-/* #endif */
-
-/*     if (dir && chdir(dir) < 0) { */
-/*         perror(dir); */
-/*         error("Cannot chdir to %s.", dir); */
-/*     } */
-
-/*     /\* warn the player if we can't write the record file *\/ */
-/*     /\* perhaps we should also test whether . is writable *\/ */
-/*     /\* unfortunately the access system-call is worthless *\/ */
-/*     if (wr) { */
-/* #ifdef VAR_PLAYGROUND */
-/*         fqn_prefix[LEVELPREFIX] = fqn_prefix[SCOREPREFIX]; */
-/*         fqn_prefix[SAVEPREFIX] = fqn_prefix[SCOREPREFIX]; */
-/*         fqn_prefix[BONESPREFIX] = fqn_prefix[SCOREPREFIX]; */
-/*         fqn_prefix[LOCKPREFIX] = fqn_prefix[SCOREPREFIX]; */
-/*         fqn_prefix[TROUBLEPREFIX] = fqn_prefix[SCOREPREFIX]; */
-/* #endif */
-/*         check_recordfile(dir); */
-/*     } */
-/* } */
-/* #endif /\* CHDIR *\/ */
-
-/* /\* returns True iff we set plname[] to username which contains a hyphen *\/ */
-/* static boolean */
-/* whoami() */
-/* { */
-/*     /\* */
-/*      * Who am i? Algorithm: 1. Use name as specified in NETHACKOPTIONS */
-/*      *			2. Use $USER or $LOGNAME	(if 1. fails) */
-/*      *			3. Use getlogin()		(if 2. fails) */
-/*      * The resulting name is overridden by command line options. */
-/*      * If everything fails, or if the resulting name is some generic */
-/*      * account like "games", "play", "player", "hack" then eventually */
-/*      * we'll ask him. */
-/*      * Note that we trust the user here; it is possible to play under */
-/*      * somebody else's name. */
-/*      *\/ */
-/*     if (!*plname) { */
-/*         register const char *s; */
-
-/*         s = nh_getenv("USER"); */
-/*         if (!s || !*s) */
-/*             s = nh_getenv("LOGNAME"); */
-/*         if (!s || !*s) */
-/*             s = getlogin(); */
-
-/*         if (s && *s) { */
-/*             (void) strncpy(plname, s, sizeof plname - 1); */
-/*             if (index(plname, '-')) */
-/*                 return TRUE; */
-/*         } */
-/*     } */
-/*     return FALSE; */
-/* } */

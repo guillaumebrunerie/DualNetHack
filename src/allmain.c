@@ -5,6 +5,7 @@
 /* various code that was replicated in *main.c */
 
 #include "hack.h"
+#include "wintcp.h"
 #include "dualnethack.h"
 
 #include <pthread.h>
@@ -19,8 +20,8 @@ STATIC_DCL void NDECL(do_positionbar);
 STATIC_DCL void FDECL(interrupt_multi, (const char *));
 
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+/* pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; */
+/* pthread_cond_t cond = PTHREAD_COND_INITIALIZER; */
 
 
 void
@@ -50,6 +51,7 @@ boolean resuming;
 
     dualnh_p2_wait();
     dualnh_switch_to_myself();
+    fprintf(stderr, "Starting the game 2 ! %d %s %s %s\n", playerid, player1.urole.name.m, player2.urole.name.m, urole.name.m);
 
     /* side-effects from the real world */
     flags.moonphase = phase_of_the_moon();
@@ -66,7 +68,9 @@ boolean resuming;
     }
 
     if (!resuming) { /* new game */
-        context.rndencode = rnd(9000);
+        if (playerid == 1)
+            context.rndencode = rnd(9000);
+        tcp_send_rndencode();
         set_wear((struct obj *) 0); /* for side-effects of starting gear */
         (void) pickup(1);      /* autopickup at initial location */
     } else {                   /* restore old game */
@@ -90,15 +94,24 @@ boolean resuming;
     youmonst.movement = NORMAL_SPEED; /* give the hero some movement points */
     context.move = 0;
 
-    dualnh_p1_wait();
-    dualnh_wait();
     clear_glyph_buffer();
 
-    if (current_player != you_player)
-         goto startp2;
-    dualnh_switch_to_myself();
+    dualnh_p1_wait();
+    dualnh_wait();
+
+    int initial_pass = 1;
+    player1.finished_turn = 0;
+    player2.finished_turn = 0;
+    current_player = &player1;
+
+    dualnh_p2_wait();
+    tcp_lock(); /* p2 will stay blocked here until p1 is done doing its initialization */
+    dualnh_p1_wait();
+
+    /* dualnh_switch_to_myself(); */
 
     program_state.in_moveloop = 1;
+
     for (;;) {
 #ifdef SAFERHANGUP
         if (program_state.done_hup)
@@ -402,6 +415,12 @@ boolean resuming;
         /* once-per-player-input things go here */
         /****************************************/
 
+        /* if (initial_pass) { */
+        /*      dualnh_p2_wait(); */
+        /*      dualnh_switch_to_myself(); */
+        /*      fprintf(stderr, "Starting the game 3 ! %i %s %s %s\n", playerid, player1.urole.name.m, player2.urole.name.m, urole.name.m); */
+        /* } */
+        
         clear_splitobjs();
         find_ac();
         if (!context.mv || Blind) {
@@ -425,20 +444,56 @@ boolean resuming;
             curs_on_u();
         }
 
-        /* Switching players, if needed */
-    startp2:
-        pthread_mutex_lock(&mutex);
         if (you_player->finished_turn) {
+             fprintf(stderr, "Finished turn %d (%d)\n", playerid, you_player->server_socket);
              you_player->finished_turn = 0;
              current_player = other_player;
-             pthread_cond_signal(&cond);
+             tcp_send_string_to(you_player->server_socket, "");
+             // At this point, the current thread still holds the lock, so the other one can’t wake up just
+             // yet. But then we will go in the while just after and release the lock in the [queue_next_char].
         }
         while (you_player != current_player) {
-             pthread_cond_wait(&cond, &mutex);
-             if (you_player == current_player)
-                  dualnh_switch_to_myself();
+             fprintf(stderr, "Queueing (player %i)…\n", playerid);
+             // This pushes all chars to a queue, which should be:
+             // * displayed immediately on change
+             // * used subsequently by [tgetchar] in the client
+             int cmd;
+             cmd = nhgetch();
+             if (cmd) {
+                  dualnh_push(cmd);
+                  fprintf(stderr, "New queue (player %i) : %s\n", playerid, dualnh_queue_str());
+                  curs(WIN_MAP, 1, ROWNO-1);
+                  putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
+                  putstr(WIN_MAP, 0, "    ");
+                  curs(WIN_MAP, you_player->u.ux, you_player->u.uy);
+             } else {
+                  /* We have been interrupted. It means that either it’s now our turn, or that
+                   * we have to do some commands. The list of commands to do has already been
+                   * forwarded to the client by [nhgetch]  */
+                  /* if (you_player == current_player) */
+                  /*      dualnh_switch_to_myself(); */
+             }
         }
-        pthread_mutex_unlock(&mutex);
+
+        /* /\* Switching players, if needed *\/ */
+        /* pthread_mutex_lock(&mutex); */
+        /* fprintf(stderr, "Starting the game 3.5 ! %i %s %s %s %i %i %i %i\n", playerid, player1.urole.name.m, player2.urole.name.m, urole.name.m, you_player, current_player, &player1, &player2); */
+        /* if (initial_pass) { */
+        /*      dualnh_p1_wait(); */
+        /*      initial_pass = 0; */
+        /* } */
+        /* if (you_player->finished_turn) { */
+        /*      you_player->finished_turn = 0; */
+        /*      current_player = other_player; */
+        /*      pthread_cond_signal(&cond); */
+        /* } */
+        /* while (you_player != current_player) { */
+        /*      pthread_cond_wait(&cond, &mutex); */
+        /*      if (you_player == current_player) */
+        /*           dualnh_switch_to_myself(); */
+        /* } */
+        /* pthread_mutex_unlock(&mutex); */
+        /* fprintf(stderr, "Starting the game 4 ! %i %s %s %s\n", playerid, player1.urole.name.m, player2.urole.name.m, urole.name.m); */
 
 
         context.move = 1;
@@ -579,7 +634,6 @@ void
 newgame()
 {
     int i;
-
 #ifdef MFLOPPY
     gameDiskPrompt();
 #endif
@@ -623,13 +677,15 @@ newgame()
 
     if (playerid == 1)
          mklev();
+    else
+         dualnh_save_glyphmap();
+
     dualnh_save_stairs();
     u_on_upstairs();
     if (wizard)
         obj_delivery(FALSE); /* finish wizkit */
     vision_reset();          /* set up internals for level (after mklev) */
     check_special_room(FALSE);
-
     if (MON_AT(u.ux, u.uy))
         mnexto(m_at(u.ux, u.uy));
     (void) makedog();
