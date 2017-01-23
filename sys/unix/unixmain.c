@@ -225,6 +225,7 @@ void *pid;
     register int fd;
     boolean exact_username;
     boolean resuming = FALSE; /* assume new game */
+    int i, j;
 
     playerid = *((int*) pid);
 
@@ -247,8 +248,8 @@ void *pid;
     dualnh_p2_wait();
 
     /* Initialize the old_gbuf’s */
-    for (int i = 0; i < ROWNO; i++)
-         for (int j = 0; j < COLNO; j++)
+    for (i = 0; i < ROWNO; i++)
+         for (j = 0; j < COLNO; j++)
               you_player->old_gbuf[i][j] = cmap_to_glyph(S_stone);
 
     init_nhwindows(NULL, NULL); /* now we can set up window system */
