@@ -250,9 +250,11 @@ menu_item **menu_list;
      tcp_send_name_command("select_menu");
      tcp_send_int(window);
      tcp_send_int(how);
+     pthread_mutex_unlock(&mutex);
      int res = tcp_recv_int();
      if (res > 0)
        tcp_recv_list_menu_item(menu_list, res);
+     tcp_lock();
      return res;
 }
 
@@ -267,7 +269,9 @@ const char *mesg;
      tcp_send_char(let);
      tcp_send_int(how);
      tcp_send_string(mesg);
+     pthread_mutex_unlock(&mutex);
      char res = tcp_recv_char();
+     tcp_lock();
      return res;
 }
 
@@ -443,7 +447,9 @@ CHAR_P c;
      tcp_send_string(a);
      tcp_send_string(b);
      tcp_send_xchar(c);
+     pthread_mutex_unlock(&mutex);
      char res = tcp_recv_char();
+     tcp_lock();
      return res;
 }
 
@@ -454,14 +460,18 @@ char * b;
 {
      tcp_send_name_command("getlin");
      tcp_send_string(a);
+     pthread_mutex_unlock(&mutex);
      tcp_recv_string(b);
+     tcp_lock();
 }
 
 int
 tcp_get_ext_cmd()
 {
      tcp_send_name_command("get_ext_cmd");
+     pthread_mutex_unlock(&mutex);
      int res = tcp_recv_int();
+     tcp_lock();
      return res;
 }
 

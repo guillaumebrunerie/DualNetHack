@@ -125,7 +125,7 @@ char *argv[];
   /* Configure the server address */
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_port = htons(4242);
-  serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  serverAddr.sin_addr.s_addr = inet_addr("104.198.50.109");
   /* Set all bits of the padding field to 0 */
   memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);  
 
