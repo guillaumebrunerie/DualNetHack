@@ -260,16 +260,18 @@ dualnh_pop()
      return cmd;
 }
 
-char __thread queue_str[QUEUE_SIZE + 1] = DUMMY;
+/* Should be CO - 1, but CO is not defined */
+char __thread queue_str[80] = DUMMY;
 
 char*
 dualnh_queue_str()
 {
      int i, j;
-     for (i = queue_start, j = 0; i != queue_end; (i++) % QUEUE_SIZE, j++) {
+     for (i = queue_start, j = 0; i != queue_end; (i++) % QUEUE_SIZE, j++)
           queue_str[j] = queue[i];
-     }
-     queue_str[j] = '\0';
+     for (; j < 79; j++)
+          queue_str[j] = ' ';
+     queue_str[79] = '\0';
      return queue_str;
 }
 
@@ -291,4 +293,13 @@ dualnh_zero_queue()
 {
      queue_start = 0;
      queue_end = 0;
+}
+
+void
+dualnh_pop_from_end()
+{
+     // Empty
+     if (queue_start == queue_end)
+          return;
+     queue_end = (queue_end - 1) % QUEUE_SIZE;
 }

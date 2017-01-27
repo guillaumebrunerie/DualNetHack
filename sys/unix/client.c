@@ -117,6 +117,8 @@ char *argv[];
   int i;
   char queue[1000];
 
+  char *host = argc >= 2 ? argv[1] : "127.0.0.1";
+  
   client_init();
   
   /* Create the socket */
@@ -125,11 +127,11 @@ char *argv[];
   /* Configure the server address */
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_port = htons(4242);
-  serverAddr.sin_addr.s_addr = inet_addr("104.198.50.109");
+  serverAddr.sin_addr.s_addr = inet_addr(host);
   /* Set all bits of the padding field to 0 */
   memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);  
 
-  fprintf(stderr, "Connecting\n");
+  fprintf(stderr, "Connecting to host %s\n", host);
   
   /* Connect the socket to the server using the address struct ----*/
   addr_size = sizeof serverAddr;
@@ -326,7 +328,8 @@ char *argv[];
        } else if (!strcmp(buffer, "nh_poskey")) {
             /* Mice are not supported */
             int result = nh_poskey(0, 0, 0);
-            tcp_send_int(result);
+            if (result != -42)
+                 tcp_send_int(result);
 
        } else if (!strcmp(buffer, "nhbell")) {
             nhbell();

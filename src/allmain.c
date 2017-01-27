@@ -34,7 +34,7 @@ boolean resuming;
 #endif
     int moveamt = 0, wtcap = 0, change = 0;
     boolean monscanmove = FALSE;
-
+    
     /* Note:  these initializers don't do anything except guarantee that
             we're linked properly.
     */
@@ -453,27 +453,37 @@ boolean resuming;
              // yet. But then we will go in the while just after and release the lock in the [queue_next_char].
         }
         while (you_player != current_player) {
+             curs(WIN_MAP, 1, ROWNO-1);
+             putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
+             curs_on_u();
+             // curs(WIN_MAP, you_player->u.ux, you_player->u.uy);
+
              fprintf(stderr, "Queueing (player %i)…\n", playerid);
              // This pushes all chars to a queue, which should be:
              // * displayed immediately on change
              // * used subsequently by [tgetchar] in the client
              int cmd;
              cmd = nhgetch();
-             if (cmd) {
+             if (cmd == 27) /* ESC */
+                  dualnh_zero_queue();
+             else if (cmd == 127) /* DEL */
+                  dualnh_pop_from_end();
+             else if (cmd)
                   dualnh_push(cmd);
-                  fprintf(stderr, "New queue (player %i) : %s\n", playerid, dualnh_queue_str());
-                  curs(WIN_MAP, 1, ROWNO-1);
-                  putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
-                  putstr(WIN_MAP, 0, "    ");
-                  curs(WIN_MAP, you_player->u.ux, you_player->u.uy);
-             } else {
-                  /* We have been interrupted. It means that either it’s now our turn, or that
-                   * we have to do some commands. The list of commands to do has already been
-                   * forwarded to the client by [nhgetch]  */
-                  /* if (you_player == current_player) */
-                  /*      dualnh_switch_to_myself(); */
-             }
+             fprintf(stderr, "New queue (player %i) : %s\n", playerid, dualnh_queue_str());
+             /* } else { */
+             /*      /\* We have been interrupted. It means that either it’s now our turn, or that */
+             /*       * we have to do some commands. The list of commands to do has already been */
+             /*       * forwarded to the client by [nhgetch]  *\/ */
+             /*      /\* if (you_player == current_player) *\/ */
+             /*      /\*      dualnh_switch_to_myself(); *\/ */
+             /* } */
         }
+        curs(WIN_MAP, 1, ROWNO-1);
+        putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
+        curs(WIN_MAP, 33, ROWNO-1);
+        putstr(WIN_MAP, ATR_INVERSE, "It's your turn");
+        curs(WIN_MAP, you_player->u.ux, you_player->u.uy);
 
         /* /\* Switching players, if needed *\/ */
         /* pthread_mutex_lock(&mutex); */
