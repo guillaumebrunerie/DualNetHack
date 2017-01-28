@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include <hack.h>
 #include <ctype.h>
@@ -121,21 +123,31 @@ char *argv[];
   
   client_init();
   
-  /* Create the socket */
-  clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+  struct addrinfo hints, *res;
   
-  /* Configure the server address */
-  serverAddr.sin_family = AF_INET;
-  serverAddr.sin_port = htons(4242);
-  serverAddr.sin_addr.s_addr = inet_addr(host);
-  /* Set all bits of the padding field to 0 */
-  memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);  
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  int err = getaddrinfo(host, "4242", &hints, &res);
+  if (err != 0) {
+       fprintf(stderr, "Failed to resolve remote socket address (err=%d)\n", err);
+       exit(err);
+  }
+  
+  /* Create the socket */
+  clientSocket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+  /* /\* Configure the server address *\/ */
+  /* serverAddr.sin_family = AF_INET; */
+  /* serverAddr.sin_port = htons(4242); */
+  /* serverAddr.sin_addr.s_addr = inet_addr(host); */
+  /* /\* Set all bits of the padding field to 0 *\/ */
+  /* memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);   */
 
   fprintf(stderr, "Connecting to host %s\n", host);
   
   /* Connect the socket to the server using the address struct ----*/
-  addr_size = sizeof serverAddr;
-  if (connect(clientSocket, (struct sockaddr *) &serverAddr, addr_size) != 0)
+  if (connect(clientSocket, res->ai_addr, res->ai_addrlen) != 0)
        return (errno);
 
   fprintf(stderr, "Connected!\n");
