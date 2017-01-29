@@ -18,6 +18,7 @@
 #endif
 #include <pthread.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #if !defined(_BULL_SOURCE) && !defined(__sgi) && !defined(_M_UNIX)
 #if !defined(SUNOS4) && !(defined(ULTRIX) && defined(__GNUC__))
@@ -202,10 +203,15 @@ char *argv[];
 
     // Creating the server socket
     int server_sockets_fd[2];
-    socketpair(AF_UNIX, SOCK_STREAM, 0, server_sockets_fd);
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, server_sockets_fd) < 0)
+         return(errno);
+    
     player1.server_socket = server_sockets_fd[0];
     player2.server_socket = server_sockets_fd[1];
 
+    fprintf(stderr,"Server socket of p1: %d and of p2: %d\n", player1.server_socket, player2.server_socket);
+    fprintf(stderr,"%d\n", sizeof (player));
+    
     pthread_t p1;
     int n1 = 1;
     pthread_create (&p1, NULL, per_thread_main, &n1);

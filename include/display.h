@@ -139,6 +139,24 @@
 #define senseself() (Unblind_telepat || Detect_monsters)
 #define canspotself() (canseeself() || senseself())
 
+/* Deal with the other player being polymorphed into a worm… */
+/* #define canseeother()                                                  \ */
+/*     ((mon->wormno ? worm_known(mon)                                       \ */
+/*                   : (cansee(mon->mx, mon->my) || see_with_infrared(mon))) \ */
+/*      && mon_visible(mon)) */
+
+/* #define mon_visible(mon)                                                \ */
+/*     (/\* The hero can see the monster IF the monster                     *\/ \ */
+/*      (!mon->minvis || See_invisible)  /\*     1. is not invisible        *\/ \ */
+/*      && !mon->mundetected             /\* AND 2. not an undetected hider *\/ \ */
+/*      && !(mon->mburied || u.uburied)) /\* AND 3. neither you nor it is buried *\/ */
+
+#define canseeother()                                                  \
+  (cansee(other_player->u.ux, other_player->u.uy) || see_with_infrared((&other_player->youmonst)) \
+    && mon_visible((&other_player->youmonst)))
+
+#define canspotother() (canseeother())
+
 /*
  * random_monster()
  * random_object()

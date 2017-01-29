@@ -131,7 +131,7 @@ char *argv[];
   int err = getaddrinfo(host, "4242", &hints, &res);
   if (err != 0) {
        fprintf(stderr, "Failed to resolve remote socket address (err=%d)\n", err);
-       exit(err);
+       return err;
   }
   
   /* Create the socket */
@@ -144,13 +144,13 @@ char *argv[];
   /* /\* Set all bits of the padding field to 0 *\/ */
   /* memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);   */
 
-  fprintf(stderr, "Connecting to host %s\n", host);
+  fprintf(stdout, "Connecting to host %s\n", host);
   
   /* Connect the socket to the server using the address struct ----*/
   if (connect(clientSocket, res->ai_addr, res->ai_addrlen) != 0)
-       return (errno);
+       return errno;
 
-  fprintf(stderr, "Connected!\n");
+  fprintf(stdout, "Connected!\n");
   tcp_set_sockfd(clientSocket);
 
   while (1) {
@@ -336,6 +336,10 @@ char *argv[];
             int result = nhgetch();
             if (result != -42)
               tcp_send_int(result);
+
+       } else if (!strcmp(buffer, "nhgetch_queue_length")) {
+            int result = nhgetch_queue_length();
+            tcp_send_int(result);
 
        } else if (!strcmp(buffer, "nh_poskey")) {
             /* Mice are not supported */

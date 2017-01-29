@@ -383,7 +383,6 @@ tcp_nhgetch()
           for (x = 0; x < COLNO; x++)
                for (y = 0; y < ROWNO; y++)
                     if (newsym_table[x][y]) {
-                         fprintf(stderr, "Doing newsym at %d %d\n", x, y);
                          newsym(x,y);
                          newsym_table[x][y] = 0;
                          fprintf(stderr, "Done newsym at %d %d\n", x, y);
@@ -401,6 +400,13 @@ tcp_nhgetch()
           fprintf(stderr, "Impossible, no input.\n");
           
      return result;
+}
+
+int
+tcp_nhgetch_queue_length()
+{
+     tcp_send_name_command("nhgetch_queue_length");
+     return tcp_recv_int();
 }
 
 /*
@@ -687,7 +693,7 @@ struct window_procs tcp_procs = {
 #ifdef POSITIONBAR
     tcp_update_positionbar,
 #endif
-    tcp_print_glyph, tcp_raw_print, tcp_raw_print_bold, tcp_nhgetch,
+    tcp_print_glyph, tcp_raw_print, tcp_raw_print_bold, tcp_nhgetch, tcp_nhgetch_queue_length,
     tcp_nh_poskey, tcp_nhbell, tcp_doprev_message, tcp_yn_function,
     tcp_getlin, tcp_get_ext_cmd, tcp_number_pad, tcp_delay_output,
 #ifdef CHANGE_COLOR /* the Mac uses a palette device */

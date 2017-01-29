@@ -9,7 +9,6 @@
 static void
 debug(const char *format, ...)
 {
-#if 1
      va_list args;
      va_start(args, format);
 
@@ -17,7 +16,6 @@ debug(const char *format, ...)
      vfprintf(stderr, format, args);
 
      va_end(args);
-#endif
 }
 
 /* The socket used implicitely by all functions here */
@@ -84,43 +82,53 @@ int *sock2;
 
 /* In order to check which variables have changed */
 
-/* static int old_iflags_window_inited; */
-/* static int old_iflags_prevmsg_window; */
-/* static int old_context_rndencode; */
-/* static int old_context_botlx; */
-/* static int old_context_botl; */
+static int old_ux = -1;
+static int old_uy = -1;
+static int old_ghost_x = -1;
+static int old_ghost_y = -1;
 
 typedef struct {
      const char* name;
      int *actual_var;
-} changed_vars;
+} int_vars;
+
+typedef struct {
+     const char* name;
+     xchar *actual_var;
+     xchar *old_var;
+} xchar_vars;
 
 /* The references are client-side */
-changed_vars common_vars[] = {
-     {"v:WIN_STATUS", &WIN_STATUS},
-     {"v:WIN_MESSAGE", &WIN_MESSAGE},
-     {"v:WIN_MAP", &WIN_MAP},
-     {"v:WIN_INVEN", &WIN_INVEN},
-     /* {"v:iflags_window_inited", (int*) &iflags.window_inited}, */
-     /* {"v:iflags_prevmsg_window", (int*) &iflags.prevmsg_window}, */
-     {"v:rndencode", &context.rndencode},
-     /* {"v:context_botlx", (int*) &context.botlx}, */
-     /* {"v:context_botl", (int*) &context.botl}, */
+int_vars common_int_vars[] = {
+     {"v:WIN_STATUS", &WIN_STATUS, 0},
+     {"v:WIN_MESSAGE", &WIN_MESSAGE, 0},
+     {"v:WIN_MAP", &WIN_MAP, 0},
+     {"v:WIN_INVEN", &WIN_INVEN, 0},
+     {"v:rndencode", &context.rndencode, 0},
      {"", NULL}};
 
-/* static void */
-/* tcp_send_changed_variables() */
-/* { */
-/*      changed_vars *var; */
-/*      for (var = common_vars; var->name[0]; var++) { */
-/*           if (*(var->actual_var) != *(var->old_var)) { */
-/*                debug(stderr,"Sending variable %s : %d (was %d)\n", var->name, *(var->actual_var), *(var->old_var)); */
-/*                tcp_send_string(var->name); */
-/*                tcp_send_int(*(var->actual_var)); */
-/*                *(var->old_var) = *(var->actual_var); */
-/*           } */
-/*      } */
-/* } */
+xchar_vars common_xchar_vars[] = {
+     {"v:u.ux", &u.ux, &old_ux},
+     {"v:u.uy", &u.uy, &old_uy},
+     {"v:u.ghost_x", &u.ghost_x, &old_ghost_x},
+     {"v:u.ghost_y", &u.ghost_y, &old_ghost_y},
+     {"", NULL}};
+
+void
+tcp_send_changed_variables()
+{
+     xchar_vars *var;
+     fprintf(stderr, "Sending changed variables\n");
+     for (var = common_xchar_vars; var->name[0]; var++) {
+          if (var->old_var && *(var->actual_var) != *(var->old_var)) {
+               fprintf(stderr, "Sending variable %s : %d (was %d)\n", var->name, *(var->actual_var), (var->old_var ? *(var->old_var) : "NULL"));
+               tcp_send_string(var->name);
+               tcp_send_xchar(*(var->actual_var));
+               if (var->old_var)
+                    *(var->old_var) = *(var->actual_var);
+          }
+     }
+}
 
 void
 tcp_send_WIN()
@@ -208,11 +216,19 @@ void
 tcp_recv_update_variable(toupdate)
 char *toupdate;
 {
-     changed_vars *var;
+     int_vars *ivar;
+     xchar_vars *cvar;
 
-     for (var = common_vars; var->name[0]; var++) {
-          if (!strcmp(toupdate, var->name)) {
-               *(var->actual_var) = tcp_recv_int();
+     for (ivar = common_int_vars; ivar->name[0]; ivar++) {
+          if (!strcmp(toupdate, ivar->name)) {
+               *(ivar->actual_var) = tcp_recv_int();
+               break;
+          }
+     }
+     
+     for (cvar = common_xchar_vars; cvar->name[0]; cvar++) {
+          if (!strcmp(toupdate, cvar->name)) {
+               *(cvar->actual_var) = tcp_recv_xchar();
                break;
           }
      }
@@ -263,16 +279,15 @@ int len;
           str += n;
           len -= n;
      }
-     if (n <= 0)
+     if (n < 0)
           fprintf(stderr, "Error sending bytes : %d.\n", errno);
-     return (n <= 0 ? -1 : 0);
+     return (n < 0 ? -1 : 0);
 }
 
 void
 tcp_send_name_command(str)
 const char *str;
 {
-     /* tcp_send_changed_variables(); */
      tcp_send_string(str);
 }
 

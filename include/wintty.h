@@ -199,6 +199,7 @@ E void FDECL(tty_print_glyph, (winid, XCHAR_P, XCHAR_P, int, int));
 E void FDECL(tty_raw_print, (const char *));
 E void FDECL(tty_raw_print_bold, (const char *));
 E int NDECL(tty_nhgetch);
+E int NDECL(tty_nhgetch_queue_length);
 E int FDECL(tty_nh_poskey, (int *, int *, int *));
 E void NDECL(tty_nhbell);
 E int NDECL(tty_doprev_message);

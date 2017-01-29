@@ -337,9 +337,9 @@ tgetch()
      }
      
      FD_ZERO(&set);
-     FD_SET(0, &set);
+     FD_SET(STDIN_FILENO, &set);
      FD_SET(sockfd, &set);
-     nfds = max(0, sockfd) + 1;
+     nfds = max(STDIN_FILENO, sockfd) + 1;
 
      if (select(nfds, &set, NULL, NULL, NULL) == -1) {
           fprintf(stderr, "Error %i\n", errno);
@@ -348,9 +348,45 @@ tgetch()
      if (FD_ISSET(sockfd, &set)) {
           /* We don’t do anything here, we leave it to the main loop */
           return -42;
-     } else if (FD_ISSET(0, &set)) {
+     } else if (FD_ISSET(STDIN_FILENO, &set)) {
           return getchar();
      }
+}
+
+int
+tty_nhgetch_queue_length()
+{
+     return dualnh_queue_length();
+     /* fd_set set; */
+     /* int nfds; */
+     /* int result; */
+     /* char queue[1000]; */
+     /* int i; */
+     /* int sockfd = tcp_get_sockfd(); */
+
+     /* if (!can_use_queue) */
+     /*      return 1; */
+     
+     /* // We use the dualnh queue */
+     /* if (!dualnh_is_empty()) { */
+     /*      return 0; */
+     /* } */
+     
+     /* /\* FD_ZERO(&set); *\/ */
+     /* /\* FD_SET(STDIN_FILENO, &set); *\/ */
+     /* /\* FD_SET(sockfd, &set); *\/ */
+     /* /\* nfds = max(STDIN_FILENO, sockfd) + 1; *\/ */
+
+     /* /\* if (select(nfds, &set, NULL, NULL, NULL) == -1) { *\/ */
+     /* /\*      fprintf(stderr, "Error %i\n", errno); *\/ */
+     /* /\* } *\/ */
+
+     /* /\* if (FD_ISSET(sockfd, &set)) { *\/ */
+     /* /\*      /\\* We don’t do anything here, we leave it to the main loop *\\/ *\/ */
+     /* /\*      return -42; *\/ */
+     /* /\* } else if (FD_ISSET(STDINFILE, &set)) { *\/ */
+     /* /\*      return getchar(); *\/ */
+     /* /\* } *\/ */
 }
 
 #endif /* TTY_GRAPHICS */

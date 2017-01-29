@@ -746,8 +746,16 @@ register int x, y;
             } else
                 /* we can see what is there */
                 _map_location(x, y, 1);
+          } else if (x == other_player->u.ux && y == other_player->u.uy) {
+             if (canspotother()) {
+                  _map_location(x, y, 0);
+                  display_monster(x, y, &other_player->youmonst, 1, 0);  // TODO
+             } else
+                  _map_location(x, y, 1);
         } else {
             mon = m_at(x, y);
+            /* mon = (x == other_player->u.ux && y == other_player->u.uy) */
+            /*      ? &other_player->youmonst : (m_at(x, y)); */
             worm_tail = is_worm_tail(mon);
             see_it =
                 mon && (worm_tail ? (!mon->minvis || See_invisible)

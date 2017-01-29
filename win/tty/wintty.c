@@ -77,7 +77,7 @@ struct window_procs tty_procs = {
 #ifdef POSITIONBAR
     tty_update_positionbar,
 #endif
-    tty_print_glyph, tty_raw_print, tty_raw_print_bold, tty_nhgetch,
+    tty_print_glyph, tty_raw_print, tty_raw_print_bold, tty_nhgetch, tty_nhgetch_queue_length,
     tty_nh_poskey, tty_nhbell, tty_doprev_message, tty_yn_function,
     tty_getlin, tty_get_ext_cmd, tty_number_pad, tty_delay_output,
 #ifdef CHANGE_COLOR /* the Mac uses a palette device */

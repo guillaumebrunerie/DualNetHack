@@ -385,6 +385,8 @@ struct you {
     struct skills weapon_skills[P_NUM_SKILLS];
     boolean twoweap;         /* KMH -- Using two-weapon combat */
 
+    xchar ghost_x, ghost_y; /* DualNetHack */
+    boolean mv_queue;       /* true if the queue only contains movement commands */
 }; /* end of `struct you' */
 
 #define Upolyd (u.umonnum != u.umonster)

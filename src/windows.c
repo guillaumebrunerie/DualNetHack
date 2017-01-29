@@ -439,6 +439,7 @@ boolean is_restoring;
  */
 
 static int NDECL(hup_nhgetch);
+static int NDECL(hup_nhgetch_queue_length);
 static char FDECL(hup_yn_function, (const char *, const char *, CHAR_P));
 static int FDECL(hup_nh_poskey, (int *, int *, int *));
 static void FDECL(hup_getlin, (const char *, char *));
@@ -500,7 +501,8 @@ static struct window_procs hup_procs = {
     hup_print_glyph,
     hup_void_fdecl_constchar_p,                       /* raw_print */
     hup_void_fdecl_constchar_p,                       /* raw_print_bold */
-    hup_nhgetch, hup_nh_poskey, hup_void_ndecl,       /* nhbell  */
+    hup_nhgetch, hup_nhgetch_queue_length,
+    hup_nh_poskey, hup_void_ndecl,                    /* nhbell  */
     hup_int_ndecl,                                    /* doprev_message */
     hup_yn_function, hup_getlin, hup_int_ndecl,       /* get_ext_cmd */
     hup_void_fdecl_int,                               /* number_pad */
@@ -578,6 +580,12 @@ static int
 hup_nhgetch(VOID_ARGS)
 {
     return '\033'; /* ESC */
+}
+
+static int
+hup_nhgetch_queue_length(VOID_ARGS)
+{
+    return 1;
 }
 
 /*ARGSUSED*/

@@ -219,6 +219,11 @@ unsigned *ospecial;
                 && flags.showrace && !Upolyd)
                 color = HI_DOMESTIC;
 #endif
+            /* special case for DualNetHack’s ghost */
+            fprintf(stderr, "mapglyph %d %d %d %d %d %d\n", x, y, u.ux, u.uy, u.ghost_x, u.ghost_y);
+            if (x == u.ghost_x && y == u.ghost_y
+                && (u.ux != u.ghost_x || u.uy != u.ghost_y))
+                color = CLR_BLACK;
         }
     }
 

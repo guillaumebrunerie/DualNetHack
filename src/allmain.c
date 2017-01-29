@@ -443,6 +443,9 @@ boolean resuming;
             bot();
             curs_on_u();
         }
+        u.ghost_x = u.ux;
+        u.ghost_y = u.uy;
+        u.mv_queue = TRUE;
 
         if (you_player->finished_turn) {
              fprintf(stderr, "Finished turn %d (%d)\n", playerid, you_player->server_socket);
@@ -452,58 +455,49 @@ boolean resuming;
              // At this point, the current thread still holds the lock, so the other one can’t wake up just
              // yet. But then we will go in the while just after and release the lock in the [queue_next_char].
         }
+        int length = 0;
         while (you_player != current_player) {
-             curs(WIN_MAP, 1, ROWNO-1);
-             putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
-             curs_on_u();
-             // curs(WIN_MAP, you_player->u.ux, you_player->u.uy);
+             int cmd;
+
+             if (length == 0)
+                  length = nhgetch_queue_length();
+             fprintf(stderr, "Queue length: %d\n", length);
+
+             if (length == 0) {
+                  tcp_send_changed_variables();
+                  tmp_at(DISP_ALWAYS, hero_glyph);
+                  if (u.ux != u.ghost_x || u.uy != u.ghost_y)
+                       tmp_at(u.ghost_x, u.ghost_y);
+
+                  curs(WIN_MAP, 1, ROWNO-1);
+                  putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
+                  curs_on_u();
+             }
 
              fprintf(stderr, "Queueing (player %i)…\n", playerid);
              // This pushes all chars to a queue, which should be:
              // * displayed immediately on change
              // * used subsequently by [tgetchar] in the client
-             int cmd;
              cmd = nhgetch();
-             if (cmd == 27) /* ESC */
-                  dualnh_zero_queue();
-             else if (cmd == 127) /* DEL */
-                  dualnh_pop_from_end();
-             else if (cmd)
-                  dualnh_push(cmd);
+
+             if (length == 0)
+                  tmp_at(DISP_END, 0);
+             else
+                  length--;
+             /* newsym(u.ghost_x, u.ghost_y); */
+
+             dualnh_process_and_queue(cmd);
+
              fprintf(stderr, "New queue (player %i) : %s\n", playerid, dualnh_queue_str());
-             /* } else { */
-             /*      /\* We have been interrupted. It means that either it’s now our turn, or that */
-             /*       * we have to do some commands. The list of commands to do has already been */
-             /*       * forwarded to the client by [nhgetch]  *\/ */
-             /*      /\* if (you_player == current_player) *\/ */
-             /*      /\*      dualnh_switch_to_myself(); *\/ */
-             /* } */
         }
+
+        tcp_send_changed_variables();
+
         curs(WIN_MAP, 1, ROWNO-1);
         putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
         curs(WIN_MAP, 33, ROWNO-1);
         putstr(WIN_MAP, ATR_INVERSE, "It's your turn");
         curs(WIN_MAP, you_player->u.ux, you_player->u.uy);
-
-        /* /\* Switching players, if needed *\/ */
-        /* pthread_mutex_lock(&mutex); */
-        /* fprintf(stderr, "Starting the game 3.5 ! %i %s %s %s %i %i %i %i\n", playerid, player1.urole.name.m, player2.urole.name.m, urole.name.m, you_player, current_player, &player1, &player2); */
-        /* if (initial_pass) { */
-        /*      dualnh_p1_wait(); */
-        /*      initial_pass = 0; */
-        /* } */
-        /* if (you_player->finished_turn) { */
-        /*      you_player->finished_turn = 0; */
-        /*      current_player = other_player; */
-        /*      pthread_cond_signal(&cond); */
-        /* } */
-        /* while (you_player != current_player) { */
-        /*      pthread_cond_wait(&cond, &mutex); */
-        /*      if (you_player == current_player) */
-        /*           dualnh_switch_to_myself(); */
-        /* } */
-        /* pthread_mutex_unlock(&mutex); */
-        /* fprintf(stderr, "Starting the game 4 ! %i %s %s %s\n", playerid, player1.urole.name.m, player2.urole.name.m, urole.name.m); */
 
 
         context.move = 1;
