@@ -259,8 +259,8 @@ const char *materialnm[] = { "mysterious", "liquid",  "wax",        "organic",
                              "gemstone",   "stone" };
 
 /* Vision */
-NEARDATA boolean vision_full_recalc = 0;
-NEARDATA char **viz_array = 0; /* used in cansee() and couldsee() macros */
+NEARDATA __thread boolean vision_full_recalc = 0;
+NEARDATA __thread char **viz_array = 0; /* used in cansee() and couldsee() macros */
 
 /* Global windowing data, defined here for multi-window-system support */
 NEARDATA winid WIN_MESSAGE = WIN_ERR;

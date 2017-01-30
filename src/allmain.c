@@ -445,7 +445,7 @@ boolean resuming;
         }
         u.ghost_x = u.ux;
         u.ghost_y = u.uy;
-        u.mv_queue = TRUE;
+        u.dist_from_mv_queue = 0;
 
         if (you_player->finished_turn) {
              fprintf(stderr, "Finished turn %d (%d)\n", playerid, you_player->server_socket);
@@ -455,43 +455,37 @@ boolean resuming;
              // At this point, the current thread still holds the lock, so the other one can’t wake up just
              // yet. But then we will go in the while just after and release the lock in the [queue_next_char].
         }
-        int length = 0;
+        int cmdx = 0;
+        int cmd;
+        boolean hasghost;
+        tmp_at(DISP_ALWAYS, hero_glyph);
         while (you_player != current_player) {
-             int cmd;
 
-             if (length == 0)
-                  length = nhgetch_queue_length();
-             fprintf(stderr, "Queue length: %d\n", length);
-
-             if (length == 0) {
-                  tcp_send_changed_variables();
-                  tmp_at(DISP_ALWAYS, hero_glyph);
-                  if (u.ux != u.ghost_x || u.uy != u.ghost_y)
+             if (cmdx < 1024) {
+                  /* if (u.ux != u.ghost_x || u.uy != u.ghost_y) { */
                        tmp_at(u.ghost_x, u.ghost_y);
-
+                  /* } */
+                  
                   curs(WIN_MAP, 1, ROWNO-1);
                   putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
                   curs_on_u();
              }
 
              fprintf(stderr, "Queueing (player %i)…\n", playerid);
+             fprintf(stderr, "glyphs : %d, %d, %d\n", player1.locations[10][5].glyph, player2.locations[10][5].glyph, levl[10][5].glyph);
              // This pushes all chars to a queue, which should be:
              // * displayed immediately on change
              // * used subsequently by [tgetchar] in the client
-             cmd = nhgetch();
-
-             if (length == 0)
-                  tmp_at(DISP_END, 0);
-             else
-                  length--;
-             /* newsym(u.ghost_x, u.ghost_y); */
+             cmdx = nhgetch();
+             cmd = cmdx % 1024;
 
              dualnh_process_and_queue(cmd);
 
              fprintf(stderr, "New queue (player %i) : %s\n", playerid, dualnh_queue_str());
         }
-
-        tcp_send_changed_variables();
+        tmp_at(DISP_END, 0);
+        newsym(other_player->u.ux, other_player->u.uy);
+        newsym(u.ux, u.uy);
 
         curs(WIN_MAP, 1, ROWNO-1);
         putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());

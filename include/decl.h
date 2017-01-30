@@ -319,8 +319,8 @@ E const char *materialnm[];
 #define EXACT_NAME 0x0F
 
 /* Vision */
-E NEARDATA boolean vision_full_recalc; /* TRUE if need vision recalc */
-E NEARDATA char **viz_array;           /* could see/in sight row pointers */
+E __thread NEARDATA boolean vision_full_recalc; /* TRUE if need vision recalc */
+E __thread NEARDATA char **viz_array;           /* could see/in sight row pointers */
 
 /* Window system stuff */
 E NEARDATA winid WIN_MESSAGE;

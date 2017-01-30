@@ -325,6 +325,7 @@ xchar x, y;
 int glyph;
 int bkglyph UNUSED;
 {
+     tcp_send_changed_variables();
      tcp_send_name_command("print_glyph");
      tcp_send_int(window);
      tcp_send_xchar(x);
@@ -378,8 +379,10 @@ tcp_nhgetch()
      if (FD_ISSET(you_player->server_socket, &set)) {
           // We have been interrupted. First send the queue, then the commands.
           fprintf(stderr, "(%i) We have been interrupted\n", playerid);
+          char* q = dualnh_queue_tosend();
           tcp_send_string("QUEUE");
-          tcp_send_string(dualnh_queue_tosend());
+          tcp_send_string(q);
+          tcp_transfer_all(you_player->server_socket);
           for (x = 0; x < COLNO; x++)
                for (y = 0; y < ROWNO; y++)
                     if (newsym_table[x][y]) {
@@ -387,7 +390,6 @@ tcp_nhgetch()
                          newsym_table[x][y] = 0;
                          fprintf(stderr, "Done newsym at %d %d\n", x, y);
                     }
-          tcp_transfer_all(you_player->server_socket);
           /* tcp_recv_string_from(you_player->server_socket, queue); */
           /* tcp_send_string(queue); */
           dualnh_zero_queue();

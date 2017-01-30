@@ -82,16 +82,16 @@ char *viz_rmin, *viz_rmax; /* current vision cs bounds */
 
 /*------ local variables ------*/
 
-static char could_see[2][ROWNO][COLNO]; /* vision work space */
-static char *cs_rows0[ROWNO], *cs_rows1[ROWNO];
-static char cs_rmin0[ROWNO], cs_rmax0[ROWNO];
-static char cs_rmin1[ROWNO], cs_rmax1[ROWNO];
+static __thread char could_see[2][ROWNO][COLNO]; /* vision work space */
+static __thread char *cs_rows0[ROWNO], *cs_rows1[ROWNO];
+static __thread char cs_rmin0[ROWNO], cs_rmax0[ROWNO];
+static __thread char cs_rmin1[ROWNO], cs_rmax1[ROWNO];
 
-static char viz_clear[ROWNO][COLNO]; /* vision clear/blocked map */
-static char *viz_clear_rows[ROWNO];
+static __thread char viz_clear[ROWNO][COLNO]; /* vision clear/blocked map */
+static __thread char *viz_clear_rows[ROWNO];
 
-static char left_ptrs[ROWNO][COLNO]; /* LOS algorithm helpers */
-static char right_ptrs[ROWNO][COLNO];
+static __thread char left_ptrs[ROWNO][COLNO]; /* LOS algorithm helpers */
+static __thread char right_ptrs[ROWNO][COLNO];
 
 /* Forward declarations. */
 STATIC_DCL void FDECL(fill_point, (int, int));
@@ -1097,15 +1097,15 @@ int row, col;
 /*
  * Variables local to both Algorithms C and D.
  */
-static int start_row;
-static int start_col;
-static int step;
-static char **cs_rows;
-static char *cs_left;
-static char *cs_right;
+static __thread int start_row;
+static __thread int start_col;
+static __thread int step;
+static __thread char **cs_rows;
+static __thread char *cs_left;
+static __thread char *cs_right;
 
-static void FDECL((*vis_func), (int, int, genericptr_t));
-static genericptr_t varg;
+static __thread void FDECL((*vis_func), (int, int, genericptr_t));
+static __thread genericptr_t varg;
 
 /*
  * Both Algorithms C and D use the following macros.
@@ -1609,8 +1609,8 @@ cleardone:
 #include "vis_tab.h"
 
 /* 3D table pointers. */
-static close2d *close_dy[CLOSE_MAX_BC_DY];
-static far2d *far_dy[FAR_MAX_BC_DY];
+static __thread close2d *close_dy[CLOSE_MAX_BC_DY];
+static __thread far2d *far_dy[FAR_MAX_BC_DY];
 
 STATIC_DCL void FDECL(right_side,  (int, int, int, int, int,
                                     int, int, char *));

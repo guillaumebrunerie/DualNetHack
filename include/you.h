@@ -386,7 +386,7 @@ struct you {
     boolean twoweap;         /* KMH -- Using two-weapon combat */
 
     xchar ghost_x, ghost_y; /* DualNetHack */
-    boolean mv_queue;       /* true if the queue only contains movement commands */
+     int dist_from_mv_queue; /* numbers of commands queued after the mv queue */
 }; /* end of `struct you' */
 
 #define Upolyd (u.umonnum != u.umonster)

@@ -293,16 +293,17 @@ dualnh_zero_queue()
 {
      queue_start = 0;
      queue_end = 0;
-     u.mv_queue = TRUE;
+     u.dist_from_mv_queue = 0;
 }
 
-void
+int
 dualnh_pop_from_end()
 {
      // Empty
      if (queue_start == queue_end)
-          return;
+          return -1;
      queue_end = (queue_end - 1) % QUEUE_SIZE;
+     return (queue[queue_end]);
 }
 
 int
@@ -320,31 +321,42 @@ int cmd;
 {
      int lcmd = tolower(cmd);
      boolean movement = FALSE;
-     if (cmd == 27) /* ESC */
+     int dir = 0;
+     
+     if (cmd == 27) { /* ESC */
           dualnh_zero_queue();
-     else if (cmd == 127) /* DEL */
-          dualnh_pop_from_end();
-     else if (cmd) {
+          u.ghost_x = u.ux;
+          u.ghost_y = u.uy;
+          return;
+     } else if (cmd == 127) { /* DEL */
+          lcmd = dualnh_pop_from_end();
+          dir = -1;
+     } else if (cmd) {
           dualnh_push(cmd);
-          if (!u.mv_queue)
-               return;
-          if (lcmd == 'h' || lcmd == 'y' || lcmd == 'b') {
-               u.ghost_x--;
-               movement = TRUE;
-          }
-          if (lcmd == 'j' || lcmd == 'b' || lcmd == 'n') {
-               u.ghost_y++;
-               movement = TRUE;
-          }
-          if (lcmd == 'k' || lcmd == 'y' || lcmd == 'u') {
-               u.ghost_y--;
-               movement = TRUE;
-          }
-          if (lcmd == 'l' || lcmd == 'u' || lcmd == 'n') {
-               u.ghost_x++;
-               movement = TRUE;
-          }
-          if (!movement)
-               u.mv_queue = FALSE;
+          dir = 1;
      }
+
+     if (u.dist_from_mv_queue > 0) {
+          u.dist_from_mv_queue += dir;
+          return;
+     }
+     
+     if (lcmd == 'h' || lcmd == 'y' || lcmd == 'b') {
+          u.ghost_x -= dir;
+          movement = TRUE;
+     }
+     if (lcmd == 'j' || lcmd == 'b' || lcmd == 'n') {
+          u.ghost_y += dir;
+          movement = TRUE;
+     }
+     if (lcmd == 'k' || lcmd == 'y' || lcmd == 'u') {
+          u.ghost_y -= dir;
+          movement = TRUE;
+     }
+     if (lcmd == 'l' || lcmd == 'u' || lcmd == 'n') {
+          u.ghost_x += dir;
+          movement = TRUE;
+     }
+     if (dir == 1 && !movement)
+          u.dist_from_mv_queue = 1;
 }

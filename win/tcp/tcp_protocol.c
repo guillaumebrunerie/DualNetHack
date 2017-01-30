@@ -433,10 +433,14 @@ int len;
           buf += n;
           len -= n;
      }
-     if (n == 0)
+     if (n == 0) {
           fprintf(stderr, "EOF\n");
-     if (n < 0)
+          exit(42);
+     }
+     if (n < 0) {
           fprintf(stderr, "%i Error receiving bytes : %d, %d.\n", playerid, errno, sockfd);
+          exit(43);
+     }
 }
 
 int

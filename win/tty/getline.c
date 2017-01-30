@@ -332,8 +332,9 @@ tgetch()
      // We use the dualnh queue
      if (!dualnh_is_empty()) {
           result = dualnh_pop();
-          fprintf(stderr, "Using the queue : %c (%i)\n", result, result);
-          return result;
+          i = (dualnh_is_empty() ? 0 : 1024);
+          fprintf(stderr, "Using the queue : %c (%d), i=%d\n", result, result, i);
+          return (i + result);
      }
      
      FD_ZERO(&set);

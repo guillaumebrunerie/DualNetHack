@@ -676,6 +676,15 @@ xchar x, y;
                         is_worm_tail(mon));
 }
 
+
+/* /\* Applies (delayed) newsym() for the other player *\/ */
+/* void */
+/* newsym_other(x, y) */
+/* int x, y; */
+/* { */
+/*     newsym_table[x][y] = 1; */
+/* } */
+
 /*
  * newsym()
  *
@@ -691,7 +700,7 @@ register int x, y;
     register xchar worm_tail;
 
     newsym_table[x][y] = 1;
-
+    
     if (in_mklev)
         return;
 #ifdef HANGUPHANDLING
