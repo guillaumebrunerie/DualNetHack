@@ -6,7 +6,6 @@
 
 #include "hack.h"
 #include "wintcp.h"
-#include "dualnethack.h"
 
 #include <pthread.h>
 
@@ -439,22 +438,27 @@ boolean resuming;
             if (vision_full_recalc)
                 vision_recalc(0); /* vision! */
         }
+
         if (context.botl || context.botlx) {
             bot();
             curs_on_u();
         }
-        u.ghost_x = u.ux;
-        u.ghost_y = u.uy;
-        u.dist_from_mv_queue = 0;
 
         if (you_player->finished_turn) {
              fprintf(stderr, "Finished turn %d (%d)\n", playerid, you_player->server_socket);
              you_player->finished_turn = 0;
              current_player = other_player;
-             tcp_send_string_to(you_player->server_socket, "");
+             dualnh_zero_queue();
+        /*              u.ghost_x = u.ux; */
+        /* u.ghost_y = u.uy; */
+        /* u.dist_from_mv_queue = 0; */
              // At this point, the current thread still holds the lock, so the other one can’t wake up just
              // yet. But then we will go in the while just after and release the lock in the [queue_next_char].
         }
+        /* Ping the other player so that it can start playing if it’s their turn
+         * or at least update the display otherwise
+         */
+        tcp_send_string_to(you_player->server_socket, "");
         int cmdx = 0;
         int cmd;
         boolean hasghost;
@@ -479,7 +483,8 @@ boolean resuming;
              cmdx = nhgetch();
              cmd = cmdx % 1024;
 
-             dualnh_process_and_queue(cmd);
+             if (cmd)
+                  dualnh_process_and_queue(cmd);
 
              fprintf(stderr, "New queue (player %i) : %s\n", playerid, dualnh_queue_str());
         }

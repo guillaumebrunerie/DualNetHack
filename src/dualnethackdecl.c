@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include "hack.h"
-#include "dualnethack.h"
 
 player player1 = DUMMY;
 player player2 = DUMMY;
@@ -294,6 +293,8 @@ dualnh_zero_queue()
      queue_start = 0;
      queue_end = 0;
      u.dist_from_mv_queue = 0;
+     u.ghost_x = u.ux;
+     u.ghost_y = u.uy;
 }
 
 int
@@ -325,8 +326,6 @@ int cmd;
      
      if (cmd == 27) { /* ESC */
           dualnh_zero_queue();
-          u.ghost_x = u.ux;
-          u.ghost_y = u.uy;
           return;
      } else if (cmd == 127) { /* DEL */
           lcmd = dualnh_pop_from_end();

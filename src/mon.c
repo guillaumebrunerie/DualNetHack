@@ -697,6 +697,10 @@ movemon()
         if (DEADMONSTER(mtmp))
             continue;
 
+        /* Dualnethack: move only half the monsters */
+        if (mtmp->m_id % 2 == playerid % 2)
+            continue;
+        
         /* Find a monster that we have not treated yet. */
         if (mtmp->movement < NORMAL_SPEED)
             continue;

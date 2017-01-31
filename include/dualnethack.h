@@ -1,6 +1,6 @@
 #include <pthread.h>
 
-#include "hack.h"
+/* #include "hack.h" */
 
 typedef struct {
   int sockfd;  /* Socket */

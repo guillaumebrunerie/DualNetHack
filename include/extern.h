@@ -309,12 +309,6 @@ E void FDECL(bury_obj, (struct obj *));
 
 /* ### display.c ### */
 
-/* DualNetHack: has been moved from display.c in order to access it from outside */
-typedef struct {
-    xchar new; /* perhaps move this bit into the rm structure. */
-    int glyph;
-} gbuf_entry;
-
 E gbuf_entry gbuf[ROWNO][COLNO];
 E char gbuf_start[ROWNO];
 E char gbuf_stop[ROWNO];

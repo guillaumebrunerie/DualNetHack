@@ -6,7 +6,6 @@
 
 #include "hack.h"
 #include "dlb.h"
-#include "dualnethack.h"
 #include "wintcp.h"
 
 #include <ctype.h>

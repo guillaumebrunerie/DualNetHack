@@ -1,6 +1,5 @@
 #include "hack.h"
 #include "wintcp.h"
-#include "dualnethack.h"
 
 #include <arpa/inet.h>
 #include <errno.h>

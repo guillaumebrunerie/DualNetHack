@@ -4,7 +4,6 @@
 
 #include "hack.h"
 #include "wintcp.h"
-#include "dualnethack.h"
 #include <errno.h>
 
 #ifdef TTY_GRAPHICS

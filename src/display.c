@@ -117,7 +117,6 @@
  */
 #include "hack.h"
 #include "extern.h"
-#include "dualnethack.h"
 
 STATIC_DCL void FDECL(display_monster,
                       (XCHAR_P, XCHAR_P, struct monst *, int, XCHAR_P));

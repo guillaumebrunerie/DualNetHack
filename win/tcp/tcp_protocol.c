@@ -1,6 +1,5 @@
 #include "hack.h"
 #include "wintcp.h"
-#include "dualnethack.h"
 
 #include <arpa/inet.h>
 #include <stdarg.h>
@@ -82,10 +81,10 @@ int *sock2;
 
 /* In order to check which variables have changed */
 
-static int old_ux = -1;
-static int old_uy = -1;
-static int old_ghost_x = -1;
-static int old_ghost_y = -1;
+/* static int old_ux = -1; */
+/* static int old_uy = -1; */
+/* static int old_ghost_x = -1; */
+/* static int old_ghost_y = -1; */
 
 typedef struct {
      const char* name;
@@ -95,37 +94,58 @@ typedef struct {
 typedef struct {
      const char* name;
      xchar *actual_var;
-     xchar *old_var;
+     xchar old_var;
 } xchar_vars;
 
 /* The references are client-side */
 int_vars common_int_vars[] = {
-     {"v:WIN_STATUS", &WIN_STATUS, 0},
-     {"v:WIN_MESSAGE", &WIN_MESSAGE, 0},
-     {"v:WIN_MAP", &WIN_MAP, 0},
-     {"v:WIN_INVEN", &WIN_INVEN, 0},
-     {"v:rndencode", &context.rndencode, 0},
+     {"v:WIN_STATUS", &WIN_STATUS},
+     {"v:WIN_MESSAGE", &WIN_MESSAGE},
+     {"v:WIN_MAP", &WIN_MAP},
+     {"v:WIN_INVEN", &WIN_INVEN},
+     {"v:rndencode", &context.rndencode},
      {"", NULL}};
 
-xchar_vars common_xchar_vars[] = {
-     {"v:u.ux", &u.ux, &old_ux},
-     {"v:u.uy", &u.uy, &old_uy},
-     {"v:u.ghost_x", &u.ghost_x, &old_ghost_x},
-     {"v:u.ghost_y", &u.ghost_y, &old_ghost_y},
+__thread xchar_vars common_xchar_vars[] = {
+     {"v:u.ux", &u.ux, -1},
+     {"v:u.uy", &u.uy, -1},
+     {"v:u.ghost_x", &u.ghost_x, -1},
+     {"v:u.ghost_y", &u.ghost_y, -1},
      {"", NULL}};
+
+void
+tcp_reset_common_xchar_vars()
+{
+     common_xchar_vars[0].actual_var = &you_player->u.ux;
+     common_xchar_vars[1].actual_var = &you_player->u.uy;
+     common_xchar_vars[2].actual_var = &u.ghost_x;
+     common_xchar_vars[3].actual_var = &u.ghost_y;
+}
+
+void
+tcp_reset2_common_xchar_vars()
+{
+     common_xchar_vars[0].actual_var = &u.ux;
+     common_xchar_vars[1].actual_var = &u.uy;
+     common_xchar_vars[2].actual_var = &u.ghost_x;
+     common_xchar_vars[3].actual_var = &u.ghost_y;
+}
 
 void
 tcp_send_changed_variables()
 {
      xchar_vars *var;
+     /* tcp_reset_common_xchar_vars(); */
+
      fprintf(stderr, "Sending changed variables\n");
      for (var = common_xchar_vars; var->name[0]; var++) {
-          if (var->old_var && *(var->actual_var) != *(var->old_var)) {
-               fprintf(stderr, "Sending variable %s : %d (was %d)\n", var->name, *(var->actual_var), (var->old_var ? *(var->old_var) : "NULL"));
+          if (*(var->actual_var) != (var->old_var)) {
+               fprintf(stderr, "Sending variable %s : %d (was %d)\n", var->name, *(var->actual_var), var->old_var); // ? *(var->old_var) : "NULL"));
                tcp_send_string(var->name);
                tcp_send_xchar(*(var->actual_var));
-               if (var->old_var)
-                    *(var->old_var) = *(var->actual_var);
+               var->old_var = *(var->actual_var);
+               /* if (var->old_var) */
+               /*      *(var->old_var) = *(var->actual_var); */
           }
      }
 }
@@ -218,6 +238,7 @@ char *toupdate;
 {
      int_vars *ivar;
      xchar_vars *cvar;
+     /* tcp_reset2_common_xchar_vars(); */
 
      for (ivar = common_int_vars; ivar->name[0]; ivar++) {
           if (!strcmp(toupdate, ivar->name)) {

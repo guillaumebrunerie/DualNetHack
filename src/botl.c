@@ -3,7 +3,6 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "dualnethack.h"
 #include <limits.h>
 
 extern const char *hu_stat[]; /* defined in eat.c */

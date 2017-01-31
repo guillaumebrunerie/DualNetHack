@@ -204,7 +204,14 @@ enum hmon_atkmode_types {
 #define NDECL(f) f()
 #endif
 
+/* DualNetHack: has been moved from display.c in order to access it from outside */
+typedef struct gbuf_entry {
+    xchar new; /* perhaps move this bit into the rm structure. */
+    int glyph;
+} gbuf_entry;
+
 #include "extern.h"
+#include "dualnethack.h"
 #include "winprocs.h"
 #include "sys.h"
 
