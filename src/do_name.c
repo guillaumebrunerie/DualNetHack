@@ -167,7 +167,7 @@ const char *goal;
             Sprintf(sbuf,
                     "  '%s' describe current spot,%s move to another spot;",
                     visctrl(Cmd.spkeys[NHKF_GETPOS_PICK]),
-                    flags.help ? " prompt if 'more info'," : "");
+                    uflags.help ? " prompt if 'more info'," : "");
             putstr(tmpwin, 0, sbuf);
             Sprintf(sbuf,
                     "  '%s' describe current spot, move to another spot;",
@@ -210,9 +210,9 @@ const void *b;
 
 #define IS_UNEXPLORED_LOC(x,y) \
     (isok((x), (y))                                     \
-     && glyph_is_cmap(levl[(x)][(y)].glyph)             \
-     && glyph_to_cmap(levl[(x)][(y)].glyph) == S_stone  \
-     && !levl[(x)][(y)].seenv)
+     && glyph_is_cmap(levl_s[(x)][(y)].glyph)             \
+     && glyph_to_cmap(levl_s[(x)][(y)].glyph) == S_stone  \
+     && !levl_s[(x)][(y)].seenv)
 
 STATIC_OVL boolean
 gather_locs_interesting(x,y, gloc)
@@ -528,7 +528,7 @@ const char *goal;
 
     if (!goal)
         goal = "desired location";
-    if (flags.verbose) {
+    if (uflags.verbose) {
         pline("(For instructions type a '%s')",
               visctrl(Cmd.spkeys[NHKF_GETPOS_HELP]));
         msg_given = TRUE;
@@ -638,7 +638,7 @@ const char *goal;
         } else if (c == Cmd.spkeys[NHKF_GETPOS_AUTODESC]) {
             iflags.autodescribe = !iflags.autodescribe;
             pline("Automatic description %sis %s.",
-                  flags.verbose ? "of features under cursor " : "",
+                  uflags.verbose ? "of features under cursor " : "",
                   iflags.autodescribe ? "on" : "off");
             if (!iflags.autodescribe)
                 show_goal_msg = TRUE;
@@ -737,14 +737,14 @@ const char *goal;
                                     /* !terrainmode: don't move to remembered
                                        trap or object if not currently shown */
                                     && !iflags.terrainmode) {
-                                    k = levl[tx][ty].glyph;
+                                    k = levl_s[tx][ty].glyph;
                                     if (glyph_is_cmap(k)
                                         && matching[glyph_to_cmap(k)])
                                         goto foundc;
                                 }
                                 /* last, try actual terrain here (shouldn't
                                    we be using lastseentyp[][] instead?) */
-                                if (levl[tx][ty].seenv) {
+                                if (levl_s[tx][ty].seenv) {
                                     k = back_to_glyph(tx, ty);
                                     if (glyph_is_cmap(k)
                                         && matching[glyph_to_cmap(k)])
@@ -1151,7 +1151,7 @@ docallcmd()
     menu_item *pick_list = 0;
     char ch, allowall[2];
     /* if player wants a,b,c instead of i,o when looting, do that here too */
-    boolean abc = flags.lootabc;
+    boolean abc = uflags.lootabc;
 
     win = create_nhwindow(NHW_MENU);
     start_menu(win);
@@ -1321,11 +1321,11 @@ namefloorobj()
         char tmpbuf[BUFSZ];
 
         /* straight role name */
-        unames[0] = ((Upolyd ? u.mfemale : flags.female) && urole.name.f)
+        unames[0] = ((Upolyd ? u.mfemale : uflags.female) && urole.name.f)
                      ? urole.name.f
                      : urole.name.m;
         /* random rank title for hero's role */
-        unames[1] = rank_of(rnd(30), Role_switch, flags.female);
+        unames[1] = rank_of(rnd(30), Role_switch, uflags.female);
         /* random fake monster */
         unames[2] = bogusmon(tmpbuf, (char *) 0);
         /* increased chance for fake monster */

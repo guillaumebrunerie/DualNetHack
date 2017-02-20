@@ -299,7 +299,7 @@ can_make_bones()
 {
     register struct trap *ttmp;
 
-    if (!flags.bones)
+    if (!uflags.bones)
         return FALSE;
     if (ledger_no(&u.uz) <= 0 || ledger_no(&u.uz) > maxledgerno())
         return FALSE;
@@ -439,7 +439,7 @@ make_bones:
     if (mtmp) {
         mtmp->m_lev = (u.ulevel ? u.ulevel : 1);
         mtmp->mhp = mtmp->mhpmax = u.uhpmax;
-        mtmp->female = flags.female;
+        mtmp->female = uflags.female;
         mtmp->msleeping = 1;
     }
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
@@ -462,9 +462,9 @@ make_bones:
     /* Clear all memory from the level. */
     for (x = 1; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++) {
-            levl[x][y].seenv = 0;
-            levl[x][y].waslit = 0;
-            levl[x][y].glyph = cmap_to_glyph(S_stone);
+            levl_s[x][y].seenv = 0;
+            levl_s[x][y].waslit = 0;
+            levl_s[x][y].glyph = cmap_to_glyph(S_stone);
             lastseentyp[x][y] = 0;
         }
 
@@ -477,7 +477,7 @@ make_bones:
        gender and alignment reflect final values rather than what the
        character started out as, same as topten and logfile entries */
     Sprintf(newbones->who, "%s-%.3s-%.3s-%.3s-%.3s", plname, urole.filecode,
-            urace.filecode, genders[flags.female].filecode,
+            urace.filecode, genders[uflags.female].filecode,
             aligns[1 - u.ualign.type].filecode);
     formatkiller(newbones->how, sizeof newbones->how, how, TRUE);
     Strcpy(newbones->when, yyyymmddhhmmss(when));
@@ -558,7 +558,7 @@ getbones()
     if (discover) /* save bones files for real games */
         return 0;
 
-    if (!flags.bones)
+    if (!uflags.bones)
         return 0;
     /* wizard check added by GAN 02/05/87 */
     if (rn2(3) /* only once in three times do we find bones */

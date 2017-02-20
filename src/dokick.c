@@ -262,7 +262,7 @@ doit:
         } else {
             maybe_mnexto(mon);
             if (mon->mx != x || mon->my != y) {
-                if (glyph_is_invisible(levl[x][y].glyph)) {
+                if (glyph_is_invisible(levl_s[x][y].glyph)) {
                     unmap_object(x, y);
                     newsym(x, y);
                 }
@@ -946,7 +946,7 @@ dokick()
         }
         return 1;
     }
-    if (glyph_is_invisible(levl[x][y].glyph)) {
+    if (glyph_is_invisible(levl_s[x][y].glyph)) {
         unmap_object(x, y);
         newsym(x, y);
     }
@@ -1261,7 +1261,7 @@ dokick()
         boolean shopdoor = *in_rooms(x, y, SHOPBASE) ? TRUE : FALSE;
         /* break the door */
         if (maploc->doormask & D_TRAPPED) {
-            if (flags.verbose)
+            if (uflags.verbose)
                 You("kick the door.");
             exercise(A_STR, FALSE);
             maploc->doormask = D_NODOOR;

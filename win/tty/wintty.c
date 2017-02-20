@@ -48,7 +48,7 @@ extern short glyph2tile[];
 extern char mapped_menu_cmds[]; /* from options.c */
 
 /* this is only needed until tty_status_* routines are written */
-extern NEARDATA winid WIN_STATUS;
+/* extern NEARDATA winid WIN_STATUS; */
 
 /* Interface definition, for windows.c */
 struct window_procs tty_procs = {
@@ -371,10 +371,10 @@ char **argv UNUSED;
 }
 
 /* try to reduce clutter in the code below... */
-#define ROLE flags.initrole
-#define RACE flags.initrace
-#define GEND flags.initgend
-#define ALGN flags.initalign
+#define ROLE uflags.initrole
+#define RACE uflags.initrace
+#define GEND uflags.initgend
+#define ALGN uflags.initalign
 
 void
 tty_player_selection()
@@ -398,7 +398,7 @@ tty_player_selection()
     /* Used for '-@';
      * choose randomly without asking for all unspecified facets.
      */
-    if (flags.randomall && picksomething) {
+    if (uflags.randomall && picksomething) {
         if (ROLE == ROLE_NONE)
             ROLE = ROLE_RANDOM;
         if (RACE == ROLE_NONE)
@@ -830,7 +830,7 @@ makepicks:
      *           q - quit
      *           (end)
      */
-    getconfirmation = (picksomething && pick4u != 'a' && !flags.randomall);
+    getconfirmation = (picksomething && pick4u != 'a' && !uflags.randomall);
     while (getconfirmation) {
         tty_clear_nhwindow(BASE_WINDOW);
         role_selection_prolog(ROLE_NONE, BASE_WINDOW);
@@ -1242,12 +1242,12 @@ STATIC_OVL void
 getret()
 {
     xputs("\n");
-    if (flags.standout)
+    if (uflags.standout)
         standoutbeg();
     xputs("Hit ");
     xputs(iflags.cbreak ? "space" : "return");
     xputs(" to continue: ");
-    if (flags.standout)
+    if (uflags.standout)
         standoutend();
     xwaitforspace(" ");
 }
@@ -1590,11 +1590,11 @@ const char *s; /* valid responses */
 
     tty_curs(BASE_WINDOW, (int) ttyDisplay->curx + offset,
              (int) ttyDisplay->cury);
-    if (flags.standout)
+    if (uflags.standout)
         standoutbeg();
     xputs(prompt);
     ttyDisplay->curx += strlen(prompt);
-    if (flags.standout)
+    if (uflags.standout)
         standoutend();
 
     xwaitforspace(s);

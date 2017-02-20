@@ -17,87 +17,90 @@ static const char
 
 static const struct innate {
     schar ulevel;
+    int ability_num;
     long *ability;
     const char *gainstr, *losestr;
-} arc_abil[] = { { 1, &(HStealth), "", "" },
-                 { 1, &(HFast), "", "" },
-                 { 10, &(HSearching), "perceptive", "" },
-                 { 0, 0, 0, 0 } },
+} arc_abil[] = { { 1, STEALTH, 0, "", "" },
+                 { 1, FAST, 0, "", "" },
+                 { 10, SEARCHING, 0, "perceptive", "" },
+                 { 0, 0, 0, 0, 0 } },
 
-  bar_abil[] = { { 1, &(HPoison_resistance), "", "" },
-                 { 7, &(HFast), "quick", "slow" },
-                 { 15, &(HStealth), "stealthy", "" },
-                 { 0, 0, 0, 0 } },
+  bar_abil[] = { { 1, POISON_RES, 0, "", "" },
+                 { 7, FAST, 0, "quick", "slow" },
+                 { 15, STEALTH, 0, "stealthy", "" },
+                 { 0, 0, 0, 0, 0} },
 
-  cav_abil[] = { { 7, &(HFast), "quick", "slow" },
-                 { 15, &(HWarning), "sensitive", "" },
-                 { 0, 0, 0, 0 } },
+  cav_abil[] = { { 7, FAST, 0, "quick", "slow" },
+                 { 15, WARNING, 0, "sensitive", "" },
+                 { 0, 0, 0, 0, 0 } },
 
-  hea_abil[] = { { 1, &(HPoison_resistance), "", "" },
-                 { 15, &(HWarning), "sensitive", "" },
-                 { 0, 0, 0, 0 } },
+  hea_abil[] = { { 1, POISON_RES, 0, "", "" },
+                 { 15, WARNING, 0, "sensitive", "" },
+                 { 0, 0, 0, 0, 0 } },
 
-  kni_abil[] = { { 7, &(HFast), "quick", "slow" }, { 0, 0, 0, 0 } },
+  kni_abil[] = { { 7, FAST, 0, "quick", "slow" }, { 0, 0, 0, 0, 0 } },
 
-  mon_abil[] = { { 1, &(HFast), "", "" },
-                 { 1, &(HSleep_resistance), "", "" },
-                 { 1, &(HSee_invisible), "", "" },
-                 { 3, &(HPoison_resistance), "healthy", "" },
-                 { 5, &(HStealth), "stealthy", "" },
-                 { 7, &(HWarning), "sensitive", "" },
-                 { 9, &(HSearching), "perceptive", "unaware" },
-                 { 11, &(HFire_resistance), "cool", "warmer" },
-                 { 13, &(HCold_resistance), "warm", "cooler" },
-                 { 15, &(HShock_resistance), "insulated", "conductive" },
-                 { 17, &(HTeleport_control), "controlled", "uncontrolled" },
-                 { 0, 0, 0, 0 } },
+  mon_abil[] = { { 1, FAST, 0, "", "" },
+                 { 1, SLEEP_RES, 0, "", "" },
+                 { 1, SEE_INVIS, 0, "", "" },
+                 { 3, POISON_RES, 0, "healthy", "" },
+                 { 5, STEALTH, 0, "stealthy", "" },
+                 { 7, WARNING, 0, "sensitive", "" },
+                 { 9, SEARCHING, 0, "perceptive", "unaware" },
+                 { 11, FIRE_RES, 0, "cool", "warmer" },
+                 { 13, COLD_RES, 0, "warm", "cooler" },
+                 { 15, SHOCK_RES, 0, "insulated", "conductive" },
+                 { 17, TELEPORT_CONTROL, 0, "controlled", "uncontrolled" },
+                 { 0, 0, 0, 0, 0 } },
 
-  pri_abil[] = { { 15, &(HWarning), "sensitive", "" },
-                 { 20, &(HFire_resistance), "cool", "warmer" },
-                 { 0, 0, 0, 0 } },
+  pri_abil[] = { { 15, WARNING, 0, "sensitive", "" },
+                 { 20, FIRE_RES, 0, "cool", "warmer" },
+                 { 0, 0, 0, 0, 0 } },
 
-  ran_abil[] = { { 1, &(HSearching), "", "" },
-                 { 7, &(HStealth), "stealthy", "" },
-                 { 15, &(HSee_invisible), "", "" },
-                 { 0, 0, 0, 0 } },
+  ran_abil[] = { { 1, SEARCHING, 0, "", "" },
+                 { 7, STEALTH, 0, "stealthy", "" },
+                 { 15, SEE_INVIS, 0, "", "" },
+                 { 0, 0, 0, 0, 0 } },
 
-  rog_abil[] = { { 1, &(HStealth), "", "" },
-                 { 10, &(HSearching), "perceptive", "" },
-                 { 0, 0, 0, 0 } },
+  rog_abil[] = { { 1, STEALTH, 0, "", "" },
+                 { 10, SEARCHING, 0, "perceptive", "" },
+                 { 0, 0, 0, 0, 0 } },
 
-  sam_abil[] = { { 1, &(HFast), "", "" },
-                 { 15, &(HStealth), "stealthy", "" },
-                 { 0, 0, 0, 0 } },
+  sam_abil[] = { { 1, FAST, 0, "", "" },
+                 { 15, STEALTH, 0, "stealthy", "" },
+                 { 0, 0, 0, 0, 0 } },
 
-  tou_abil[] = { { 10, &(HSearching), "perceptive", "" },
-                 { 20, &(HPoison_resistance), "hardy", "" },
-                 { 0, 0, 0, 0 } },
+  tou_abil[] = { { 10, SEARCHING, 0, "perceptive", "" },
+                 { 20, POISON_RES, 0, "hardy", "" },
+                 { 0, 0, 0, 0, 0 } },
 
-  val_abil[] = { { 1, &(HCold_resistance), "", "" },
-                 { 1, &(HStealth), "", "" },
-                 { 7, &(HFast), "quick", "slow" },
-                 { 0, 0, 0, 0 } },
+  val_abil[] = { { 1, COLD_RES, 0, "", "" },
+                 { 1, STEALTH, 0, "", "" },
+                 { 7, FAST, 0, "quick", "slow" },
+                 { 0, 0, 0, 0, 0 } },
 
-  wiz_abil[] = { { 15, &(HWarning), "sensitive", "" },
-                 { 17, &(HTeleport_control), "controlled", "uncontrolled" },
-                 { 0, 0, 0, 0 } },
+  wiz_abil[] = { { 15, WARNING, 0, "sensitive", "" },
+                 { 17, TELEPORT_CONTROL, 0, "controlled", "uncontrolled" },
+                 { 0, 0, 0, 0, 0 } },
 
   /* Intrinsics conferred by race */
-  dwa_abil[] = { { 1, &HInfravision, "", "" },
-                 { 0, 0, 0, 0 } },
+  dwa_abil[] = { { 1, INFRAVISION, 0, "", "" },
+                 { 0, 0, 0, 0, 0 } },
 
-  elf_abil[] = { { 1, &HInfravision, "", "" },
-                 { 4, &HSleep_resistance, "awake", "tired" },
-                 { 0, 0, 0, 0 } },
+  elf_abil[] = { { 1, INFRAVISION, 0, "", "" },
+                 { 4, SLEEP_RES, 0, "awake", "tired" },
+                 { 0, 0, 0, 0, 0 } },
 
-  gno_abil[] = { { 1, &HInfravision, "", "" },
-                 { 0, 0, 0, 0 } },
+  gno_abil[] = { { 1, INFRAVISION, 0, "", "" },
+                 { 0, 0, 0, 0, 0 } },
 
-  orc_abil[] = { { 1, &HInfravision, "", "" },
-                 { 1, &HPoison_resistance, "", "" },
-                 { 0, 0, 0, 0 } },
+  orc_abil[] = { { 1, INFRAVISION, 0, "", "" },
+                 { 1, POISON_RES, 0, "", "" },
+                 { 0, 0, 0, 0, 0 } },
 
-  hum_abil[] = { { 0, 0, 0, 0 } };
+  hum_abil[] = { { 0, 0, 0, 0, 0 } };
+
+struct innate curr_abil = DUMMY;
 
 STATIC_DCL void NDECL(exerper);
 STATIC_DCL void FDECL(postadjabil, (long *));
@@ -149,7 +152,7 @@ int msgflg; /* positive => no message, zero => message, and */
         abonflg = (ABON(ndx) > 0);
     }
     if (ACURR(ndx) == old_acurr) {
-        if (msgflg == 0 && flags.verbose)
+        if (msgflg == 0 && uflags.verbose)
             pline("You're %s as %s as you can get.",
                   abonflg ? "currently" : "already", attrstr);
         return FALSE;
@@ -671,7 +674,12 @@ int r;
     };
     int i;
     for (i = 0; roleabils[i].abil && roleabils[i].role != r; i++);
-    return roleabils[i].abil;
+
+    curr_abil.ulevel = roleabils[i].abil->ulevel;
+    curr_abil.ability = &u.uprops[roleabils[i].abil->ability_num].intrinsic;
+    curr_abil.gainstr = roleabils[i].abil->gainstr;
+    curr_abil.losestr = roleabils[i].abil->losestr;
+    return (const struct innate *) &curr_abil;
 }
 
 STATIC_OVL const struct innate *
@@ -941,7 +949,7 @@ newhp()
             hp += rnd(urace.hpadv.inrnd);
         if (moves <= 1L) { /* initial hero; skip for polyself to new man */
             /* Initialize alignment stuff */
-            u.ualign.type = aligns[flags.initalign].value;
+            u.ualign.type = aligns[uflags.initalign].value;
             u.ualign.record = urole.initrecord;
         }
         /* no Con adjustment for initial hit points */

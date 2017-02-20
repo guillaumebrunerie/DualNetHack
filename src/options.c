@@ -16,6 +16,7 @@ NEARDATA struct instance_flags iflags; /* provide linkage */
 #include "hack.h"
 #include "tcap.h"
 #include <ctype.h>
+#include <stddef.h>
 #endif
 
 #define BACKWARD_COMPAT
@@ -45,17 +46,22 @@ NEARDATA struct instance_flags iflags; /* provide linkage */
  *  option (e.g. time and timed_delay) the shorter one must come first.
  */
 
+#define offp(m) offsetof(player, m)
+#define setoffp(off, val)  *((boolean *)((char *)you_player + off)) = val
+#define getoffp(off)  *((boolean *)((char *)you_player + off))
+
 static struct Bool_Opt {
     const char *name;
-    boolean *addr, initvalue;
+    size_t addr;
+    boolean initvalue;
     int optflags;
 } boolopt[] = {
-    { "acoustics", &flags.acoustics, TRUE, SET_IN_GAME },
+    { "acoustics", offp(p_flags.acoustics), TRUE, SET_IN_GAME },
 #if defined(SYSFLAGS) && defined(AMIGA)
     /* Amiga altmeta causes Alt+key to be converted into Meta+key by
        low level nethack code; on by default, can be toggled off if
        Alt+key is needed for some ASCII chars on non-ASCII keyboard */
-    { "altmeta", &sysflags.altmeta, TRUE, DISP_IN_GAME },
+    { "altmeta", offp(sysflags.altmeta), TRUE, DISP_IN_GAME },
 #else
 #ifdef ALTMETA
     /* non-Amiga altmeta causes nethack's top level command loop to treat
@@ -64,122 +70,122 @@ static struct Bool_Opt {
        this can potentially make trouble if user types ESC when nethack
        is honoring this conversion request (primarily after starting a
        count prefix prior to a command and then deciding to cancel it) */
-    { "altmeta", &iflags.altmeta, FALSE, SET_IN_GAME },
+    { "altmeta", offp(p_iflags.altmeta), FALSE, SET_IN_GAME },
 #else
-    { "altmeta", (boolean *) 0, TRUE, DISP_IN_GAME },
+    { "altmeta", 0, TRUE, DISP_IN_GAME },
 #endif
 #endif
-    { "ascii_map", &iflags.wc_ascii_map, !PREFER_TILED, SET_IN_GAME }, /*WC*/
+    { "ascii_map", offp(p_iflags.wc_ascii_map), !PREFER_TILED, SET_IN_GAME }, /*WC*/
 #if defined(SYSFLAGS) && defined(MFLOPPY)
-    { "asksavedisk", &sysflags.asksavedisk, FALSE, SET_IN_GAME },
+    { "asksavedisk", offp(sysflags.asksavedisk), FALSE, SET_IN_GAME },
 #else
-    { "asksavedisk", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "asksavedisk", 0, FALSE, SET_IN_FILE },
 #endif
-    { "autodescribe", &iflags.autodescribe, FALSE, SET_IN_GAME },
-    { "autodig", &flags.autodig, FALSE, SET_IN_GAME },
-    { "autoopen", &flags.autoopen, TRUE, SET_IN_GAME },
-    { "autopickup", &flags.pickup, TRUE, SET_IN_GAME },
-    { "autoquiver", &flags.autoquiver, FALSE, SET_IN_GAME },
+    { "autodescribe", offp(p_iflags.autodescribe), FALSE, SET_IN_GAME },
+    { "autodig", offp(p_flags.autodig), FALSE, SET_IN_GAME },
+    { "autoopen", offp(p_flags.autoopen), TRUE, SET_IN_GAME },
+    { "autopickup", offp(p_flags.pickup), TRUE, SET_IN_GAME },
+    { "autoquiver", offp(p_flags.autoquiver), FALSE, SET_IN_GAME },
 #if defined(MICRO) && !defined(AMIGA)
-    { "BIOS", &iflags.BIOS, FALSE, SET_IN_FILE },
+    { "BIOS", offp(p_iflags.BIOS), FALSE, SET_IN_FILE },
 #else
-    { "BIOS", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "BIOS", 0, FALSE, SET_IN_FILE },
 #endif
-    { "blind", &u.uroleplay.blind, FALSE, DISP_IN_GAME },
-    { "bones", &flags.bones, TRUE, SET_IN_FILE },
+    { "blind", offp(p_u.uroleplay.blind), FALSE, DISP_IN_GAME },
+    { "bones", offp(p_flags.bones), TRUE, SET_IN_FILE },
 #ifdef INSURANCE
-    { "checkpoint", &flags.ins_chkpt, TRUE, SET_IN_GAME },
+    { "checkpoint", offp(p_flags.ins_chkpt), TRUE, SET_IN_GAME },
 #else
-    { "checkpoint", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "checkpoint", 0, FALSE, SET_IN_FILE },
 #endif
 #ifdef MFLOPPY
-    { "checkspace", &iflags.checkspace, TRUE, SET_IN_GAME },
+    { "checkspace", offp(p_iflags.checkspace), TRUE, SET_IN_GAME },
 #else
-    { "checkspace", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "checkspace", 0, FALSE, SET_IN_FILE },
 #endif
-    { "clicklook", &iflags.clicklook, FALSE, SET_IN_GAME },
-    { "cmdassist", &iflags.cmdassist, TRUE, SET_IN_GAME },
+    { "clicklook", offp(p_iflags.clicklook), FALSE, SET_IN_GAME },
+    { "cmdassist", offp(p_iflags.cmdassist), TRUE, SET_IN_GAME },
 #if defined(MICRO) || defined(WIN32)
-    { "color", &iflags.wc_color, TRUE, SET_IN_GAME }, /*WC*/
+    { "color", offp(p_iflags.wc_color), TRUE, SET_IN_GAME }, /*WC*/
 #else /* systems that support multiple terminals, many monochrome */
-    { "color", &iflags.wc_color, FALSE, SET_IN_GAME }, /*WC*/
+    { "color", offp(p_iflags.wc_color), FALSE, SET_IN_GAME }, /*WC*/
 #endif
-    { "confirm", &flags.confirm, TRUE, SET_IN_GAME },
-    { "dark_room", &flags.dark_room, TRUE, SET_IN_GAME },
-    { "eight_bit_tty", &iflags.wc_eight_bit_input, FALSE,
+    { "confirm", offp(p_flags.confirm), TRUE, SET_IN_GAME },
+    { "dark_room", offp(p_flags.dark_room), TRUE, SET_IN_GAME },
+    { "eight_bit_tty", offp(p_iflags.wc_eight_bit_input), FALSE,
       SET_IN_GAME }, /*WC*/
 #ifdef TTY_GRAPHICS
-    { "extmenu", &iflags.extmenu, FALSE, SET_IN_GAME },
+    { "extmenu", offp(p_iflags.extmenu), FALSE, SET_IN_GAME },
 #else
-    { "extmenu", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "extmenu", 0, FALSE, SET_IN_FILE },
 #endif
 #ifdef OPT_DISPMAP
-    { "fast_map", &flags.fast_map, TRUE, SET_IN_GAME },
+    { "fast_map", offp(p_flags.fast_map), TRUE, SET_IN_GAME },
 #else
-    { "fast_map", (boolean *) 0, TRUE, SET_IN_FILE },
+    { "fast_map", 0, TRUE, SET_IN_FILE },
 #endif
-    { "female", &flags.female, FALSE, DISP_IN_GAME },
-    { "fixinv", &flags.invlet_constant, TRUE, SET_IN_GAME },
+    { "female", offp(p_flags.female), FALSE, DISP_IN_GAME },
+    { "fixinv", offp(p_flags.invlet_constant), TRUE, SET_IN_GAME },
 #if defined(SYSFLAGS) && defined(AMIFLUSH)
-    { "flush", &sysflags.amiflush, FALSE, SET_IN_GAME },
+    { "flush", offp(sysflags.amiflush), FALSE, SET_IN_GAME },
 #else
-    { "flush", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "flush", 0, FALSE, SET_IN_FILE },
 #endif
-    { "fullscreen", &iflags.wc2_fullscreen, FALSE, SET_IN_FILE },
-    { "help", &flags.help, TRUE, SET_IN_GAME },
-    { "hilite_pet", &iflags.wc_hilite_pet, FALSE, SET_IN_GAME }, /*WC*/
-    { "hilite_pile", &iflags.hilite_pile, FALSE, SET_IN_GAME },
+    { "fullscreen", offp(p_iflags.wc2_fullscreen), FALSE, SET_IN_FILE },
+    { "help", offp(p_flags.help), TRUE, SET_IN_GAME },
+    { "hilite_pet", offp(p_iflags.wc_hilite_pet), FALSE, SET_IN_GAME }, /*WC*/
+    { "hilite_pile", offp(p_iflags.hilite_pile), FALSE, SET_IN_GAME },
 #ifndef MAC
-    { "ignintr", &flags.ignintr, FALSE, SET_IN_GAME },
+    { "ignintr", offp(p_flags.ignintr), FALSE, SET_IN_GAME },
 #else
-    { "ignintr", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "ignintr", 0, FALSE, SET_IN_FILE },
 #endif
-    { "implicit_uncursed", &iflags.implicit_uncursed, TRUE, SET_IN_GAME },
-    { "large_font", &iflags.obsolete, FALSE, SET_IN_FILE }, /* OBSOLETE */
-    { "legacy", &flags.legacy, TRUE, DISP_IN_GAME },
-    { "lit_corridor", &flags.lit_corridor, FALSE, SET_IN_GAME },
-    { "lootabc", &flags.lootabc, FALSE, SET_IN_GAME },
+    { "implicit_uncursed", offp(p_iflags.implicit_uncursed), TRUE, SET_IN_GAME },
+    { "large_font", offp(p_iflags.obsolete), FALSE, SET_IN_FILE }, /* OBSOLETE */
+    { "legacy", offp(p_flags.legacy), TRUE, DISP_IN_GAME },
+    { "lit_corridor", offp(p_flags.lit_corridor), FALSE, SET_IN_GAME },
+    { "lootabc", offp(p_flags.lootabc), FALSE, SET_IN_GAME },
 #ifdef MAIL
-    { "mail", &flags.biff, TRUE, SET_IN_GAME },
+    { "mail", offp(p_flags.biff), TRUE, SET_IN_GAME },
 #else
-    { "mail", (boolean *) 0, TRUE, SET_IN_FILE },
+    { "mail", 0, TRUE, SET_IN_FILE },
 #endif
-    { "mention_walls", &iflags.mention_walls, FALSE, SET_IN_GAME },
-    { "menucolors", &iflags.use_menu_color, FALSE, SET_IN_GAME },
+    { "mention_walls", offp(p_iflags.mention_walls), FALSE, SET_IN_GAME },
+    { "menucolors", offp(p_iflags.use_menu_color), FALSE, SET_IN_GAME },
     /* for menu debugging only*/
-    { "menu_tab_sep", &iflags.menu_tab_sep, FALSE, SET_IN_WIZGAME },
-    { "menu_objsyms", &iflags.menu_head_objsym, FALSE, SET_IN_GAME },
+    { "menu_tab_sep", offp(p_iflags.menu_tab_sep), FALSE, SET_IN_WIZGAME },
+    { "menu_objsyms", offp(p_iflags.menu_head_objsym), FALSE, SET_IN_GAME },
 #ifdef TTY_GRAPHICS
-    { "menu_overlay", &iflags.menu_overlay, TRUE, SET_IN_GAME },
+    { "menu_overlay", offp(p_iflags.menu_overlay), TRUE, SET_IN_GAME },
 #else
-    { "menu_overlay", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "menu_overlay", 0, FALSE, SET_IN_FILE },
 #endif
-    { "mouse_support", &iflags.wc_mouse_support, TRUE, DISP_IN_GAME }, /*WC*/
+    { "mouse_support", offp(p_iflags.wc_mouse_support), TRUE, DISP_IN_GAME }, /*WC*/
 #ifdef NEWS
-    { "news", &iflags.news, TRUE, DISP_IN_GAME },
+    { "news", offp(p_iflags.news), TRUE, DISP_IN_GAME },
 #else
-    { "news", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "news", 0, FALSE, SET_IN_FILE },
 #endif
-    { "nudist", &u.uroleplay.nudist, FALSE, DISP_IN_GAME },
-    { "null", &flags.null, TRUE, SET_IN_GAME },
+    { "nudist", offp(p_u.uroleplay.nudist), FALSE, DISP_IN_GAME },
+    { "null", offp(p_flags.null), TRUE, SET_IN_GAME },
 #if defined(SYSFLAGS) && defined(MAC)
-    { "page_wait", &sysflags.page_wait, TRUE, SET_IN_GAME },
+    { "page_wait", offp(sysflags.page_wait), TRUE, SET_IN_GAME },
 #else
-    { "page_wait", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "page_wait", 0, FALSE, SET_IN_FILE },
 #endif
-    { "perm_invent", &flags.perm_invent, FALSE, SET_IN_GAME },
-    { "pickup_thrown", &flags.pickup_thrown, TRUE, SET_IN_GAME },
-    { "popup_dialog", &iflags.wc_popup_dialog, FALSE, SET_IN_GAME },   /*WC*/
-    { "preload_tiles", &iflags.wc_preload_tiles, TRUE, DISP_IN_GAME }, /*WC*/
-    { "pushweapon", &flags.pushweapon, FALSE, SET_IN_GAME },
+    { "perm_invent", offp(p_flags.perm_invent), FALSE, SET_IN_GAME },
+    { "pickup_thrown", offp(p_flags.pickup_thrown), TRUE, SET_IN_GAME },
+    { "popup_dialog", offp(p_iflags.wc_popup_dialog), FALSE, SET_IN_GAME },   /*WC*/
+    { "preload_tiles", offp(p_iflags.wc_preload_tiles), TRUE, DISP_IN_GAME }, /*WC*/
+    { "pushweapon", offp(p_flags.pushweapon), FALSE, SET_IN_GAME },
 #if defined(MICRO) && !defined(AMIGA)
-    { "rawio", &iflags.rawio, FALSE, DISP_IN_GAME },
+    { "rawio", offp(p_iflags.rawio), FALSE, DISP_IN_GAME },
 #else
-    { "rawio", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "rawio", 0, FALSE, SET_IN_FILE },
 #endif
-    { "rest_on_space", &flags.rest_on_space, FALSE, SET_IN_GAME },
+    { "rest_on_space", offp(p_flags.rest_on_space), FALSE, SET_IN_GAME },
 #ifdef RLECOMP
-    { "rlecomp", &iflags.rlecomp,
+    { "rlecomp", offp(p_iflags.rlecomp),
 #if defined(COMPRESS) || defined(ZLIB_COMP)
       FALSE,
 #else
@@ -187,55 +193,55 @@ static struct Bool_Opt {
 #endif
       DISP_IN_GAME },
 #endif
-    { "safe_pet", &flags.safe_dog, TRUE, SET_IN_GAME },
-    { "sanity_check", &iflags.sanity_check, FALSE, SET_IN_WIZGAME },
-    { "selectsaved", &iflags.wc2_selectsaved, TRUE, DISP_IN_GAME }, /*WC*/
-    { "showexp", &flags.showexp, FALSE, SET_IN_GAME },
-    { "showrace", &flags.showrace, FALSE, SET_IN_GAME },
+    { "safe_pet", offp(p_flags.safe_dog), TRUE, SET_IN_GAME },
+    { "sanity_check", offp(p_iflags.sanity_check), FALSE, SET_IN_WIZGAME },
+    { "selectsaved", offp(p_iflags.wc2_selectsaved), TRUE, DISP_IN_GAME }, /*WC*/
+    { "showexp", offp(p_flags.showexp), FALSE, SET_IN_GAME },
+    { "showrace", offp(p_flags.showrace), FALSE, SET_IN_GAME },
 #ifdef SCORE_ON_BOTL
-    { "showscore", &flags.showscore, FALSE, SET_IN_GAME },
+    { "showscore", offp(p_flags.showscore), FALSE, SET_IN_GAME },
 #else
-    { "showscore", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "showscore", 0, FALSE, SET_IN_FILE },
 #endif
-    { "silent", &flags.silent, TRUE, SET_IN_GAME },
-    { "softkeyboard", &iflags.wc2_softkeyboard, FALSE, SET_IN_FILE },
-    { "sortpack", &flags.sortpack, TRUE, SET_IN_GAME },
-    { "sparkle", &flags.sparkle, TRUE, SET_IN_GAME },
-    { "splash_screen", &iflags.wc_splash_screen, TRUE, DISP_IN_GAME }, /*WC*/
-    { "standout", &flags.standout, FALSE, SET_IN_GAME },
+    { "silent", offp(p_flags.silent), TRUE, SET_IN_GAME },
+    { "softkeyboard", offp(p_iflags.wc2_softkeyboard), FALSE, SET_IN_FILE },
+    { "sortpack", offp(p_flags.sortpack), TRUE, SET_IN_GAME },
+    { "sparkle", offp(p_flags.sparkle), TRUE, SET_IN_GAME },
+    { "splash_screen", offp(p_iflags.wc_splash_screen), TRUE, DISP_IN_GAME }, /*WC*/
+    { "standout", offp(p_flags.standout), FALSE, SET_IN_GAME },
 #if defined(STATUS_VIA_WINDOWPORT) && defined(STATUS_HILITES)
-    { "statushilites", &iflags.use_status_hilites, TRUE, SET_IN_GAME },
+    { "statushilites", offp(p_iflags.use_status_hilites), TRUE, SET_IN_GAME },
 #else
-    { "statushilites", &iflags.use_status_hilites, FALSE, DISP_IN_GAME },
+    { "statushilites", offp(p_iflags.use_status_hilites), FALSE, DISP_IN_GAME },
 #endif
-    { "tiled_map", &iflags.wc_tiled_map, PREFER_TILED, DISP_IN_GAME }, /*WC*/
-    { "time", &flags.time, FALSE, SET_IN_GAME },
+    { "tiled_map", offp(p_iflags.wc_tiled_map), PREFER_TILED, DISP_IN_GAME }, /*WC*/
+    { "time", offp(p_flags.time), FALSE, SET_IN_GAME },
 #ifdef TIMED_DELAY
-    { "timed_delay", &flags.nap, TRUE, SET_IN_GAME },
+    { "timed_delay", offp(p_flags.nap), TRUE, SET_IN_GAME },
 #else
-    { "timed_delay", (boolean *) 0, FALSE, SET_IN_GAME },
+    { "timed_delay", 0, FALSE, SET_IN_GAME },
 #endif
-    { "tombstone", &flags.tombstone, TRUE, SET_IN_GAME },
-    { "toptenwin", &iflags.toptenwin, FALSE, SET_IN_GAME },
-    { "travel", &flags.travelcmd, TRUE, SET_IN_GAME },
-    { "use_darkgray", &iflags.wc2_darkgray, TRUE, SET_IN_FILE },
+    { "tombstone", offp(p_flags.tombstone), TRUE, SET_IN_GAME },
+    { "toptenwin", offp(p_iflags.toptenwin), FALSE, SET_IN_GAME },
+    { "travel", offp(p_flags.travelcmd), TRUE, SET_IN_GAME },
+    { "use_darkgray", offp(p_iflags.wc2_darkgray), TRUE, SET_IN_FILE },
 #ifdef WIN32
-    { "use_inverse", &iflags.wc_inverse, TRUE, SET_IN_GAME }, /*WC*/
+    { "use_inverse", offp(p_iflags.wc_inverse), TRUE, SET_IN_GAME }, /*WC*/
 #else
-    { "use_inverse", &iflags.wc_inverse, FALSE, SET_IN_GAME }, /*WC*/
+    { "use_inverse", offp(p_iflags.wc_inverse), FALSE, SET_IN_GAME }, /*WC*/
 #endif
-    { "verbose", &flags.verbose, TRUE, SET_IN_GAME },
+    { "verbose", offp(p_flags.verbose), TRUE, SET_IN_GAME },
 #ifdef TTY_TILES_ESCCODES
-    { "vt_tiledata", &iflags.vt_tiledata, FALSE, SET_IN_FILE },
+    { "vt_tiledata", offp(p_iflags.vt_tiledata), FALSE, SET_IN_FILE },
 #else
-    { "vt_tiledata", (boolean *) 0, FALSE, SET_IN_FILE },
+    { "vt_tiledata", 0, FALSE, SET_IN_FILE },
 #endif
-    { "whatis_menu", &iflags.getloc_usemenu, FALSE, SET_IN_GAME },
-    { "whatis_inview", &iflags.getloc_limitview, FALSE, SET_IN_GAME },
-    { "wizweight", &iflags.wizweight, FALSE, SET_IN_WIZGAME },
-    { "wraptext", &iflags.wc2_wraptext, FALSE, SET_IN_GAME },
+    { "whatis_menu", offp(p_iflags.getloc_usemenu), FALSE, SET_IN_GAME },
+    { "whatis_inview", offp(p_iflags.getloc_limitview), FALSE, SET_IN_GAME },
+    { "wizweight", offp(p_iflags.wizweight), FALSE, SET_IN_WIZGAME },
+    { "wraptext", offp(p_iflags.wc2_wraptext), FALSE, SET_IN_GAME },
 #ifdef ZEROCOMP
-    { "zerocomp", &iflags.zerocomp,
+    { "zerocomp", offp(p_iflags.zerocomp),
 #if defined(COMPRESS) || defined(ZLIB_COMP)
       FALSE,
 #else
@@ -243,7 +249,7 @@ static struct Bool_Opt {
 #endif
       DISP_IN_GAME },
 #endif
-    { (char *) 0, (boolean *) 0, FALSE, 0 }
+    { (char *) 0, 0, FALSE, 0 }
 };
 
 /* compound options, for option_help() and external programs like Amiga
@@ -269,7 +275,7 @@ static struct Comp_Opt {
     { "catname", "the name of your (first) cat (e.g., catname:Tabby)",
       PL_PSIZ, DISP_IN_GAME },
     { "disclose", "the kinds of information to disclose at end of game",
-      sizeof(flags.end_disclose) * 2, SET_IN_GAME },
+      sizeof(player1.p_flags.end_disclose) * 2, SET_IN_GAME },
     { "dogname", "the name of your (first) dog (e.g., dogname:Fang)", PL_PSIZ,
       DISP_IN_GAME },
     { "dungeon", "the symbols to use in drawing the dungeon map",
@@ -554,22 +560,23 @@ reglyph_darkroom()
     for (x = 0; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++) {
             struct rm *lev = &levl[x][y];
+            struct rm_sub *lev_s = &levl_s[x][y];
 
-            if (!flags.dark_room || !iflags.use_color
+            if (!uflags.dark_room || !iflags.use_color
                 || Is_rogue_level(&u.uz)) {
-                if (lev->glyph == cmap_to_glyph(S_darkroom))
-                    lev->glyph = lev->waslit ? cmap_to_glyph(S_room)
+                if (lev_s->glyph == cmap_to_glyph(S_darkroom))
+                    lev_s->glyph = lev_s->waslit ? cmap_to_glyph(S_room)
                                              : cmap_to_glyph(S_stone);
             } else {
-                if (lev->glyph == cmap_to_glyph(S_room) && lev->seenv
-                    && lev->waslit && !cansee(x, y))
-                    lev->glyph = cmap_to_glyph(S_darkroom);
-                else if (lev->glyph == cmap_to_glyph(S_stone)
-                         && lev->typ == ROOM && lev->seenv && !cansee(x, y))
-                    lev->glyph = cmap_to_glyph(S_darkroom);
+                if (lev_s->glyph == cmap_to_glyph(S_room) && lev_s->seenv
+                    && lev_s->waslit && !cansee(x, y))
+                    lev_s->glyph = cmap_to_glyph(S_darkroom);
+                else if (lev_s->glyph == cmap_to_glyph(S_stone)
+                         && lev->typ == ROOM && lev_s->seenv && !cansee(x, y))
+                    lev_s->glyph = cmap_to_glyph(S_darkroom);
             }
         }
-    if (flags.dark_room && iflags.use_color)
+    if (uflags.dark_room && iflags.use_color)
         showsyms[S_darkroom] = showsyms[S_room];
     else
         showsyms[S_darkroom] = showsyms[S_stone];
@@ -624,6 +631,17 @@ const char *ev;
         return (char *) 0;
 }
 
+void
+initoptions_both()
+{
+    you_player = &player1;
+    initoptions();
+    /* We copy the options to player2 */
+    player2.p_flags = player1.p_flags;
+    player2.p_iflags  = player1.p_iflags;
+    you_player = 0;
+}
+
 /* process options, possibly including SYSCF */
 void
 initoptions()
@@ -666,8 +684,9 @@ initoptions_init()
     iflags.opt_booldup = iflags.opt_compdup = (int *) 0;
 
     for (i = 0; boolopt[i].name; i++) {
-        if (boolopt[i].addr)
-            *(boolopt[i].addr) = boolopt[i].initvalue;
+        if (boolopt[i].addr) {
+            setoffp(boolopt[i].addr, boolopt[i].initvalue);
+        }
     }
 #if defined(COMPRESS) || defined(ZLIB_COMP)
     set_savepref("externalcomp");
@@ -690,12 +709,12 @@ initoptions_init()
     Strcpy(sysflags.sysflagsid, "sysflags");
     sysflags.sysflagsid[9] = (char) sizeof(struct sysflag);
 #endif
-    flags.end_own = FALSE;
-    flags.end_top = 3;
-    flags.end_around = 2;
-    flags.paranoia_bits = PARANOID_PRAY; /* old prayconfirm=TRUE */
-    flags.pile_limit = PILE_LIMIT_DFLT;  /* 5 */
-    flags.runmode = RUN_LEAP;
+    uflags.end_own = FALSE;
+    uflags.end_top = 3;
+    uflags.end_around = 2;
+    uflags.paranoia_bits = PARANOID_PRAY; /* old prayconfirm=TRUE */
+    uflags.pile_limit = PILE_LIMIT_DFLT;  /* 5 */
+    uflags.runmode = RUN_LEAP;
     iflags.msg_history = 20;
 #ifdef TTY_GRAPHICS
     iflags.prevmsg_window = 's';
@@ -704,7 +723,7 @@ initoptions_init()
     iflags.getpos_coords = GPCOORDS_NONE;
 
     /* hero's role, race, &c haven't been chosen yet */
-    flags.initrole = flags.initrace = flags.initgend = flags.initalign =
+    uflags.initrole = uflags.initrace = uflags.initgend = uflags.initalign =
         ROLE_NONE;
 
     /* Set the default monster and object class symbols. */
@@ -715,15 +734,15 @@ initoptions_init()
 
     iflags.travelcc.x = iflags.travelcc.y = -1;
 
-    /* assert( sizeof flags.inv_order == sizeof def_inv_order ); */
-    (void) memcpy((genericptr_t) flags.inv_order,
-                  (genericptr_t) def_inv_order, sizeof flags.inv_order);
-    flags.pickup_types[0] = '\0';
-    flags.pickup_burden = MOD_ENCUMBER;
-    flags.sortloot = 'l'; /* sort only loot by default */
+    /* assert( sizeof uflags.inv_order == sizeof def_inv_order ); */
+    (void) memcpy((genericptr_t) uflags.inv_order,
+                  (genericptr_t) def_inv_order, sizeof uflags.inv_order);
+    uflags.pickup_types[0] = '\0';
+    uflags.pickup_burden = MOD_ENCUMBER;
+    uflags.sortloot = 'l'; /* sort only loot by default */
 
     for (i = 0; i < NUM_DISCLOSURE_OPTIONS; i++)
-        flags.end_disclose[i] = DISCLOSE_PROMPT_DEFAULT_NO;
+        uflags.end_disclose[i] = DISCLOSE_PROMPT_DEFAULT_NO;
     switch_symbols(FALSE); /* set default characters */
 #if defined(UNIX) && defined(TTY_GRAPHICS)
     /*
@@ -764,7 +783,7 @@ initoptions_init()
         load_symset("MACGraphics", PRIMARY);
     switch_symbols(TRUE);
 #endif /* MAC_GRAPHICS_ENV */
-    flags.menu_style = MENU_FULL;
+    uflags.menu_style = MENU_FULL;
 
     /* since this is done before init_objects(), do partial init here */
     objects[SLIME_MOLD].oc_name_idx = SLIME_MOLD;
@@ -1039,8 +1058,8 @@ char *op;
         if (oc_sym == MAXOCLASSES /* not an object class char */
             /* VENOM_CLASS, RANDOM_CLASS, and ILLOBJ_CLASS are excluded
                because they aren't in def_inv_order[] so don't make it
-               into flags.inv_order, hence always fail this index() test */
-            || !index(flags.inv_order, oc_sym) || index(sp + 1, *sp))
+               into uflags.inv_order, hence always fail this index() test */
+            || !index(uflags.inv_order, oc_sym) || index(sp + 1, *sp))
             return 0;
         /* retain good ones */
         buf[num++] = (char) oc_sym;
@@ -1048,12 +1067,12 @@ char *op;
     buf[num] = '\0';
 
     /* fill in any omitted classes, using previous ordering */
-    for (sp = flags.inv_order; *sp; sp++)
+    for (sp = uflags.inv_order; *sp; sp++)
         if (!index(buf, *sp))
             (void) strkitten(&buf[num++], *sp);
     buf[MAXOCLASSES - 1] = '\0';
 
-    Strcpy(flags.inv_order, buf);
+    Strcpy(uflags.inv_order, buf);
     return 1;
 }
 
@@ -1103,7 +1122,7 @@ const char *optn;
     if (fnv > get_current_feature_ver())
         rejectver = TRUE;
     else
-        flags.suppress_alert = fnv;
+        uflags.suppress_alert = fnv;
     if (rejectver) {
         if (!initial) {
             You_cant("disable new feature alerts for future versions.");
@@ -1841,20 +1860,20 @@ boolean tinitial, tfrom_file;
     if (match_optname(opts, "female", 3, FALSE)) {
         if (duplicate_opt_detection(opts, 0))
             complain_about_duplicate(opts, 0);
-        if (!initial && flags.female == negated)
+        if (!initial && uflags.female == negated)
             pline("That is not anatomically possible.");
         else
-            flags.initgend = flags.female = !negated;
+            uflags.initgend = uflags.female = !negated;
         return;
     }
 
     if (match_optname(opts, "male", 4, FALSE)) {
         if (duplicate_opt_detection(opts, 0))
             complain_about_duplicate(opts, 0);
-        if (!initial && flags.female != negated)
+        if (!initial && uflags.female != negated)
             pline("That is not anatomically possible.");
         else
-            flags.initgend = flags.female = negated;
+            uflags.initgend = uflags.female = negated;
         return;
     }
 
@@ -1874,7 +1893,7 @@ boolean tinitial, tfrom_file;
     fullname = "align";
     if (match_optname(opts, fullname, sizeof("align") - 1, TRUE)) {
         if (parse_role_opts(negated, fullname, opts, &op)) {
-            if ((flags.initalign = str2align(op)) == ROLE_NONE)
+            if ((uflags.initalign = str2align(op)) == ROLE_NONE)
                 badoption(opts);
         }
         return;
@@ -1885,7 +1904,7 @@ boolean tinitial, tfrom_file;
     if (match_optname(opts, fullname, 4, TRUE)
         || match_optname(opts, (fullname = "character"), 4, TRUE)) {
         if (parse_role_opts(negated, fullname, opts, &op)) {
-            if ((flags.initrole = str2role(op)) == ROLE_NONE)
+            if ((uflags.initrole = str2role(op)) == ROLE_NONE)
                 badoption(opts);
             else /* Backwards compatibility */
                 nmcpy(pl_character, op, PL_NSIZ);
@@ -1897,7 +1916,7 @@ boolean tinitial, tfrom_file;
     fullname = "race";
     if (match_optname(opts, fullname, 4, TRUE)) {
         if (parse_role_opts(negated, fullname, opts, &op)) {
-            if ((flags.initrace = str2race(op)) == ROLE_NONE)
+            if ((uflags.initrace = str2race(op)) == ROLE_NONE)
                 badoption(opts);
             else /* Backwards compatibility */
                 pl_race = *op;
@@ -1909,10 +1928,10 @@ boolean tinitial, tfrom_file;
     fullname = "gender";
     if (match_optname(opts, fullname, 4, TRUE)) {
         if (parse_role_opts(negated, fullname, opts, &op)) {
-            if ((flags.initgend = str2gend(op)) == ROLE_NONE)
+            if ((uflags.initgend = str2gend(op)) == ROLE_NONE)
                 badoption(opts);
             else
-                flags.female = flags.initgend;
+                uflags.female = uflags.initgend;
         }
         return;
     }
@@ -2087,16 +2106,16 @@ boolean tinitial, tfrom_file;
         if (duplicate)
             complain_about_duplicate(opts, 1);
         if (negated) {
-            flags.runmode = RUN_TPORT;
+            uflags.runmode = RUN_TPORT;
         } else if ((op = string_for_opt(opts, FALSE)) != 0) {
             if (!strncmpi(op, "teleport", strlen(op)))
-                flags.runmode = RUN_TPORT;
+                uflags.runmode = RUN_TPORT;
             else if (!strncmpi(op, "run", strlen(op)))
-                flags.runmode = RUN_LEAP;
+                uflags.runmode = RUN_LEAP;
             else if (!strncmpi(op, "walk", strlen(op)))
-                flags.runmode = RUN_STEP;
+                uflags.runmode = RUN_STEP;
             else if (!strncmpi(op, "crawl", strlen(op)))
-                flags.runmode = RUN_CRAWL;
+                uflags.runmode = RUN_CRAWL;
             else
                 badoption(opts);
         }
@@ -2346,7 +2365,7 @@ boolean tinitial, tfrom_file;
                     break;
                 num++;
             }
-            if (!flags.made_fruit) {
+            if (!uflags.made_fruit) {
                 for (forig = ffruit; forig; forig = forig->nextf) {
                     if (!strcmp(pl_fruit, forig->fname)) {
                         break;
@@ -2540,9 +2559,9 @@ boolean tinitial, tfrom_file;
            option, but we do throw away the old settings whenever
            we process a new one [clearing old flags is essential
            for handling default paranoid_confirm:pray sanely] */
-        flags.paranoia_bits = 0; /* clear all */
+        uflags.paranoia_bits = 0; /* clear all */
         if (negated) {
-            flags.paranoia_bits = 0; /* [now redundant...] */
+            uflags.paranoia_bits = 0; /* [now redundant...] */
         } else if ((op = string_for_opt(opts, TRUE)) != 0) {
             char *pp, buf[BUFSZ];
 
@@ -2567,9 +2586,9 @@ boolean tinitial, tfrom_file;
                             && match_optname(op, paranoia[i].synonym,
                                              paranoia[i].synMinLen, FALSE))) {
                         if (paranoia[i].flagmask)
-                            flags.paranoia_bits |= paranoia[i].flagmask;
+                            uflags.paranoia_bits |= paranoia[i].flagmask;
                         else /* 0 == "none", so clear all */
-                            flags.paranoia_bits = 0;
+                            uflags.paranoia_bits = 0;
                         break;
                     }
                 }
@@ -2593,9 +2612,9 @@ boolean tinitial, tfrom_file;
     fullname = "prayconfirm";
     if (match_optname(opts, fullname, 4, FALSE)) {
         if (negated)
-            flags.paranoia_bits &= ~PARANOID_PRAY;
+            uflags.paranoia_bits &= ~PARANOID_PRAY;
         else
-            flags.paranoia_bits |= PARANOID_PRAY;
+            uflags.paranoia_bits |= PARANOID_PRAY;
         return;
     }
 
@@ -2610,23 +2629,23 @@ boolean tinitial, tfrom_file;
         } else if ((op = string_for_env_opt(fullname, opts, FALSE)) != 0) {
             switch (lowc(*op)) {
             case 'u': /* Unencumbered */
-                flags.pickup_burden = UNENCUMBERED;
+                uflags.pickup_burden = UNENCUMBERED;
                 break;
             case 'b': /* Burdened (slight encumbrance) */
-                flags.pickup_burden = SLT_ENCUMBER;
+                uflags.pickup_burden = SLT_ENCUMBER;
                 break;
             case 's': /* streSsed (moderate encumbrance) */
-                flags.pickup_burden = MOD_ENCUMBER;
+                uflags.pickup_burden = MOD_ENCUMBER;
                 break;
             case 'n': /* straiNed (heavy encumbrance) */
-                flags.pickup_burden = HVY_ENCUMBER;
+                uflags.pickup_burden = HVY_ENCUMBER;
                 break;
             case 'o': /* OverTaxed (extreme encumbrance) */
             case 't':
-                flags.pickup_burden = EXT_ENCUMBER;
+                uflags.pickup_burden = EXT_ENCUMBER;
                 break;
             case 'l': /* overLoaded */
-                flags.pickup_burden = OVERLOADED;
+                uflags.pickup_burden = OVERLOADED;
                 break;
             default:
                 badoption(opts);
@@ -2644,21 +2663,21 @@ boolean tinitial, tfrom_file;
 
         if (duplicate)
             complain_about_duplicate(opts, 1);
-        oc_to_str(flags.pickup_types, tbuf);
-        flags.pickup_types[0] = '\0'; /* all */
+        oc_to_str(uflags.pickup_types, tbuf);
+        uflags.pickup_types[0] = '\0'; /* all */
         op = string_for_opt(opts, (compat || !initial));
         if (!op) {
             if (compat || negated || initial) {
                 /* for backwards compatibility, "pickup" without a
                    value is a synonym for autopickup of all types
                    (and during initialization, we can't prompt yet) */
-                flags.pickup = !negated;
+                uflags.pickup = !negated;
                 return;
             }
-            oc_to_str(flags.inv_order, ocl);
+            oc_to_str(uflags.inv_order, ocl);
             use_menu = TRUE;
-            if (flags.menu_style == MENU_TRADITIONAL
-                || flags.menu_style == MENU_COMBINATION) {
+            if (uflags.menu_style == MENU_TRADITIONAL
+                || uflags.menu_style == MENU_COMBINATION) {
                 use_menu = FALSE;
                 Sprintf(qbuf, "New pickup_types: [%s am] (%s)", ocl,
                         *tbuf ? tbuf : "all");
@@ -2687,9 +2706,9 @@ boolean tinitial, tfrom_file;
                 oc_sym = def_char_to_objclass(*op);
                 /* make sure all are valid obj symbols occurring once */
                 if (oc_sym != MAXOCLASSES
-                    && !index(flags.pickup_types, oc_sym)) {
-                    flags.pickup_types[num] = (char) oc_sym;
-                    flags.pickup_types[++num] = '\0';
+                    && !index(uflags.pickup_types, oc_sym)) {
+                    uflags.pickup_types[num] = (char) oc_sym;
+                    uflags.pickup_types[++num] = '\0';
                 } else
                     badopt = TRUE;
                 op++;
@@ -2708,14 +2727,14 @@ boolean tinitial, tfrom_file;
             complain_about_duplicate(opts, 1);
         op = string_for_opt(opts, negated);
         if ((negated && !op) || (!negated && op))
-            flags.pile_limit = negated ? 0 : atoi(op);
+            uflags.pile_limit = negated ? 0 : atoi(op);
         else if (negated)
             bad_negation(fullname, TRUE);
         else /* !op */
-            flags.pile_limit = PILE_LIMIT_DFLT;
+            uflags.pile_limit = PILE_LIMIT_DFLT;
         /* sanity check */
-        if (flags.pile_limit < 0)
-            flags.pile_limit = PILE_LIMIT_DFLT;
+        if (uflags.pile_limit < 0)
+            uflags.pile_limit = PILE_LIMIT_DFLT;
         return;
     }
 
@@ -2802,7 +2821,7 @@ boolean tinitial, tfrom_file;
             if (op && !strcmpi(op, "none"))
                 negated = TRUE;
             for (num = 0; num < NUM_DISCLOSURE_OPTIONS; num++)
-                flags.end_disclose[num] = negated
+                uflags.end_disclose[num] = negated
                                               ? DISCLOSE_NO_WITHOUT_PROMPT
                                               : DISCLOSE_PROMPT_DEFAULT_YES;
             return;
@@ -2810,7 +2829,7 @@ boolean tinitial, tfrom_file;
 
         num = 0;
         prefix_val = -1;
-        while (*op && num < sizeof flags.end_disclose - 1) {
+        while (*op && num < sizeof uflags.end_disclose - 1) {
             static char valid_settings[] = {
                 DISCLOSE_PROMPT_DEFAULT_YES, DISCLOSE_PROMPT_DEFAULT_NO,
                 DISCLOSE_PROMPT_DEFAULT_SPECIAL,
@@ -2838,10 +2857,10 @@ boolean tinitial, tfrom_file;
                         if (prefix_val == DISCLOSE_SPECIAL_WITHOUT_PROMPT)
                             prefix_val = DISCLOSE_YES_WITHOUT_PROMPT;
                     }
-                    flags.end_disclose[idx] = prefix_val;
+                    uflags.end_disclose[idx] = prefix_val;
                     prefix_val = -1;
                 } else
-                    flags.end_disclose[idx] = DISCLOSE_YES_WITHOUT_PROMPT;
+                    uflags.end_disclose[idx] = DISCLOSE_YES_WITHOUT_PROMPT;
             } else if (index(valid_settings, c)) {
                 prefix_val = c;
             } else if (c == ' ') {
@@ -2883,15 +2902,15 @@ boolean tinitial, tfrom_file;
             switch (*op) {
             case 't':
             case 'T':
-                flags.end_top = inum;
+                uflags.end_top = inum;
                 break;
             case 'a':
             case 'A':
-                flags.end_around = inum;
+                uflags.end_around = inum;
                 break;
             case 'o':
             case 'O':
-                flags.end_own = !negated;
+                uflags.end_own = !negated;
                 break;
             default:
                 badoption(opts);
@@ -2915,7 +2934,7 @@ boolean tinitial, tfrom_file;
             case 'n': /* none */
             case 'l': /* loot (pickup) */
             case 'f': /* full (pickup + invent) */
-                flags.sortloot = c;
+                uflags.sortloot = c;
                 break;
             default:
                 badoption(opts);
@@ -3199,19 +3218,19 @@ boolean tinitial, tfrom_file;
         case 'n': /* none */
         case 't': /* traditional: prompt for class(es) by symbol,
                      prompt for each item within class(es) one at a time */
-            flags.menu_style = MENU_TRADITIONAL;
+            uflags.menu_style = MENU_TRADITIONAL;
             break;
         case 'c': /* combination: prompt for class(es) by symbol,
                      choose items within selected class(es) by menu */
-            flags.menu_style = MENU_COMBINATION;
+            uflags.menu_style = MENU_COMBINATION;
             break;
         case 'f': /* full: choose class(es) by first menu,
                      choose items within selected class(es) by second menu */
-            flags.menu_style = MENU_FULL;
+            uflags.menu_style = MENU_FULL;
             break;
         case 'p': /* partial: skip class filtering,
                      choose items among all classes by menu */
-            flags.menu_style = MENU_PARTIAL;
+            uflags.menu_style = MENU_PARTIAL;
             break;
         default:
             badoption(opts);
@@ -3405,37 +3424,37 @@ boolean tinitial, tfrom_file;
                 }
             }
 
-            *(boolopt[i].addr) = !negated;
+            setoffp(boolopt[i].addr, !negated);
 
             /* 0 means boolean opts */
             if (duplicate_opt_detection(boolopt[i].name, 0))
                 complain_about_duplicate(boolopt[i].name, 0);
 #ifdef RLECOMP
-            if (boolopt[i].addr == &iflags.rlecomp)
+            if (boolopt[i].addr == offp(p_iflags.rlecomp))
                 set_savepref(iflags.rlecomp ? "rlecomp" : "!rlecomp");
 #endif
 #ifdef ZEROCOMP
-            if (boolopt[i].addr == &iflags.zerocomp)
+            if (boolopt[i].addr == offp(p_iflags.zerocomp))
                 set_savepref(iflags.zerocomp ? "zerocomp" : "externalcomp");
 #endif
             /* only do processing below if setting with doset() */
             if (initial)
                 return;
 
-            if (boolopt[i].addr == &flags.time
+            if (boolopt[i].addr == offp(p_flags.time)
 #ifdef SCORE_ON_BOTL
-                || boolopt[i].addr == &flags.showscore
+                || boolopt[i].addr == offp(p_flags.showscore)
 #endif
-                || boolopt[i].addr == &flags.showexp) {
+                || boolopt[i].addr == offp(p_flags.showexp)) {
 #ifdef STATUS_VIA_WINDOWPORT
                 status_initialize(REASSESS_ONLY);
 #endif
                 context.botl = TRUE;
-            } else if (boolopt[i].addr == &flags.invlet_constant) {
-                if (flags.invlet_constant)
+            } else if (boolopt[i].addr == offp(p_flags.invlet_constant)) {
+                if (uflags.invlet_constant)
                     reassign();
-            } else if (boolopt[i].addr == &flags.lit_corridor
-                       || boolopt[i].addr == &flags.dark_room) {
+            } else if (boolopt[i].addr == offp(p_flags.lit_corridor)
+                       || boolopt[i].addr == offp(p_flags.dark_room)) {
                 /*
                  * All corridor squares seen via night vision or
                  * candles & lamps change.  Update them by calling
@@ -3447,14 +3466,14 @@ boolean tinitial, tfrom_file;
                 vision_full_recalc = 1; /* delayed recalc */
                 if (iflags.use_color)
                     need_redraw = TRUE; /* darkroom refresh */
-            } else if (boolopt[i].addr == &iflags.wc_tiled_map
-                       || boolopt[i].addr == &flags.showrace
-                       || boolopt[i].addr == &iflags.use_inverse
-                       || boolopt[i].addr == &iflags.hilite_pile
-                       || boolopt[i].addr == &iflags.hilite_pet) {
+            } else if (boolopt[i].addr == offp(p_iflags.wc_tiled_map)
+                       || boolopt[i].addr == offp(p_flags.showrace)
+                       || boolopt[i].addr == offp(p_iflags.use_inverse)
+                       || boolopt[i].addr == offp(p_iflags.hilite_pile)
+                       || boolopt[i].addr == offp(p_iflags.hilite_pet)) {
                 need_redraw = TRUE;
 #ifdef TEXTCOLOR
-            } else if (boolopt[i].addr == &iflags.use_color) {
+            } else if (boolopt[i].addr == offp(p_iflags.use_color)) {
                 need_redraw = TRUE;
 #ifdef TOS
                 if (iflags.BIOS) {
@@ -3767,7 +3786,7 @@ doset() /* changing options via menu by Per Liboriussen */
     char buf[BUFSZ], buf2[BUFSZ];
     const char *name;
     int i = 0, pass, boolcount, pick_cnt, pick_idx, opt_indx;
-    boolean *bool_p;
+    size_t bool_p;
     winid tmpwin;
     anything any;
     menu_item *pick_list;
@@ -3827,7 +3846,7 @@ doset() /* changing options via menu by Per Liboriussen */
             if ((bool_p = boolopt[i].addr) != 0
                 && ((boolopt[i].optflags <= DISP_IN_GAME && pass == 0)
                     || (boolopt[i].optflags >= SET_IN_GAME && pass == 1))) {
-                if (bool_p == &flags.female)
+                if (bool_p == offp(p_flags.female))
                     continue; /* obsolete */
                 if (boolopt[i].optflags == SET_IN_WIZGAME && !wizard)
                     continue;
@@ -3838,10 +3857,10 @@ doset() /* changing options via menu by Per Liboriussen */
                 any.a_int = (pass == 0) ? 0 : i + 1;
                 if (!iflags.menu_tab_sep)
                     Sprintf(buf, fmtstr_doset, (pass == 0) ? "    " : "",
-                            name, *bool_p ? "true" : "false");
+                            name, getoffp(bool_p) ? "true" : "false");
                 else
                     Sprintf(buf, fmtstr_doset_tab,
-                            name, *bool_p ? "true" : "false");
+                            name, getoffp(bool_p) ? "true" : "false");
                 add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf,
                          MENU_UNSELECTED);
             }
@@ -3938,7 +3957,7 @@ doset() /* changing options via menu by Per Liboriussen */
                     (void) special_handling("msgtype", setinitial, fromfile);
             } else if (opt_indx < boolcount) {
                 /* boolean option */
-                Sprintf(buf, "%s%s", *boolopt[opt_indx].addr ? "!" : "",
+                Sprintf(buf, "%s%s", getoffp(boolopt[opt_indx].addr) ? "!" : "",
                         boolopt[opt_indx].name);
                 parseoptions(buf, setinitial, fromfile);
                 if (wc_supported(boolopt[opt_indx].name)
@@ -4056,7 +4075,7 @@ boolean setinitial, setfromfile;
         }
         end_menu(tmpwin, "Select menustyle:");
         if (select_menu(tmpwin, PICK_ONE, &style_pick) > 0) {
-            flags.menu_style = style_pick->item.a_int - 1;
+            uflags.menu_style = style_pick->item.a_int - 1;
             free((genericptr_t) style_pick);
         }
         destroy_nhwindow(tmpwin);
@@ -4072,7 +4091,7 @@ boolean setinitial, setfromfile;
             any.a_int = paranoia[i].flagmask;
             add_menu(tmpwin, NO_GLYPH, &any, *paranoia[i].argname, 0,
                      ATR_NONE, paranoia[i].explain,
-                     (flags.paranoia_bits & paranoia[i].flagmask)
+                     (uflags.paranoia_bits & paranoia[i].flagmask)
                          ? MENU_SELECTED
                          : MENU_UNSELECTED);
         }
@@ -4082,11 +4101,11 @@ boolean setinitial, setfromfile;
             /* player didn't cancel; we reset all the paranoia options
                here even if there were no items picked, since user
                could have toggled off preselected ones to end up with 0 */
-            flags.paranoia_bits = 0;
+            uflags.paranoia_bits = 0;
             if (i > 0) {
                 /* at least 1 item set, either preselected or newly picked */
                 while (--i >= 0)
-                    flags.paranoia_bits |= paranoia_picks[i].item.a_int;
+                    uflags.paranoia_bits |= paranoia_picks[i].item.a_int;
                 free((genericptr_t) paranoia_picks);
             }
         }
@@ -4106,7 +4125,7 @@ boolean setinitial, setfromfile;
         }
         end_menu(tmpwin, "Select encumbrance level:");
         if (select_menu(tmpwin, PICK_ONE, &burden_pick) > 0) {
-            flags.pickup_burden = burden_pick->item.a_int - 1;
+            uflags.pickup_burden = burden_pick->item.a_int - 1;
             free((genericptr_t) burden_pick);
         }
         destroy_nhwindow(tmpwin);
@@ -4130,7 +4149,7 @@ boolean setinitial, setfromfile;
         any = zeroany;
         for (i = 0; i < NUM_DISCLOSURE_OPTIONS; i++) {
             Sprintf(buf, "%-12s[%c%c]", disclosure_names[i],
-                    flags.end_disclose[i], disclosure_options[i]);
+                    uflags.end_disclose[i], disclosure_options[i]);
             any.a_int = i + 1;
             add_menu(tmpwin, NO_GLYPH, &any, disclosure_options[i], 0,
                      ATR_NONE, buf, MENU_UNSELECTED);
@@ -4150,7 +4169,7 @@ boolean setinitial, setfromfile;
 
         for (i = 0; i < NUM_DISCLOSURE_OPTIONS; i++) {
             if (disc_cat[i]) {
-                c = flags.end_disclose[i];
+                c = uflags.end_disclose[i];
                 Sprintf(buf, "Disclosure options for %s:",
                         disclosure_names[i]);
                 tmpwin = create_nhwindow(NHW_MENU);
@@ -4190,9 +4209,9 @@ boolean setinitial, setfromfile;
                 end_menu(tmpwin, buf);
                 n = select_menu(tmpwin, PICK_ONE, &disclosure_pick);
                 if (n > 0) {
-                    flags.end_disclose[i] = disclosure_pick[0].item.a_char;
-                    if (n > 1 && flags.end_disclose[i] == c)
-                        flags.end_disclose[i] = disclosure_pick[1].item.a_char;
+                    uflags.end_disclose[i] = disclosure_pick[0].item.a_char;
+                    if (n > 1 && uflags.end_disclose[i] == c)
+                        uflags.end_disclose[i] = disclosure_pick[1].item.a_char;
                     free((genericptr_t) disclosure_pick);
                 }
                 destroy_nhwindow(tmpwin);
@@ -4213,7 +4232,7 @@ boolean setinitial, setfromfile;
         }
         end_menu(tmpwin, "Select run/travel display mode:");
         if (select_menu(tmpwin, PICK_ONE, &mode_pick) > 0) {
-            flags.runmode = mode_pick->item.a_int - 1;
+            uflags.runmode = mode_pick->item.a_int - 1;
             free((genericptr_t) mode_pick);
         }
         destroy_nhwindow(tmpwin);
@@ -4249,14 +4268,14 @@ boolean setinitial, setfromfile;
         add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, "", MENU_UNSELECTED);
         Sprintf(buf, "map: upper-left: <%d,%d>, lower-right: <%d,%d>%s",
                 1, 0, COLNO - 1, ROWNO - 1,
-                flags.verbose ? "; column 0 unused, off left edge" : "");
+                uflags.verbose ? "; column 0 unused, off left edge" : "");
         add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, MENU_UNSELECTED);
         if (strcmp(windowprocs.name, "tty"))
             add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE,
        "screen: row is offset to accommodate tty interface's use of top line",
                      MENU_UNSELECTED);
 #if COLNO == 80
-#define COL80ARG flags.verbose ? "; column 80 is not used" : ""
+#define COL80ARG uflags.verbose ? "; column 80 is not used" : ""
 #else
 #define COL80ARG ""
 #endif
@@ -4314,7 +4333,7 @@ boolean setinitial, setfromfile;
             sortl_name = sortltype[i];
             any.a_char = *sortl_name;
             add_menu(tmpwin, NO_GLYPH, &any, *sortl_name, 0, ATR_NONE,
-                     sortl_name, (flags.sortloot == *sortl_name)
+                     sortl_name, (uflags.sortloot == *sortl_name)
                                     ? MENU_SELECTED : MENU_UNSELECTED);
         }
         end_menu(tmpwin, "Select loot sorting type:");
@@ -4322,9 +4341,9 @@ boolean setinitial, setfromfile;
         if (n > 0) {
             char c = sortl_pick[0].item.a_char;
 
-            if (n > 1 && c == flags.sortloot)
+            if (n > 1 && c == uflags.sortloot)
                 c = sortl_pick[1].item.a_char;
-            flags.sortloot = c;
+            uflags.sortloot = c;
             free((genericptr_t) sortl_pick);
         }
         destroy_nhwindow(tmpwin);
@@ -4831,7 +4850,7 @@ char *buf;
                                       ? "right"
                                       : defopt);
     else if (!strcmp(optname, "align"))
-        Sprintf(buf, "%s", rolestring(flags.initalign, aligns, adj));
+        Sprintf(buf, "%s", rolestring(uflags.initalign, aligns, adj));
 #ifdef WIN32
     else if (!strcmp(optname, "altkeyhandler"))
         Sprintf(buf, "%s",
@@ -4850,7 +4869,7 @@ char *buf;
         for (i = 0; i < NUM_DISCLOSURE_OPTIONS; i++) {
             if (i)
                 (void) strkitten(buf, ' ');
-            (void) strkitten(buf, flags.end_disclose[i]);
+            (void) strkitten(buf, uflags.end_disclose[i]);
             (void) strkitten(buf, disclosure_options[i]);
         }
     else if (!strcmp(optname, "dogname"))
@@ -4901,7 +4920,7 @@ char *buf;
     } else if (!strcmp(optname, "fruit"))
         Sprintf(buf, "%s", pl_fruit);
     else if (!strcmp(optname, "gender"))
-        Sprintf(buf, "%s", rolestring(flags.initgend, genders, adj));
+        Sprintf(buf, "%s", rolestring(uflags.initgend, genders, adj));
     else if (!strcmp(optname, "horsename"))
         Sprintf(buf, "%s", horsename[0] ? horsename : none);
     else if (!strcmp(optname, "map_mode"))
@@ -4934,7 +4953,7 @@ char *buf;
                                                 ? "fit_to_screen"
                                                 : defopt);
     else if (!strcmp(optname, "menustyle"))
-        Sprintf(buf, "%s", menutype[(int) flags.menu_style]);
+        Sprintf(buf, "%s", menutype[(int) uflags.menu_style]);
     else if (!strcmp(optname, "menu_deselect_all"))
         Sprintf(buf, "%s", to_be_done);
     else if (!strcmp(optname, "menu_deselect_page"))
@@ -4991,7 +5010,7 @@ char *buf;
     } else if (!strcmp(optname, "objects")) {
         Sprintf(buf, "%s", to_be_done);
     } else if (!strcmp(optname, "packorder")) {
-        oc_to_str(flags.inv_order, ocl);
+        oc_to_str(uflags.inv_order, ocl);
         Sprintf(buf, "%s", ocl);
 #ifdef CHANGE_COLOR
     } else if (!strcmp(optname, "palette")) {
@@ -5023,25 +5042,25 @@ char *buf;
                                : (preferred_pet == 'n') ? "none"
                                  : "random");
     } else if (!strcmp(optname, "pickup_burden")) {
-        Sprintf(buf, "%s", burdentype[flags.pickup_burden]);
+        Sprintf(buf, "%s", burdentype[uflags.pickup_burden]);
     } else if (!strcmp(optname, "pickup_types")) {
-        oc_to_str(flags.pickup_types, ocl);
+        oc_to_str(uflags.pickup_types, ocl);
         Sprintf(buf, "%s", ocl[0] ? ocl : "all");
     } else if (!strcmp(optname, "pile_limit")) {
-        Sprintf(buf, "%d", flags.pile_limit);
+        Sprintf(buf, "%d", uflags.pile_limit);
     } else if (!strcmp(optname, "playmode")) {
         Strcpy(buf, wizard ? "debug" : discover ? "explore" : "normal");
     } else if (!strcmp(optname, "race")) {
-        Sprintf(buf, "%s", rolestring(flags.initrace, races, noun));
+        Sprintf(buf, "%s", rolestring(uflags.initrace, races, noun));
     } else if (!strcmp(optname, "roguesymset")) {
         Sprintf(buf, "%s",
                 symset[ROGUESET].name ? symset[ROGUESET].name : "default");
         if (currentgraphics == ROGUESET && symset[ROGUESET].name)
             Strcat(buf, ", active");
     } else if (!strcmp(optname, "role")) {
-        Sprintf(buf, "%s", rolestring(flags.initrole, roles, name.m));
+        Sprintf(buf, "%s", rolestring(uflags.initrole, roles, name.m));
     } else if (!strcmp(optname, "runmode")) {
-        Sprintf(buf, "%s", runmodes[flags.runmode]);
+        Sprintf(buf, "%s", runmodes[uflags.runmode]);
     } else if (!strcmp(optname, "whatis_coord")) {
         Sprintf(buf, "%s",
                 (iflags.getpos_coords == GPCOORDS_MAP) ? "map"
@@ -5050,8 +5069,8 @@ char *buf;
                 : (iflags.getpos_coords == GPCOORDS_SCREEN) ? "screen"
                 : "none");
     } else if (!strcmp(optname, "scores")) {
-        Sprintf(buf, "%d top/%d around%s", flags.end_top, flags.end_around,
-                flags.end_own ? "/own" : "");
+        Sprintf(buf, "%d top/%d around%s", uflags.end_top, uflags.end_around,
+                uflags.end_own ? "/own" : "");
     } else if (!strcmp(optname, "scroll_amount")) {
         if (iflags.wc_scroll_amount)
             Sprintf(buf, "%d", iflags.wc_scroll_amount);
@@ -5064,7 +5083,7 @@ char *buf;
             Strcpy(buf, defopt);
     } else if (!strcmp(optname, "sortloot")) {
         for (i = 0; i < SIZE(sortltype); i++)
-            if (flags.sortloot == sortltype[i][0]) {
+            if (uflags.sortloot == sortltype[i][0]) {
                 Strcpy(buf, sortltype[i]);
                 break;
             }
@@ -5075,7 +5094,7 @@ char *buf;
         Sprintf(buf, "%s", to_be_done);
 #endif
     } else if (!strcmp(optname, "suppress_alert")) {
-        if (flags.suppress_alert == 0L)
+        if (uflags.suppress_alert == 0L)
             Strcpy(buf, none);
         else
             Sprintf(buf, "%lu.%lu.%lu", FEATURE_NOTICE_VER_MAJ,
@@ -5155,9 +5174,9 @@ dotogglepickup()
 {
     char buf[BUFSZ], ocl[MAXOCLASSES + 1];
 
-    flags.pickup = !flags.pickup;
-    if (flags.pickup) {
-        oc_to_str(flags.pickup_types, ocl);
+    uflags.pickup = !uflags.pickup;
+    if (uflags.pickup) {
+        oc_to_str(uflags.pickup_types, ocl);
         Sprintf(buf, "ON, for %s objects%s", ocl[0] ? ocl : "all",
                 (iflags.autopickup_exceptions[AP_LEAVE]
                  || iflags.autopickup_exceptions[AP_GRAB])
@@ -5465,9 +5484,9 @@ option_help()
     /* Boolean options */
     for (i = 0; boolopt[i].name; i++) {
         if (boolopt[i].addr) {
-            if (boolopt[i].addr == &iflags.sanity_check && !wizard)
+            if (boolopt[i].addr == offp(p_iflags.sanity_check) && !wizard)
                 continue;
-            if (boolopt[i].addr == &iflags.menu_tab_sep && !wizard)
+            if (boolopt[i].addr == offp(p_iflags.menu_tab_sep) && !wizard)
                 continue;
             next_opt(datawin, boolopt[i].name);
         }
@@ -5604,7 +5623,7 @@ struct fruit *replace_fruit;
          * Possible expansion: check for specific fruit IDs, not for
          * any fruit.
          */
-        flags.made_fruit = FALSE;
+        uflags.made_fruit = FALSE;
         if (replace_fruit) {
             for (f = ffruit; f; f = f->nextf) {
                 if (f == replace_fruit) {
@@ -5617,7 +5636,7 @@ struct fruit *replace_fruit;
         /* not user_supplied, so assumed to be from bones */
         copynchars(altname, str, PL_FSIZ - 1);
         sanitize_name(altname);
-        flags.made_fruit = TRUE; /* for safety.  Any fruit name added from a
+        uflags.made_fruit = TRUE; /* for safety.  Any fruit name added from a
                                     bones level should exist anyway. */
     }
     for (f = ffruit; f; f = f->nextf) {
@@ -5991,14 +6010,14 @@ char *op;
     char *wn, *tfg, *tbg, *newop;
     static const char *wnames[] = { "menu", "message", "status", "text" };
     static const char *shortnames[] = { "mnu", "msg", "sts", "txt" };
-    static char **fgp[] = { &iflags.wc_foregrnd_menu,
-                            &iflags.wc_foregrnd_message,
-                            &iflags.wc_foregrnd_status,
-                            &iflags.wc_foregrnd_text };
-    static char **bgp[] = { &iflags.wc_backgrnd_menu,
-                            &iflags.wc_backgrnd_message,
-                            &iflags.wc_backgrnd_status,
-                            &iflags.wc_backgrnd_text };
+    /* static char **fgp[] = { &iflags.wc_foregrnd_menu, */
+    /*                         &iflags.wc_foregrnd_message, */
+    /*                         &iflags.wc_foregrnd_status, */
+    /*                         &iflags.wc_foregrnd_text }; */
+    /* static char **bgp[] = { &iflags.wc_backgrnd_menu, */
+    /*                         &iflags.wc_backgrnd_message, */
+    /*                         &iflags.wc_backgrnd_status, */
+    /*                         &iflags.wc_backgrnd_text }; */
 
     Strcpy(buf, op);
     newop = mungspaces(buf);
@@ -6055,21 +6074,21 @@ char *op;
         if (*newop)
             *newop++ = '\0';
 
-        for (j = 0; j < 4; ++j) {
-            if (!strcmpi(wn, wnames[j]) || !strcmpi(wn, shortnames[j])) {
-                if (tfg && !strstri(tfg, " ")) {
-                    if (*fgp[j])
-                        free((genericptr_t) *fgp[j]);
-                    *fgp[j] = dupstr(tfg);
-                }
-                if (tbg && !strstri(tbg, " ")) {
-                    if (*bgp[j])
-                        free((genericptr_t) *bgp[j]);
-                    *bgp[j] = dupstr(tbg);
-                }
-                break;
-            }
-        }
+        /* for (j = 0; j < 4; ++j) { */
+        /*     if (!strcmpi(wn, wnames[j]) || !strcmpi(wn, shortnames[j])) { */
+        /*         if (tfg && !strstri(tfg, " ")) { */
+        /*             if (*fgp[j]) */
+        /*                 free((genericptr_t) *fgp[j]); */
+        /*             *fgp[j] = dupstr(tfg); */
+        /*         } */
+        /*         if (tbg && !strstri(tbg, " ")) { */
+        /*             if (*bgp[j]) */
+        /*                 free((genericptr_t) *bgp[j]); */
+        /*             *bgp[j] = dupstr(tbg); */
+        /*         } */
+        /*         break; */
+        /*     } */
+        /* } */
     }
     return 1;
 }

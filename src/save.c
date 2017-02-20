@@ -166,9 +166,9 @@ dosave0()
                          in the event of an impossible() call */
 
     /* undo date-dependent luck adjustments made at startup time */
-    if (flags.moonphase == FULL_MOON) /* ut-sally!fletcher */
+    if (uflags.moonphase == FULL_MOON) /* ut-sally!fletcher */
         change_luck(-1);              /* and unido!ab */
-    if (flags.friday13)
+    if (uflags.friday13)
         change_luck(1);
     if (iflags.window_inited)
         HUP clear_nhwindow(WIN_MESSAGE);
@@ -287,7 +287,7 @@ register int fd, mode;
     uid = (unsigned long) getuid();
     bwrite(fd, (genericptr_t) &uid, sizeof uid);
     bwrite(fd, (genericptr_t) &context, sizeof(struct context_info));
-    bwrite(fd, (genericptr_t) &flags, sizeof(struct flag));
+    bwrite(fd, (genericptr_t) &uflags, sizeof(struct flag));
 #ifdef SYSFLAGS
     bwrite(fd, (genericptr_t) &sysflags, sizeof(struct sysflag));
 #endif
@@ -382,7 +382,7 @@ savestateinlock()
      * noop pid rewriting will take place on the first "checkpoint" after
      * the game is started or restored, if checkpointing is off.
      */
-    if (flags.ins_chkpt || havestate) {
+    if (uflags.ins_chkpt || havestate) {
         /* save the rest of the current game state in the lock file,
          * following the original int pid, the current level number,
          * and the current savefile name, which should not be subject
@@ -411,7 +411,7 @@ savestateinlock()
             return;
         }
         (void) write(fd, (genericptr_t) &hackpid, sizeof(hackpid));
-        if (flags.ins_chkpt) {
+        if (uflags.ins_chkpt) {
             int currlev = ledger_no(&u.uz);
 
             (void) write(fd, (genericptr_t) &currlev, sizeof(currlev));
@@ -426,7 +426,7 @@ savestateinlock()
         }
         bclose(fd);
     }
-    havestate = flags.ins_chkpt;
+    havestate = uflags.ins_chkpt;
 }
 #endif
 
@@ -603,6 +603,7 @@ boolean rlecomp;
     nhUse(rlecomp);
 #endif /* ?RLECOMP */
     bwrite(fd, (genericptr_t) levl, sizeof levl);
+    bwrite(fd, (genericptr_t) you_player->p_locations_sub, sizeof you_player->p_locations_sub);
 }
 
 /*ARGSUSED*/

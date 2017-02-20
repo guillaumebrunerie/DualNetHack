@@ -102,7 +102,7 @@ char *outbuf;
     struct obj *otmp;
     boolean fakeobj, isyou = (mon == &youmonst);
     int x = isyou ? u.ux : mon->mx, y = isyou ? u.uy : mon->my,
-        glyph = (level.flags.hero_memory && !isyou) ? levl[x][y].glyph
+        glyph = (level.flags.hero_memory && !isyou) ? levl_s[x][y].glyph
                                                     : glyph_at(x, y);
 
     *outbuf = '\0';
@@ -460,7 +460,7 @@ char *buf, *monbuf;
                    Is_airlevel(&u.uz) ? "cloudy area" : "fog/vapor cloud");
             break;
         case S_stone:
-            if (!levl[x][y].seenv) {
+            if (!levl_s[x][y].seenv) {
                 Strcpy(buf, "unexplored");
                 break;
             } else if (Underwater && !Is_waterlevel(&u.uz)) {
@@ -788,7 +788,7 @@ const char **firstmatch;
            symbol; firstmatch is assumed to already be set for '@' */
         if ((looked ? (sym == showsyms[S_HUMAN + SYM_OFF_M]
                        && cc.x == u.ux && cc.y == u.uy)
-                    : (sym == def_monsyms[S_HUMAN].sym && !flags.showrace))
+                    : (sym == def_monsyms[S_HUMAN].sym && !uflags.showrace))
             && !(Race_if(PM_HUMAN) || Race_if(PM_ELF)) && !Upolyd)
             found += append_str(out_str, "you"); /* tack on "or you" */
     }
@@ -975,7 +975,7 @@ coord *click_cc;
     int sym;              /* typed symbol or converted glyph */
     int found;            /* count of matching syms found */
     coord cc;             /* screen pos of unknown glyph */
-    boolean save_verbose; /* saved value of flags.verbose */
+    boolean save_verbose; /* saved value of uflags.verbose */
     boolean from_screen;  /* question from the screen */
 
     if (!clicklook) {
@@ -994,15 +994,15 @@ coord *click_cc;
             /* 'y' and 'n' to keep backwards compatibility with previous
                versions: "Specify unknown object by cursor?" */
             add_menu(win, NO_GLYPH, &any,
-                     flags.lootabc ? 0 : any.a_char, 'y', ATR_NONE,
+                     uflags.lootabc ? 0 : any.a_char, 'y', ATR_NONE,
                      "something on the map", MENU_UNSELECTED);
             any.a_char = 'i';
             add_menu(win, NO_GLYPH, &any,
-                     flags.lootabc ? 0 : any.a_char, 0, ATR_NONE,
+                     uflags.lootabc ? 0 : any.a_char, 0, ATR_NONE,
                      "something you're carrying", MENU_UNSELECTED);
             any.a_char = '?';
             add_menu(win, NO_GLYPH, &any,
-                     flags.lootabc ? 0 : any.a_char, 'n', ATR_NONE,
+                     uflags.lootabc ? 0 : any.a_char, 'n', ATR_NONE,
                      "something else (by symbol or name)", MENU_UNSELECTED);
             if (!u.uswallow && !Hallucination) {
                 any = zeroany;
@@ -1015,19 +1015,19 @@ coord *click_cc;
                    bogus monster type, so suppress when hallucinating */
                 any.a_char = 'm';
                 add_menu(win, NO_GLYPH, &any,
-                         flags.lootabc ? 0 : any.a_char, 0, ATR_NONE,
+                         uflags.lootabc ? 0 : any.a_char, 0, ATR_NONE,
                          "nearby monsters", MENU_UNSELECTED);
                 any.a_char = 'M';
                 add_menu(win, NO_GLYPH, &any,
-                         flags.lootabc ? 0 : any.a_char, 0, ATR_NONE,
+                         uflags.lootabc ? 0 : any.a_char, 0, ATR_NONE,
                          "all monsters shown on map", MENU_UNSELECTED);
                 any.a_char = 'o';
                 add_menu(win, NO_GLYPH, &any,
-                         flags.lootabc ? 0 : any.a_char, 0, ATR_NONE,
+                         uflags.lootabc ? 0 : any.a_char, 0, ATR_NONE,
                          "nearby objects", MENU_UNSELECTED);
                 any.a_char = 'O';
                 add_menu(win, NO_GLYPH, &any,
-                         flags.lootabc ? 0 : any.a_char, 0, ATR_NONE,
+                         uflags.lootabc ? 0 : any.a_char, 0, ATR_NONE,
                          "all objects shown on map", MENU_UNSELECTED);
             }
             end_menu(win, "What do you want to look at:");
@@ -1104,8 +1104,8 @@ coord *click_cc;
     }
 
     /* Save the verbose flag, we change it later. */
-    save_verbose = flags.verbose;
-    flags.verbose = flags.verbose && !quick;
+    save_verbose = uflags.verbose;
+    uflags.verbose = uflags.verbose && !quick;
     /*
      * The user typed one letter, or we're identifying from the screen.
      */
@@ -1117,7 +1117,7 @@ coord *click_cc;
 
         if (from_screen || clicklook) {
             if (from_screen) {
-                if (flags.verbose)
+                if (uflags.verbose)
                     pline("Please move the cursor to %s.",
                           what_is_an_unknown_object);
                 else
@@ -1125,10 +1125,10 @@ coord *click_cc;
 
                 ans = getpos(&cc, quick, what_is_an_unknown_object);
                 if (ans < 0 || cc.x < 0) {
-                    flags.verbose = save_verbose;
+                    uflags.verbose = save_verbose;
                     return 0; /* done */
                 }
-                flags.verbose = FALSE; /* only print long question once */
+                uflags.verbose = FALSE; /* only print long question once */
             }
         }
 
@@ -1143,7 +1143,7 @@ coord *click_cc;
 
             /* check the data file for information about this thing */
             if (found == 1 && ans != LOOK_QUICK && ans != LOOK_ONCE
-                && (ans == LOOK_VERBOSE || (flags.help && !quick))
+                && (ans == LOOK_VERBOSE || (uflags.help && !quick))
                 && !clicklook) {
                 char temp_buf[BUFSZ];
 
@@ -1157,7 +1157,7 @@ coord *click_cc;
 
     } while (from_screen && !quick && ans != LOOK_ONCE && !clicklook);
 
-    flags.verbose = save_verbose;
+    uflags.verbose = save_verbose;
     return 0;
 }
 
@@ -1439,9 +1439,9 @@ int *depth, lnum;
                 }
             }
         } else if (!strcmpi(buf, "rest_on_space")) {
-            newcond = flags.rest_on_space;
+            newcond = uflags.rest_on_space;
         } else if (!strcmpi(buf, "debug") || !strcmpi(buf, "wizard")) {
-            newcond = flags.debug; /* == wizard */
+            newcond = uflags.debug; /* == wizard */
         } else if (!strcmpi(buf, "shell")) {
 #ifdef SHELL
             /* should we also check sysopt.shellers? */

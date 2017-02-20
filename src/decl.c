@@ -5,7 +5,7 @@
 #include "hack.h"
 
 int NDECL((*afternmv));
-int NDECL((*occupation));
+/* int NDECL((*occupation)); */
 
 /* from xxxmain.c */
 const char *hname = 0; /* name of the game (argv[0] of main) */
@@ -19,26 +19,16 @@ char *catmore = 0; /* default pager */
 
 NEARDATA int bases[MAXOCLASSES] = DUMMY;
 
-NEARDATA int multi = 0;
-const char *multi_reason = NULL;
-NEARDATA int nroom = 0;
-NEARDATA int nsubroom = 0;
-NEARDATA int occtime = 0;
-
 /* maze limits must be even; masking off lowest bit guarantees that */
 int x_maze_max = (COLNO - 1) & ~1, y_maze_max = (ROWNO - 1) & ~1;
 
 int otg_temp; /* used by object_to_glyph() [otg] */
-
-NEARDATA int in_doagain = 0;
 
 /*
  *      The following structure will be initialized at startup time with
  *      the level numbers of some "important" things in the game.
  */
 struct dgn_topology dungeon_topology = { DUMMY };
-
-struct q_score quest_status = DUMMY;
 
 NEARDATA int warn_obj_cnt = 0;
 NEARDATA int smeq[MAXNROFROOMS + 1] = DUMMY;
@@ -48,8 +38,6 @@ NEARDATA char *save_cm = 0;
 NEARDATA struct kinfo killer = DUMMY;
 NEARDATA long done_money = 0;
 const char *nomovemsg = 0;
-NEARDATA char plname[PL_NSIZ] = DUMMY; /* player name */
-NEARDATA char pl_character[PL_CSIZ] = DUMMY;
 NEARDATA char pl_race = '\0';
 
 NEARDATA char pl_fruit[PL_FSIZ] = DUMMY;
@@ -100,13 +88,6 @@ NEARDATA struct multishot m_shot = { 0, 0, STRANGE_OBJECT, FALSE };
 
 NEARDATA dungeon dungeons[MAXDUNGEON]; /* ini'ed by init_dungeon() */
 NEARDATA s_level *sp_levchn;
-NEARDATA stairway upstair = { 0, 0, { 0, 0 }, 0 },
-                  dnstair = { 0, 0, { 0, 0 }, 0 };
-NEARDATA stairway upladder = { 0, 0, { 0, 0 }, 0 },
-                  dnladder = { 0, 0, { 0, 0 }, 0 };
-NEARDATA stairway sstairs = { 0, 0, { 0, 0 }, 0 };
-NEARDATA dest_area updest = { 0, 0, 0, 0, 0, 0, 0, 0 };
-NEARDATA dest_area dndest = { 0, 0, 0, 0, 0, 0, 0, 0 };
 NEARDATA coord inv_pos = { 0, 0 };
 
 NEARDATA boolean defer_see_monsters = FALSE;
@@ -125,36 +106,22 @@ NEARDATA struct mkroom rooms[(MAXNROFROOMS + 1) * 2] = { DUMMY };
 NEARDATA struct mkroom *subrooms = &rooms[MAXNROFROOMS + 1];
 struct mkroom *upstairs_room, *dnstairs_room, *sstairs_room;
 
-dlevel_t level; /* level map */
 struct trap *ftrap = (struct trap *) 0;
-NEARDATA struct monst youmonst = DUMMY;
-NEARDATA struct context_info context = DUMMY;
-NEARDATA struct flag flags = DUMMY;
 #ifdef SYSFLAGS
 NEARDATA struct sysflag sysflags = DUMMY;
 #endif
-NEARDATA struct instance_flags iflags = DUMMY;
-NEARDATA struct you u = DUMMY;
 NEARDATA time_t ubirthday = DUMMY;
 NEARDATA struct u_realtime urealtime = DUMMY;
 
-schar lastseentyp[COLNO][ROWNO] = {
-    DUMMY
-}; /* last seen/touched dungeon typ */
+player player1 = DUMMY;
+player player2 = DUMMY;
 
-NEARDATA struct obj
-    *invent = (struct obj *) 0,
-    *uwep = (struct obj *) 0, *uarm = (struct obj *) 0,
-    *uswapwep = (struct obj *) 0,
-    *uquiver = (struct obj *) 0,       /* quiver */
-        *uarmu = (struct obj *) 0,     /* under-wear, so to speak */
-            *uskin = (struct obj *) 0, /* dragon armor, if a dragon */
-                *uarmc = (struct obj *) 0, *uarmh = (struct obj *) 0,
-    *uarms = (struct obj *) 0, *uarmg = (struct obj *) 0,
-    *uarmf = (struct obj *) 0, *uamul = (struct obj *) 0,
-    *uright = (struct obj *) 0, *uleft = (struct obj *) 0,
-    *ublindf = (struct obj *) 0, *uchain = (struct obj *) 0,
-    *uball = (struct obj *) 0;
+/* Pointers to either [player1] or [player2] */
+__thread player* you_player = &player1;
+__thread player* other_player = NULL;
+
+player* current_player = NULL;
+
 /* some objects need special handling during destruction or placement */
 NEARDATA struct obj
     *current_wand = 0,  /* wand currently zapped/applied */
@@ -182,8 +149,6 @@ const int shield_static[SHIELD_COUNT] = {
     S_ss1, S_ss2, S_ss3, S_ss2, S_ss1, S_ss2, S_ss4,
     S_ss1, S_ss2, S_ss3, S_ss2, S_ss1, S_ss2, S_ss4,
 };
-
-NEARDATA struct spell spl_book[MAXSPELL + 1] = { DUMMY };
 
 NEARDATA long moves = 1L, monstermoves = 1L;
 /* These diverge when player is Fast */
@@ -263,11 +228,11 @@ NEARDATA __thread boolean vision_full_recalc = 0;
 NEARDATA __thread char **viz_array = 0; /* used in cansee() and couldsee() macros */
 
 /* Global windowing data, defined here for multi-window-system support */
-NEARDATA winid WIN_MESSAGE = WIN_ERR;
-#ifndef STATUS_VIA_WINDOWPORT
-NEARDATA winid WIN_STATUS = WIN_ERR;
-#endif
-NEARDATA winid WIN_MAP = WIN_ERR, WIN_INVEN = WIN_ERR;
+/* NEARDATA winid WIN_MESSAGE = WIN_ERR; */
+/* #ifndef STATUS_VIA_WINDOWPORT */
+/* NEARDATA winid WIN_STATUS = WIN_ERR; */
+/* #endif */
+/* NEARDATA winid WIN_MAP = WIN_ERR, WIN_INVEN = WIN_ERR; */
 char toplines[TBUFSZ];
 /* Windowing stuff that's really tty oriented, but present for all ports */
 struct tc_gbl_data tc_gbl_data = { 0, 0, 0, 0 }; /* AS,AE, LI,CO */

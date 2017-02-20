@@ -352,7 +352,7 @@ register boolean nearshop;
               && (mvitals[PM_KOP_KAPTAIN].mvflags & G_GONE));
 
     if (!angry_guards(!!Deaf) && nokops) {
-        if (flags.verbose && !Deaf)
+        if (uflags.verbose && !Deaf)
             pline("But no one seems to respond to it.");
         return;
     }
@@ -365,14 +365,14 @@ register boolean nearshop;
 
         if (nearshop) {
             /* Create swarm around you, if you merely "stepped out" */
-            if (flags.verbose)
+            if (uflags.verbose)
                 pline_The("Keystone Kops appear!");
             mm.x = u.ux;
             mm.y = u.uy;
             makekops(&mm);
             return;
         }
-        if (flags.verbose)
+        if (uflags.verbose)
             pline_The("Keystone Kops are after you!");
         /* Create swarm near down staircase (hinders return to level) */
         mm.x = xdnstair;
@@ -2591,11 +2591,11 @@ char *buf;
                                            "most renowned and sacred" };
     Strcat(buf, honored[rn2(SIZE(honored) - 1) + u.uevent.udemigod]);
     if (is_vampire(youmonst.data))
-        Strcat(buf, (flags.female) ? " dark lady" : " dark lord");
+        Strcat(buf, (uflags.female) ? " dark lady" : " dark lord");
     else if (is_elf(youmonst.data))
-        Strcat(buf, (flags.female) ? " hiril" : " hir");
+        Strcat(buf, (uflags.female) ? " hiril" : " hir");
     else
-        Strcat(buf, !is_human(youmonst.data) ? " creature" : (flags.female)
+        Strcat(buf, !is_human(youmonst.data) ? " creature" : (uflags.female)
                                                                  ? " lady"
                                                                  : " sir");
 }
@@ -3316,7 +3316,7 @@ long cost;
     level.damagelist = tmp_dam;
     /* If player saw damage, display as a wall forever */
     if (cansee(x, y))
-        levl[x][y].seenv = SVALL;
+        levl_s[x][y].seenv = SVALL;
 }
 
 /*
@@ -3564,7 +3564,7 @@ boolean catchup; /* restoring a level */
 
         if (IS_WALL(tmp_dam->typ) && cansee(x, y)) {
             /* Player sees actual repair process, so they KNOW it's a wall */
-            levl[x][y].seenv = SVALL;
+            levl_s[x][y].seenv = SVALL;
             newsym(x, y);
         }
         /* Mark this wall as "repaired".  There currently is no code
@@ -3755,10 +3755,10 @@ register int fall;
                 if (u.utraptype == TT_PIT)
                     verbalize(
                         "Be careful, %s, or you might fall through the floor.",
-                        flags.female ? "madam" : "sir");
+                        uflags.female ? "madam" : "sir");
                 else
                     verbalize("%s, do not damage the floor here!",
-                        flags.female ? "Madam" : "Sir");
+                        uflags.female ? "Madam" : "Sir");
             }
         }
         if (Role_if(PM_KNIGHT)) {

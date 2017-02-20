@@ -50,18 +50,18 @@ boolean resuming;
 
     dualnh_p2_wait();
     dualnh_switch_to_myself();
-    fprintf(stderr, "Starting the game 2 ! %d %s %s %s\n", playerid, player1.urole.name.m, player2.urole.name.m, urole.name.m);
+    fprintf(stderr, "Starting the game 2 ! %d %s %s\n", playerid, player1.p_urole.name.m, player2.p_urole.name.m);
 
     /* side-effects from the real world */
-    flags.moonphase = phase_of_the_moon();
-    if (flags.moonphase == FULL_MOON) {
+    uflags.moonphase = phase_of_the_moon();
+    if (uflags.moonphase == FULL_MOON) {
         You("are lucky!  Full moon tonight.");
         change_luck(1);
-    } else if (flags.moonphase == NEW_MOON) {
+    } else if (uflags.moonphase == NEW_MOON) {
         pline("Be careful!  New moon tonight.");
     }
-    flags.friday13 = friday_13th();
-    if (flags.friday13) {
+    uflags.friday13 = friday_13th();
+    if (uflags.friday13) {
         pline("Watch out!  Bad things can happen on Friday the 13th.");
         change_luck(-1);
     }
@@ -212,7 +212,7 @@ boolean resuming;
 
                     if (u.ublesscnt)
                         u.ublesscnt--;
-                    if (flags.time && !context.run)
+                    if (uflags.time && !context.run)
                         context.botl = 1;
 
                     /* One possible result of prayer is healing.  Whether or
@@ -413,12 +413,6 @@ boolean resuming;
         /****************************************/
         /* once-per-player-input things go here */
         /****************************************/
-
-        /* if (initial_pass) { */
-        /*      dualnh_p2_wait(); */
-        /*      dualnh_switch_to_myself(); */
-        /*      fprintf(stderr, "Starting the game 3 ! %i %s %s %s\n", playerid, player1.urole.name.m, player2.urole.name.m, urole.name.m); */
-        /* } */
         
         clear_splitobjs();
         find_ac();
@@ -449,13 +443,14 @@ boolean resuming;
              you_player->finished_turn = 0;
              current_player = other_player;
              dualnh_zero_queue();
-        /*              u.ghost_x = u.ux; */
-        /* u.ghost_y = u.uy; */
-        /* u.dist_from_mv_queue = 0; */
-             // At this point, the current thread still holds the lock, so the other one can’t wake up just
-             // yet. But then we will go in the while just after and release the lock in the [queue_next_char].
+             /* u.ghost_x = u.ux; */
+             /* u.ghost_y = u.uy; */
+             /* u.dist_from_mv_queue = 0; */
+             /* At this point, the current thread still holds the lock, so the other one can’t wake up just
+              * yet. But then we will go in the while just after and release the lock in the [queue_next_char].
+              */
         }
-        /* Ping the other player so that it can start playing if it’s their turn
+        /* Ping the other player so that they can start playing if it’s their turn
          * or at least update the display otherwise
          */
         tcp_send_string_to(you_player->server_socket, "");
@@ -476,10 +471,11 @@ boolean resuming;
              }
 
              fprintf(stderr, "Queueing (player %i)…\n", playerid);
-             fprintf(stderr, "glyphs : %d, %d, %d\n", player1.locations[10][5].glyph, player2.locations[10][5].glyph, levl[10][5].glyph);
-             // This pushes all chars to a queue, which should be:
-             // * displayed immediately on change
-             // * used subsequently by [tgetchar] in the client
+             /* fprintf(stderr, "glyphs : %d, %d, %d\n", player1.locations[10][5].glyph, player2.locations[10][5].glyph, levl[10][5].glyph); */
+             /* This pushes all chars to a queue, which should be:
+              * - displayed immediately on change
+              * - used subsequently by [tgetchar] in the client
+              */
              cmdx = nhgetch();
              cmd = cmdx % 1024;
 
@@ -489,14 +485,14 @@ boolean resuming;
              fprintf(stderr, "New queue (player %i) : %s\n", playerid, dualnh_queue_str());
         }
         tmp_at(DISP_END, 0);
-        newsym(other_player->u.ux, other_player->u.uy);
+        newsym(o_u.ux, o_u.uy);
         newsym(u.ux, u.uy);
 
         curs(WIN_MAP, 1, ROWNO-1);
         putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
         curs(WIN_MAP, 33, ROWNO-1);
         putstr(WIN_MAP, ATR_INVERSE, "It's your turn");
-        curs(WIN_MAP, you_player->u.ux, you_player->u.uy);
+        curs(WIN_MAP, u.ux, u.uy);
 
 
         context.move = 1;
@@ -545,7 +541,7 @@ boolean resuming;
             if (!multi) {
                 /* lookaround may clear multi */
                 context.move = 0;
-                if (flags.time)
+                if (uflags.time)
                     context.botl = 1;
                 continue;
             }
@@ -567,15 +563,15 @@ boolean resuming;
         if (u.utotype)       /* change dungeon level */
             deferred_goto(); /* after rhack() */
         /* !context.move here: multiple movement command stopped */
-        else if (flags.time && (!context.move || !context.mv))
+        else if (uflags.time && (!context.move || !context.mv))
             context.botl = 1;
 
         if (vision_full_recalc)
             vision_recalc(0); /* vision! */
         /* when running in non-tport mode, this gets done through domove() */
-        if ((!context.run || flags.runmode == RUN_TPORT)
+        if ((!context.run || uflags.runmode == RUN_TPORT)
             && (multi && (!context.travel ? !(multi % 7) : !(moves % 7L)))) {
-            if (flags.time && context.run)
+            if (uflags.time && context.run)
                 context.botl = 1;
             display_nhwindow(WIN_MAP, FALSE);
         }
@@ -655,7 +651,7 @@ newgame()
     if (playerid == 1)
       init_objects(); /* must be before u_init() */
 
-    flags.pantheon = -1; /* role_init() will reset this */
+    uflags.pantheon = -1; /* role_init() will reset this */
     role_init();         /* must be before init_dungeons(), u_init(),
                           * and init_artifacts() */
 
@@ -679,9 +675,20 @@ newgame()
     /* quest_init();  --  Now part of role_init() */
 
     if (playerid == 1)
-         mklev();
-    else
-         dualnh_save_glyphmap();
+        mklev();
+    else {
+        player2.p_level = &player1.p_level_actual;
+        clear_levl_s(levl_s);
+        nroom = 0;
+        rooms[0].hx = -1;
+        nsubroom = 0;
+        subrooms[0].hx = -1;
+        doorindex = 0;
+        xdnstair = ydnstair = xupstair = yupstair = 0;
+        sstairs.sx = sstairs.sy = 0;
+        xdnladder = ydnladder = xupladder = yupladder = 0;
+        clear_regions();
+    }
 
     dualnh_save_stairs();
     u_on_upstairs();
@@ -694,7 +701,7 @@ newgame()
     (void) makedog();
     docrt();
 
-    if (flags.legacy) {
+    if (uflags.legacy) {
         flush_screen(1);
         com_pager(1);
     }
@@ -717,7 +724,7 @@ welcome(new_game)
 boolean new_game; /* false => restoring an old game */
 {
     char buf[BUFSZ];
-    boolean currentgend = Upolyd ? u.mfemale : flags.female;
+    boolean currentgend = Upolyd ? u.mfemale : uflags.female;
 
     /*
      * The "welcome back" message always describes your innate form
@@ -733,7 +740,7 @@ boolean new_game; /* false => restoring an old game */
     if (!urole.name.f
         && (new_game
                 ? (urole.allow & ROLE_GENDMASK) == (ROLE_MALE | ROLE_FEMALE)
-                : currentgend != flags.initgend))
+                : currentgend != uflags.initgend))
         Sprintf(eos(buf), " %s", genders[currentgend].adj);
 
     pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s."
@@ -804,7 +811,7 @@ const char *msg;
 {
     if (multi > 0 && !context.travel) {
         nomul(0);
-        if (flags.verbose && msg)
+        if (uflags.verbose && msg)
             Norep("%s", msg);
     }
 }

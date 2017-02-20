@@ -810,7 +810,7 @@ boolean artif;
                 break;
             case SLIME_MOLD:
                 otmp->spe = context.current_fruit;
-                flags.made_fruit = TRUE;
+                uflags.made_fruit = TRUE;
                 break;
             case KELP_FROND:
                 otmp->quan = (long) rnd(2);

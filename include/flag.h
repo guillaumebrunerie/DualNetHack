@@ -25,10 +25,10 @@ struct flag {
     boolean confirm;   /* confirm before hitting tame monsters */
     boolean dark_room; /* show shadows in lit rooms */
     boolean debug;     /* in debugging mode */
-#define wizard flags.debug
+#define wizard uflags.debug
     boolean end_own; /* list all own scores */
     boolean explore; /* in exploration mode */
-#define discover flags.explore
+#define discover uflags.explore
     boolean female;
     boolean friday13;        /* it's Friday the 13th */
     boolean help;            /* look in data file for info about stuff */
@@ -374,11 +374,11 @@ struct instance_flags {
 #endif
 #define preload_tiles wc_preload_tiles
 
-extern NEARDATA struct flag flags;
+#define uflags you_player->p_flags
 #ifdef SYSFLAGS
 extern NEARDATA struct sysflag sysflags;
 #endif
-extern NEARDATA struct instance_flags iflags;
+#define iflags you_player->p_iflags
 
 /* last_msg values
  * Usage:
@@ -407,23 +407,23 @@ enum runmode_types {
 
 /* paranoid confirmation prompting */
 /* any yes confirmations also require explicit no (or ESC) to reject */
-#define ParanoidConfirm ((flags.paranoia_bits & PARANOID_CONFIRM) != 0)
+#define ParanoidConfirm ((uflags.paranoia_bits & PARANOID_CONFIRM) != 0)
 /* quit: yes vs y for "Really quit?" and "Enter explore mode?" */
-#define ParanoidQuit ((flags.paranoia_bits & PARANOID_QUIT) != 0)
+#define ParanoidQuit ((uflags.paranoia_bits & PARANOID_QUIT) != 0)
 /* die: yes vs y for "Die?" (dying in explore mode or wizard mode) */
-#define ParanoidDie ((flags.paranoia_bits & PARANOID_DIE) != 0)
+#define ParanoidDie ((uflags.paranoia_bits & PARANOID_DIE) != 0)
 /* hit: yes vs y for "Save bones?" in wizard mode */
-#define ParanoidBones ((flags.paranoia_bits & PARANOID_BONES) != 0)
+#define ParanoidBones ((uflags.paranoia_bits & PARANOID_BONES) != 0)
 /* hit: yes vs y for "Really attack <the peaceful monster>?" */
-#define ParanoidHit ((flags.paranoia_bits & PARANOID_HIT) != 0)
+#define ParanoidHit ((uflags.paranoia_bits & PARANOID_HIT) != 0)
 /* pray: ask "Really pray?" (accepts y answer, doesn't require yes),
    taking over for the old prayconfirm boolean option */
-#define ParanoidPray ((flags.paranoia_bits & PARANOID_PRAY) != 0)
+#define ParanoidPray ((uflags.paranoia_bits & PARANOID_PRAY) != 0)
 /* remove: remove ('R') and takeoff ('T') commands prompt for an inventory
    item even when only one accessory or piece of armor is currently worn */
-#define ParanoidRemove ((flags.paranoia_bits & PARANOID_REMOVE) != 0)
+#define ParanoidRemove ((uflags.paranoia_bits & PARANOID_REMOVE) != 0)
 /* breakwand: Applying a wand */
-#define ParanoidBreakwand ((flags.paranoia_bits & PARANOID_BREAKWAND) != 0)
+#define ParanoidBreakwand ((uflags.paranoia_bits & PARANOID_BREAKWAND) != 0)
 
 /* command parsing, mainly dealing with number_pad handling;
    not saved and restored */

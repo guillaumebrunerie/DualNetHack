@@ -182,7 +182,7 @@ doread()
 
     /* outrumor has its own blindness check */
     if (scroll->otyp == FORTUNE_COOKIE) {
-        if (flags.verbose)
+        if (uflags.verbose)
             You("break up the cookie and throw away the pieces.");
         outrumor(bcsign(scroll), BY_COOKIE);
         if (!Blind)
@@ -203,7 +203,7 @@ doread()
             return 0;
         }
         u.uconduct.literate++;
-        if (flags.verbose)
+        if (uflags.verbose)
             pline("It reads:");
         pline("\"%s\"", (scroll->otyp == T_SHIRT) ? tshirt_text(scroll, buf)
                                                   : apron_text(scroll, buf));
@@ -228,7 +228,7 @@ doread()
         if (Blind) {
             You("feel the embossed numbers:");
         } else {
-            if (flags.verbose)
+            if (uflags.verbose)
                 pline("It reads:");
             pline("\"%s\"",
                   scroll->oartifact
@@ -250,7 +250,7 @@ doread()
             You_cant("feel any Braille writing.");
             return 0;
         }
-        if (flags.verbose)
+        if (uflags.verbose)
             pline("It reads:");
         pline("\"Magic Marker(TM) Red Ink Marker Pen. Water Soluble.\"");
         u.uconduct.literate++;
@@ -258,7 +258,7 @@ doread()
     } else if (scroll->oclass == COIN_CLASS) {
         if (Blind)
             You("feel the embossed words:");
-        else if (flags.verbose)
+        else if (uflags.verbose)
             You("read:");
         pline("\"1 Zorkmid. 857 GUE. In Frobs We Trust.\"");
         u.uconduct.literate++;
@@ -772,9 +772,9 @@ int howmuch;
         for (zy = 0; zy < ROWNO; zy++)
             if (howmuch & ALL_MAP || rn2(7)) {
                 /* Zonk all memory of this location. */
-                levl[zx][zy].seenv = 0;
-                levl[zx][zy].waslit = 0;
-                levl[zx][zy].glyph = cmap_to_glyph(S_stone);
+                levl_s[zx][zy].seenv = 0;
+                levl_s[zx][zy].waslit = 0;
+                levl_s[zx][zy].glyph = cmap_to_glyph(S_stone);
                 lastseentyp[zx][zy] = STONE;
             }
     /* forget overview data for this level */
@@ -1677,7 +1677,7 @@ boolean confused, helmet_protects, byu, skip_uswallow;
                 pline("Fortunately, you are wearing a hard helmet.");
                 if (dmg > 2)
                     dmg = 2;
-            } else if (flags.verbose) {
+            } else if (uflags.verbose) {
                 pline("%s does not protect you.", Yname2(uarmh));
             }
         }
@@ -2166,7 +2166,7 @@ int how;
                      * circumstances.  Who's speaking?  Divine pronouncements
                      * aren't supposed to be hampered by deafness....
                      */
-                    if (flags.verbose)
+                    if (uflags.verbose)
                         pline("A thunderous voice booms through the caverns:");
                     verbalize("No, mortal!  That will not be done.");
                 }
@@ -2185,7 +2185,7 @@ int how;
         if (Upolyd)
             Strcpy(buf, youmonst.data->mname);
         else {
-            Strcpy(buf, (flags.female && urole.name.f) ? urole.name.f
+            Strcpy(buf, (uflags.female && urole.name.f) ? urole.name.f
                                                        : urole.name.m);
             buf[0] = lowc(buf[0]);
         }

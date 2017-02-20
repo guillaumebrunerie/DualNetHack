@@ -2231,7 +2231,7 @@ int src;
     } else if (match_varname(buf, "ROLE", 4)
                || match_varname(buf, "CHARACTER", 4)) {
         if ((len = str2role(bufp)) >= 0)
-            flags.initrole = len;
+            uflags.initrole = len;
     } else if (match_varname(buf, "DOGNAME", 3)) {
         (void) strncpy(dogname, bufp, PL_PSIZ - 1);
     } else if (match_varname(buf, "CATNAME", 3)) {

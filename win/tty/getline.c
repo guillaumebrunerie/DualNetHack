@@ -26,7 +26,9 @@ extern int NDECL(extcmd_via_menu); /* cmd.c */
 
 extern char erase_char, kill_char; /* from appropriate tty.c file */
 
-int tgetch(void);
+/* int tgetch(void); */
+void dualnh_hide_queueing(void);
+void dualnh_show_queueing(void);
 
 /*
  * Read a line closed with '\n' into the array char bufp[BUFSZ].
@@ -353,6 +355,7 @@ tgetch()
      }
 }
 
+/* Probably to get rid of, or at least clean-up */
 int
 tty_nhgetch_queue_length()
 {

@@ -12,23 +12,40 @@ STATIC_DCL int FDECL(extra_pref, (struct monst *, struct obj *));
 const struct worn {
     long w_mask;
     struct obj **w_obj;
-} worn[] = { { W_ARM, &uarm },
-             { W_ARMC, &uarmc },
-             { W_ARMH, &uarmh },
-             { W_ARMS, &uarms },
-             { W_ARMG, &uarmg },
-             { W_ARMF, &uarmf },
-             { W_ARMU, &uarmu },
-             { W_RINGL, &uleft },
-             { W_RINGR, &uright },
-             { W_WEP, &uwep },
-             { W_SWAPWEP, &uswapwep },
-             { W_QUIVER, &uquiver },
-             { W_AMUL, &uamul },
-             { W_TOOL, &ublindf },
-             { W_BALL, &uball },
-             { W_CHAIN, &uchain },
-             { 0, 0 } };
+} worn[][17] = { { { W_ARM, &player1.p_uarm },
+                 { W_ARMC, &player1.p_uarmc },
+                 { W_ARMH, &player1.p_uarmh },
+                 { W_ARMS, &player1.p_uarms },
+                 { W_ARMG, &player1.p_uarmg },
+                 { W_ARMF, &player1.p_uarmf },
+                 { W_ARMU, &player1.p_uarmu },
+                 { W_RINGL, &player1.p_uleft },
+                 { W_RINGR, &player1.p_uright },
+                 { W_WEP, &player1.p_uwep },
+                 { W_SWAPWEP, &player1.p_uswapwep },
+                 { W_QUIVER, &player1.p_uquiver },
+                 { W_AMUL, &player1.p_uamul },
+                 { W_TOOL, &player1.p_ublindf },
+                 { W_BALL, &player1.p_uball },
+                 { W_CHAIN, &player1.p_uchain },
+                 { 0, 0 } },
+               { { W_ARM, &player2.p_uarm },
+                 { W_ARMC, &player2.p_uarmc },
+                 { W_ARMH, &player2.p_uarmh },
+                 { W_ARMS, &player2.p_uarms },
+                 { W_ARMG, &player2.p_uarmg },
+                 { W_ARMF, &player2.p_uarmf },
+                 { W_ARMU, &player2.p_uarmu },
+                 { W_RINGL, &player2.p_uleft },
+                 { W_RINGR, &player2.p_uright },
+                 { W_WEP, &player2.p_uwep },
+                 { W_SWAPWEP, &player2.p_uswapwep },
+                 { W_QUIVER, &player2.p_uquiver },
+                 { W_AMUL, &player2.p_uamul },
+                 { W_TOOL, &player2.p_ublindf },
+                 { W_BALL, &player2.p_uball },
+                 { W_CHAIN, &player2.p_uchain },
+                 { 0, 0 } }};
 
 /* This only allows for one blocking item per property */
 #define w_blocks(o, m)                                                     \
@@ -57,7 +74,7 @@ long mask;
     } else {
         if ((mask & W_ARMOR))
             u.uroleplay.nudist = FALSE;
-        for (wp = worn; wp->w_mask; wp++)
+        for (wp = worn[playerid-1]; wp->w_mask; wp++)
             if (wp->w_mask & mask) {
                 oobj = *(wp->w_obj);
                 if (oobj && !(oobj->owornmask & wp->w_mask))
@@ -117,7 +134,7 @@ register struct obj *obj;
         return;
     if (obj == uwep || obj == uswapwep)
         u.twoweap = 0;
-    for (wp = worn; wp->w_mask; wp++)
+    for (wp = worn[playerid-1]; wp->w_mask; wp++)
         if (obj == *(wp->w_obj)) {
             *(wp->w_obj) = 0;
             p = objects[obj->otyp].oc_oprop;
@@ -282,7 +299,7 @@ struct obj *obj; /* item to make known if effect can be seen */
         if (petrify) {
             /* mimic the player's petrification countdown; "slowing down"
                even if fast movement rate retained via worn speed boots */
-            if (flags.verbose)
+            if (uflags.verbose)
                 pline("%s is slowing down.", Monnam(mon));
         } else if (adjust > 0 || mon->mspeed == MFAST)
             pline("%s is suddenly moving %sfaster.", Monnam(mon), howmuch);

@@ -285,19 +285,19 @@ char c;
         str = plname;
         break;
     case 'c':
-        str = (flags.female && urole.name.f) ? urole.name.f : urole.name.m;
+        str = (uflags.female && urole.name.f) ? urole.name.f : urole.name.m;
         break;
     case 'r':
-        str = rank_of(u.ulevel, Role_switch, flags.female);
+        str = rank_of(u.ulevel, Role_switch, uflags.female);
         break;
     case 'R':
-        str = rank_of(MIN_QUEST_LEVEL, Role_switch, flags.female);
+        str = rank_of(MIN_QUEST_LEVEL, Role_switch, uflags.female);
         break;
     case 's':
-        str = (flags.female) ? "sister" : "brother";
+        str = (uflags.female) ? "sister" : "brother";
         break;
     case 'S':
-        str = (flags.female) ? "daughter" : "son";
+        str = (uflags.female) ? "daughter" : "son";
         break;
     case 'l':
         str = ldrname();

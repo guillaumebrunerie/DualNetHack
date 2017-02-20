@@ -20,7 +20,7 @@
 
 struct dig_info { /* apply.c, hack.c */
     int effort;
-    d_level level;
+    d_level diglevel;
     coord pos;
     long lastdigtime;
     boolean down, chew, warned, quiet;
@@ -141,6 +141,6 @@ struct context_info {
     struct novel_tracking novel;
 };
 
-extern NEARDATA struct context_info context;
+#define context you_player->p_context
 
 #endif /* CONTEXT_H */

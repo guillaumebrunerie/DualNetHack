@@ -423,7 +423,7 @@ ghost_from_bottle()
     }
     pline("As you open the bottle, an enormous %s emerges!",
           Hallucination ? rndmonnam(NULL) : (const char *) "ghost");
-    if (flags.verbose)
+    if (uflags.verbose)
         You("are frightened to death, and unable to move.");
     nomul(-3);
     multi_reason = "being frightened to death";
@@ -765,7 +765,7 @@ register struct obj *otmp;
             incr_itimeout(&HDetect_monsters, i);
             for (x = 1; x < COLNO; x++) {
                 for (y = 0; y < ROWNO; y++) {
-                    if (levl[x][y].glyph == GLYPH_INVISIBLE) {
+                    if (levl_s[x][y].glyph == GLYPH_INVISIBLE) {
                         unmap_object(x, y);
                         newsym(x, y);
                     }
@@ -1129,7 +1129,7 @@ strange_feeling(obj, txt)
 struct obj *obj;
 const char *txt;
 {
-    if (flags.beginner || !txt)
+    if (uflags.beginner || !txt)
         You("have a %s feeling for a moment, then it passes.",
             Hallucination ? "normal" : "strange");
     else
@@ -1817,7 +1817,7 @@ dodip()
     /* Is there a fountain to dip into here? */
     if (IS_FOUNTAIN(here)) {
         Sprintf(qbuf, "%s%s into the fountain?", Dip_,
-                flags.verbose ? obuf : shortestname);
+                uflags.verbose ? obuf : shortestname);
         /* "Dip <the object> into the fountain?" */
         if (yn(qbuf) == 'y') {
             dipfountain(obj);
@@ -1827,7 +1827,7 @@ dodip()
         const char *pooltype = waterbody_name(u.ux, u.uy);
 
         Sprintf(qbuf, "%s%s into the %s?", Dip_,
-                flags.verbose ? obuf : shortestname, pooltype);
+                uflags.verbose ? obuf : shortestname, pooltype);
         /* "Dip <the object> into the {pool, moat, &c}?" */
         if (yn(qbuf) == 'y') {
             if (Levitation) {
@@ -1846,7 +1846,7 @@ dodip()
     }
 
     /* "What do you want to dip <the object> into? [xyz or ?*] " */
-    Sprintf(qbuf, "dip %s into", flags.verbose ? obuf : shortestname);
+    Sprintf(qbuf, "dip %s into", uflags.verbose ? obuf : shortestname);
     potion = getobj(beverages, qbuf);
     if (!potion)
         return 0;

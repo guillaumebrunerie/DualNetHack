@@ -1329,7 +1329,7 @@ const char *mesg;
 
         pline("It smells like %s.", what);
         if (yn("Eat it?") == 'n') {
-            if (flags.verbose)
+            if (uflags.verbose)
                 You("discard the open tin.");
             if (!Hallucination)
                 tin->dknown = tin->known = 1;
@@ -1376,7 +1376,7 @@ const char *mesg;
         }
 
         if (yn("Eat it?") == 'n') {
-            if (flags.verbose)
+            if (uflags.verbose)
                 You("discard the open tin.");
             costly_tin(COST_OPEN);
             goto use_up_tin;
@@ -2007,7 +2007,7 @@ struct obj *otmp;
             makeknown(typ);
             change_sex();
             You("are suddenly very %s!",
-                flags.female ? "feminine" : "masculine");
+                uflags.female ? "feminine" : "masculine");
             context.botl = 1;
             break;
         case AMULET_OF_UNCHANGING:
@@ -2216,7 +2216,7 @@ struct obj *otmp;
                won't have to wait for a prince to be rescued/revived */
             if (Race_if(PM_DWARF) && Hallucination)
                 verbalize("Heigh-ho, ho-hum, I think I'll skip work today.");
-            else if (Deaf || !flags.acoustics)
+            else if (Deaf || !uflags.acoustics)
                 You("fall asleep.");
             else
                 You_hear("sinister laughter as you fall asleep...");

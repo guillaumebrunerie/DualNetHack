@@ -3045,7 +3045,7 @@ struct monst *mtmp;
 const char *force; /* usually either "." or "!" */
 {
     if ((!cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp)
-         && !(u.uswallow && mtmp == u.ustuck)) || !flags.verbose)
+         && !(u.uswallow && mtmp == u.ustuck)) || !uflags.verbose)
         pline("%s %s it.", The(str), vtense(str, "hit"));
     else
         pline("%s %s %s%s", The(str), vtense(str, "hit"),
@@ -3059,7 +3059,7 @@ register struct monst *mtmp;
 {
     pline(
         "%s %s %s.", The(str), vtense(str, "miss"),
-        ((cansee(bhitpos.x, bhitpos.y) || canspotmon(mtmp)) && flags.verbose)
+        ((cansee(bhitpos.x, bhitpos.y) || canspotmon(mtmp)) && uflags.verbose)
             ? mon_nam(mtmp)
             : "it");
 }
@@ -3267,7 +3267,7 @@ struct obj **pobj; /* object tossed/used, set to NULL
             }
         } else {
             if (weapon == ZAPPED_WAND && obj->otyp == WAN_PROBING
-                && glyph_is_invisible(levl[bhitpos.x][bhitpos.y].glyph)) {
+                && glyph_is_invisible(levl_s[bhitpos.x][bhitpos.y].glyph)) {
                 unmap_object(bhitpos.x, bhitpos.y);
                 newsym(x, y);
             }
@@ -3314,7 +3314,7 @@ struct obj **pobj; /* object tossed/used, set to NULL
         if (weapon != ZAPPED_WAND && weapon != INVIS_BEAM) {
             /* 'I' present but no monster: erase */
             /* do this before the tmp_at() */
-            if (glyph_is_invisible(levl[bhitpos.x][bhitpos.y].glyph)
+            if (glyph_is_invisible(levl_s[bhitpos.x][bhitpos.y].glyph)
                 && cansee(x, y)) {
                 unmap_object(bhitpos.x, bhitpos.y);
                 newsym(x, y);
@@ -3956,7 +3956,7 @@ boolean say; /* Announce out of sight hit/miss events if true */
             /* reveal/unreveal invisible monsters before tmp_at() */
             if (mon && !canspotmon(mon))
                 map_invisible(sx, sy);
-            else if (!mon && glyph_is_invisible(levl[sx][sy].glyph)) {
+            else if (!mon && glyph_is_invisible(levl_s[sx][sy].glyph)) {
                 unmap_object(sx, sy);
                 newsym(sx, sy);
             }
@@ -5041,7 +5041,7 @@ makewish()
 
     promptbuf[0] = '\0';
     nothing = zeroobj; /* lint suppression; only its address matters */
-    if (flags.verbose)
+    if (uflags.verbose)
         You("may wish for an object.");
 retry:
     Strcpy(promptbuf, "For what do you wish");

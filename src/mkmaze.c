@@ -1212,10 +1212,10 @@ movebubbles()
     struct bubble *b;
     int x, y, i, j;
     struct trap *btrap;
-    static const struct rm water_pos = { cmap_to_glyph(S_water), WATER, 0, 0,
-                                         0, 0, 0, 0, 0, 0 };
-    static const struct rm air_pos = { cmap_to_glyph(S_cloud), AIR, 0, 0, 0,
-                                       1, 0, 0, 0, 0 };
+    static const struct rm water_pos = { WATER, 0, 0, 0, 0, 0, 0 };
+    static const struct rm_sub water_pos_s = { cmap_to_glyph(S_water), 0, 0 };
+    static const struct rm air_pos = { AIR, 0, 0, 1, 0, 0, 0 };
+    static const struct rm_sub air_pos_s = { cmap_to_glyph(S_cloud), 0, 0 };
 
     /* set up the portal the first time bubbles are moved */
     if (!wportal)
@@ -1314,6 +1314,7 @@ movebubbles()
                         }
 
                         levl[x][y] = water_pos;
+                        levl_s[x][y] = water_pos_s;
                         block_point(x, y);
                     }
         }
@@ -1321,6 +1322,7 @@ movebubbles()
         for (x = 0; x < COLNO; x++)
             for (y = 0; y < ROWNO; y++) {
                 levl[x][y] = air_pos;
+                levl_s[x][y] = air_pos_s;
                 unblock_point(x, y);
             }
     }
@@ -1497,7 +1499,7 @@ setup_waterlevel()
 
     for (x = xmin; x <= xmax; x++)
         for (y = ymin; y <= ymax; y++)
-            levl[x][y].glyph = Is_waterlevel(&u.uz) ? water_glyph : air_glyph;
+            levl_s[x][y].glyph = Is_waterlevel(&u.uz) ? water_glyph : air_glyph;
 
     /* make bubbles */
 

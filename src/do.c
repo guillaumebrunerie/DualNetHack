@@ -81,7 +81,7 @@ boolean pushing;
                     Strcpy(whobuf, y_monnam(u.usteed));
                 pline("%s %s %s into the %s.", upstart(whobuf),
                       vtense(whobuf, "push"), the(xname(otmp)), what);
-                if (flags.verbose && !Blind)
+                if (uflags.verbose && !Blind)
                     pline("Now you can cross it!");
                 /* no splashing in this case */
             }
@@ -110,7 +110,7 @@ boolean pushing;
                 dmg = d((Fire_resistance ? 1 : 3), 6);
                 losehp(Maybe_Half_Phys(dmg), /* lava damage */
                        "molten lava", KILLED_BY);
-            } else if (!fills_up && flags.verbose
+            } else if (!fills_up && uflags.verbose
                        && (pushing ? !Blind : cansee(rx, ry)))
                 pline("It sinks without a trace!");
         }
@@ -565,7 +565,7 @@ register struct obj *obj;
 
     if (u.uswallow) {
         /* barrier between you and the floor */
-        if (flags.verbose) {
+        if (uflags.verbose) {
             char buf[BUFSZ];
 
             /* doname can call s_suffix, reusing its buffer */
@@ -587,7 +587,7 @@ register struct obj *obj;
 
             if (levhack)
                 ELevitation = W_ART; /* other than W_ARTI */
-            if (flags.verbose)
+            if (uflags.verbose)
                 You("drop %s.", doname(obj));
             /* Ensure update when we drop gold objects */
             if (obj->oclass == COIN_CLASS)
@@ -598,7 +598,7 @@ register struct obj *obj;
                 float_down(I_SPECIAL | TIMEOUT, W_ARTI | W_ART);
             return 1;
         }
-        if (!IS_ALTAR(levl[u.ux][u.uy].typ) && flags.verbose)
+        if (!IS_ALTAR(levl[u.ux][u.uy].typ) && uflags.verbose)
             You("drop %s.", doname(obj));
     }
     dropx(obj);
@@ -747,7 +747,7 @@ doddrop()
     add_valid_menu_class(0); /* clear any classes already there */
     if (*u.ushops)
         sellobj_state(SELL_DELIBERATE);
-    if (flags.menu_style != MENU_TRADITIONAL
+    if (uflags.menu_style != MENU_TRADITIONAL
         || (result = ggetobj("drop", drop, 0, FALSE, (unsigned *) 0)) < -1)
         result = menu_drop(result);
     if (*u.ushops)
@@ -772,7 +772,7 @@ int retry;
 
     if (retry) {
         all_categories = (retry == -2);
-    } else if (flags.menu_style == MENU_FULL) {
+    } else if (uflags.menu_style == MENU_FULL) {
         all_categories = FALSE;
         n = query_category("Drop what type of items?", invent,
                            UNPAID_TYPES | ALL_TYPES | CHOOSE_ALL | BUC_BLESSED
@@ -789,7 +789,7 @@ int retry;
                 add_valid_menu_class(pick_list[i].item.a_int);
         }
         free((genericptr_t) pick_list);
-    } else if (flags.menu_style == MENU_COMBINATION) {
+    } else if (uflags.menu_style == MENU_COMBINATION) {
         unsigned ggoresults = 0;
 
         all_categories = FALSE;
@@ -925,10 +925,10 @@ dodown()
              */
             if (stairs_down)
                 stairs_down =
-                    (glyph_to_cmap(levl[u.ux][u.uy].glyph) == S_dnstair);
+                    (glyph_to_cmap(levl_s[u.ux][u.uy].glyph) == S_dnstair);
             else if (ladder_down)
                 ladder_down =
-                    (glyph_to_cmap(levl[u.ux][u.uy].glyph) == S_dnladder);
+                    (glyph_to_cmap(levl_s[u.ux][u.uy].glyph) == S_dnladder);
         }
         if (Is_airlevel(&u.uz))
             You("are floating in the %s.", surface(u.ux, u.uy));
@@ -948,7 +948,7 @@ dodown()
             return 1;
         } else if (!trap || (trap->ttyp != TRAPDOOR && trap->ttyp != HOLE)
                    || !Can_fall_thru(&u.uz) || !trap->tseen) {
-            if (flags.autodig && !context.nopick && uwep && is_pick(uwep)) {
+            if (uflags.autodig && !context.nopick && uwep && is_pick(uwep)) {
                 return use_pick_axe2(uwep);
             } else {
                 You_cant("go down here.");
@@ -1086,7 +1086,7 @@ save_currentstate()
 {
     int fd;
 
-    if (flags.ins_chkpt) {
+    if (uflags.ins_chkpt) {
         /* write out just-attained level, with pets and everything */
         fd = currentlevel_rewrite();
         if (fd < 0)
@@ -1232,21 +1232,38 @@ boolean at_stairs, falling, portal;
      * for the level being left, to recover dynamic memory in use and
      * to avoid dangling timers and light sources.
      */
-    cant_go_back = (newdungeon && In_endgame(newlevel));
-    if (!cant_go_back) {
-        update_mlstmv(); /* current monsters are becoming inactive */
-        bufon(fd);       /* use buffered output */
-    }
-    savelev(fd, ledger_no(&u.uz),
-            cant_go_back ? FREE_SAVE : (WRITE_SAVE | FREE_SAVE));
-    bclose(fd);
-    if (cant_go_back) {
-        /* discard unreachable levels; keep #0 */
-        for (l_idx = maxledgerno(); l_idx > 0; --l_idx)
-            delete_levelfile(l_idx);
-        /* mark #overview data for all dungeon branches as uninteresting */
-        for (l_idx = 0; l_idx < n_dgns; ++l_idx)
-            remdun_mapseen(l_idx);
+    if (on_level(&u.uz, &o_u.uz)) {
+        /*
+         * DualNetHack: If the other player is still at the same level,
+         * we don’t need to save, we only make sure they’re up to date.
+         */
+        if (you_player->p_level == &you_player->p_level_actual) {
+            /* The current player is the one having the copy of the
+             * current level, so we need to copy it to the other player.
+             */
+            memcpy(&other_player->p_level_actual, &you_player->p_level_actual, sizeof you_player->p_level_actual);
+            other_player->p_level = &other_player->p_level_actual;
+        } else {
+            you_player->p_level = &you_player->p_level_actual;
+        }
+        memcpy(&other_player->p_locations_sub[playerid-1], levl_s, sizeof levl_s);
+    } else {
+        cant_go_back = (newdungeon && In_endgame(newlevel));
+        if (!cant_go_back) {
+            update_mlstmv(); /* current monsters are becoming inactive */
+            bufon(fd);       /* use buffered output */
+        }
+        savelev(fd, ledger_no(&u.uz),
+                cant_go_back ? FREE_SAVE : (WRITE_SAVE | FREE_SAVE));
+        bclose(fd);
+        if (cant_go_back) {
+            /* discard unreachable levels; keep #0 */
+            for (l_idx = maxledgerno(); l_idx > 0; --l_idx)
+                delete_levelfile(l_idx);
+            /* mark #overview data for all dungeon branches as uninteresting */
+            for (l_idx = 0; l_idx < n_dgns; ++l_idx)
+                remdun_mapseen(l_idx);
+        }
     }
 
     if (Is_rogue_level(newlevel) || Is_rogue_level(&u.uz))
@@ -1278,25 +1295,39 @@ boolean at_stairs, falling, portal;
     (void) memset((genericptr_t) &updest, 0, sizeof updest);
     (void) memset((genericptr_t) &dndest, 0, sizeof dndest);
 
-    if (!(level_info[new_ledger].flags & LFILE_EXISTS)) {
-        /* entering this level for first time; make it now */
-        if (level_info[new_ledger].flags & (FORGOTTEN | VISITED)) {
-            impossible("goto_level: returning to discarded level?");
-            level_info[new_ledger].flags &= ~(FORGOTTEN | VISITED);
-        }
-        mklev();
-        new = TRUE; /* made the level */
+    if (on_level(&u.uz, &o_u.uz)) {
+        /* We arrived to the level where the other player already is */
+        you_player->p_level = &other_player->p_level_actual;
+        memcpy(levl_s, &other_player->p_locations_sub[playerid-1], sizeof levl_s);
+        upstair = other_player->p_upstair;
+        dnstair = other_player->p_dnstair;
+        upladder = other_player->p_upladder;
+        dnladder = other_player->p_dnladder;
+        sstairs = other_player->p_sstairs;
+        updest = other_player->p_updest;
+        dndest = other_player->p_dndest;
     } else {
-        /* returning to previously visited level; reload it */
-        fd = open_levelfile(new_ledger, whynot);
-        if (tricked_fileremoved(fd, whynot)) {
-            /* we'll reach here if running in wizard mode */
-            error("Cannot continue this game.");
+        if (!(level_info[new_ledger].flags & LFILE_EXISTS)) {
+            /* entering this level for first time; make it now */
+            if (level_info[new_ledger].flags & (FORGOTTEN | VISITED)) {
+                impossible("goto_level: returning to discarded level?");
+                level_info[new_ledger].flags &= ~(FORGOTTEN | VISITED);
+            }
+            mklev();
+            clear_levl_s(you_player->p_locations_sub[2-playerid]);
+            new = TRUE; /* made the level */
+        } else {
+            /* returning to previously visited level; reload it */
+            fd = open_levelfile(new_ledger, whynot);
+            if (tricked_fileremoved(fd, whynot)) {
+                /* we'll reach here if running in wizard mode */
+                error("Cannot continue this game.");
+            }
+            minit(); /* ZEROCOMP */
+            getlev(fd, hackpid, new_ledger, FALSE);
+            (void) nhclose(fd);
+            oinit(); /* reassign level dependent obj probabilities */
         }
-        minit(); /* ZEROCOMP */
-        getlev(fd, hackpid, new_ledger, FALSE);
-        (void) nhclose(fd);
-        oinit(); /* reassign level dependent obj probabilities */
     }
     reglyph_darkroom();
     /* do this prior to level-change pline messages */
@@ -1327,7 +1358,7 @@ boolean at_stairs, falling, portal;
             /* you climb up the {stairs|ladder};
                fly up the stairs; fly up along the ladder */
             great_effort = (Punished && !Levitation);
-            if (flags.verbose || great_effort)
+            if (uflags.verbose || great_effort)
                 pline("%s %s up%s the %s.",
                       great_effort ? "With great effort, you" : "You",
                       Levitation ? "float" : Flying ? "fly" : "climb",
@@ -1343,7 +1374,7 @@ boolean at_stairs, falling, portal;
             if (!u.dz) {
                 ; /* stayed on same level? (no transit effects) */
             } else if (Flying) {
-                if (flags.verbose)
+                if (uflags.verbose)
                     You("fly down %s.",
                         at_ladder ? "along the ladder" : "the stairs");
             } else if (near_capacity() > UNENCUMBERED
@@ -1363,7 +1394,7 @@ boolean at_stairs, falling, portal;
                            KILLED_BY);
                 selftouch("Falling, you");
             } else { /* ordinary descent */
-                if (flags.verbose)
+                if (uflags.verbose)
                     You("%s.", at_ladder ? "climb down the ladder"
                                          : "descend the stairs");
             }

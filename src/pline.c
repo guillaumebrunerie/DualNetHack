@@ -236,7 +236,7 @@ VA_DECL(const char *, line)
 {
     char *tmp;
 
-    if (Deaf || !flags.acoustics)
+    if (Deaf || !uflags.acoustics)
         return;
     VA_START(line);
     VA_INIT(line, const char *);

@@ -21,7 +21,7 @@ boolean
 mb_trapped(mtmp)
 struct monst *mtmp;
 {
-    if (flags.verbose) {
+    if (uflags.verbose) {
         if (cansee(mtmp->mx, mtmp->my) && !Unaware)
             pline("KABOOM!!  You see a door explode.");
         else if (!Deaf)
@@ -1250,7 +1250,7 @@ postmov:
                         || (can_fog(mtmp)
                             && vamp_shift(mtmp, &mons[PM_FOG_CLOUD],
                                           canspotmon(mtmp))))) {
-                    if (flags.verbose && canseemon(mtmp))
+                    if (uflags.verbose && canseemon(mtmp))
                         pline("%s %s under the door.", Monnam(mtmp),
                               (ptr == &mons[PM_FOG_CLOUD]
                                || ptr == &mons[PM_YELLOW_LIGHT])
@@ -1264,7 +1264,7 @@ postmov:
                         if (mb_trapped(mtmp))
                             return 2;
                     } else {
-                        if (flags.verbose) {
+                        if (uflags.verbose) {
                             if (observeit)
                                 pline("%s unlocks and opens a door.",
                                       Monnam(mtmp));
@@ -1285,7 +1285,7 @@ postmov:
                         if (mb_trapped(mtmp))
                             return 2;
                     } else {
-                        if (flags.verbose) {
+                        if (uflags.verbose) {
                             if (observeit)
                                 pline("%s opens a door.", Monnam(mtmp));
                             else if (canseeit)
@@ -1306,7 +1306,7 @@ postmov:
                         if (mb_trapped(mtmp))
                             return 2;
                     } else {
-                        if (flags.verbose) {
+                        if (uflags.verbose) {
                             if (observeit)
                                 pline("%s smashes down a door.",
                                       Monnam(mtmp));
@@ -1333,7 +1333,7 @@ postmov:
                         pline("%s eats through the iron bars.", Monnam(mtmp));
                     dissolve_bars(mtmp->mx, mtmp->my);
                     return 3;
-                } else if (flags.verbose && canseemon(mtmp))
+                } else if (uflags.verbose && canseemon(mtmp))
                     Norep("%s %s %s the iron bars.", Monnam(mtmp),
                           /* pluralization fakes verb conjugation */
                           makeplural(locomotion(ptr, "pass")),

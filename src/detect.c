@@ -491,11 +491,11 @@ register struct obj *sobj;
                         ? " then starts to tingle"
                         : "");
             if (sobj->blessed && !u.uedibility) {
-                boolean savebeginner = flags.beginner;
+                boolean savebeginner = uflags.beginner;
 
-                flags.beginner = FALSE; /* prevent non-delivery of message */
+                uflags.beginner = FALSE; /* prevent non-delivery of message */
                 strange_feeling(sobj, buf);
-                flags.beginner = savebeginner;
+                uflags.beginner = savebeginner;
                 u.uedibility = 1;
             } else
                 strange_feeling(sobj, buf);
@@ -1164,12 +1164,12 @@ struct obj **optr;
     }
 
     /* read a single character */
-    if (flags.verbose)
+    if (uflags.verbose)
         You("may look for an object or monster symbol.");
     ch = yn_function("What do you look for?", (char *) 0, '\0');
     /* Don't filter out ' ' here; it has a use */
     if ((ch != def_monsyms[S_GHOST].sym) && index(quitchars, ch)) {
-        if (flags.verbose)
+        if (uflags.verbose)
             pline1(Never_mind);
         return;
     }
@@ -1226,14 +1226,16 @@ show_map_spot(x, y)
 register int x, y;
 {
     struct rm *lev;
+    struct rm_sub *lev_s;
     struct trap *t;
     int oldglyph;
 
     if (Confusion && rn2(7))
         return;
     lev = &levl[x][y];
+    lev_s = &levl_s[x][y];
 
-    lev->seenv = SVALL;
+    lev_s->seenv = SVALL;
 
     /* Secret corridors are found, but not secret doors. */
     if (lev->typ == SCORR) {
@@ -1261,7 +1263,7 @@ register int x, y;
         } else if (glyph_is_trap(oldglyph) || glyph_is_object(oldglyph)) {
             show_glyph(x, y, oldglyph);
             if (level.flags.hero_memory)
-                lev->glyph = oldglyph;
+                lev_s->glyph = oldglyph;
         }
     }
 }
@@ -1388,9 +1390,9 @@ genericptr_t num;
             newsym(zx, zy);
             (*(int *) num)++;
         }
-        if (!canspotmon(mtmp) && !glyph_is_invisible(levl[zx][zy].glyph))
+        if (!canspotmon(mtmp) && !glyph_is_invisible(levl_s[zx][zy].glyph))
             map_invisible(zx, zy);
-    } else if (glyph_is_invisible(levl[zx][zy].glyph)) {
+    } else if (glyph_is_invisible(levl_s[zx][zy].glyph)) {
         unmap_object(zx, zy);
         newsym(zx, zy);
         (*(int *) num)++;
@@ -1511,7 +1513,7 @@ struct trap *trap;
     exercise(A_WIS, TRUE);
     feel_newsym(trap->tx, trap->ty);
 
-    if (levl[trap->tx][trap->ty].glyph != trap_to_glyph(trap)) {
+    if (levl_s[trap->tx][trap->ty].glyph != trap_to_glyph(trap)) {
         /* There's too much clutter to see your find otherwise */
         cls();
         map_trap(trap, 1);
@@ -1543,7 +1545,7 @@ boolean via_warning;
     find:
         exercise(A_WIS, TRUE);
         if (!canspotmon(mtmp)) {
-            if (glyph_is_invisible(levl[x][y].glyph)) {
+            if (glyph_is_invisible(levl_s[x][y].glyph)) {
                 /* Found invisible monster in a square which already has
                  * an 'I' in it.  Logically, this should still take time
                  * and lead to a return 1, but if we did that the player
@@ -1643,7 +1645,7 @@ register int aflag; /* intrinsic autosearch vs explicit searching */
                      * feel_location() already did it
                      */
                     if (!aflag && !mtmp && !Blind
-                        && glyph_is_invisible(levl[x][y].glyph)) {
+                        && glyph_is_invisible(levl_s[x][y].glyph)) {
                         unmap_object(x, y);
                         newsym(x, y);
                     }
@@ -1698,8 +1700,8 @@ sokoban_detect()
     /* Map the background and boulders */
     for (x = 1; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++) {
-            levl[x][y].seenv = SVALL;
-            levl[x][y].waslit = TRUE;
+            levl_s[x][y].seenv = SVALL;
+            levl_s[x][y].waslit = TRUE;
             map_background(x, y, 1);
             if ((obj = sobj_at(BOULDER, x, y)) != 0)
                 map_object(obj, 1);
@@ -1745,19 +1747,19 @@ int which_subset; /* when not full, whether to suppress objs and/or traps */
         for (x = 1; x < COLNO; x++)
             for (y = 0; y < ROWNO; y++) {
                 seenv = (full || level.flags.hero_memory)
-                           ? levl[x][y].seenv : cansee(x, y) ? SVALL : 0;
+                           ? levl_s[x][y].seenv : cansee(x, y) ? SVALL : 0;
                 if (full) {
-                    levl[x][y].seenv = SVALL;
+                    levl_s[x][y].seenv = SVALL;
                     glyph = back_to_glyph(x, y);
-                    levl[x][y].seenv = seenv;
+                    levl_s[x][y].seenv = seenv;
                 } else {
                     levl_glyph = level.flags.hero_memory
-                                    ? levl[x][y].glyph
+                                    ? levl_s[x][y].glyph
                                     : seenv
                                        ? back_to_glyph(x, y)
                                        : default_glyph;
                     /* glyph_at() returns the displayed glyph, which might
-                       be a monster.  levl[][].glyph contains the remembered
+                       be a monster.  levl_s[][].glyph contains the remembered
                        glyph, which will never be a monster (unless it is
                        the invisible monster glyph, which is handled like
                        an object, replacing any object or trap at its spot) */

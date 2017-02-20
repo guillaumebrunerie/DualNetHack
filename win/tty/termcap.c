@@ -190,7 +190,7 @@ int *wid, *hgt;
 
     tbufptr = tbuf;
     if (!strncmp(term, "5620", 4))
-        flags.null = FALSE; /* this should be a termcap flag */
+        uflags.null = FALSE; /* this should be a termcap flag */
     if (tgetent(tptr, term) < 1) {
         char buf[BUFSZ];
         (void) strncpy(buf, term,
@@ -704,7 +704,7 @@ backsp()
 void
 tty_nhbell()
 {
-    if (flags.silent)
+    if (uflags.silent)
         return;
     (void) putchar('\007'); /* curx does not change */
     (void) fflush(stdout);
@@ -748,7 +748,7 @@ tty_delay_output()
     register int i;
 #endif
 #ifdef TIMED_DELAY
-    if (flags.nap) {
+    if (uflags.nap) {
         (void) fflush(stdout);
         msleep(50); /* sleep for 50 milliseconds */
         return;
@@ -763,7 +763,7 @@ tty_delay_output()
 #else /* MICRO */
     /* BUG: if the padding character is visible, as it is on the 5620
        then this looks terrible. */
-    if (flags.null) {
+    if (uflags.null) {
 #ifdef TERMINFO
 /* cbosgd!cbcephus!pds for SYS V R2 */
 #ifdef NHSTDC

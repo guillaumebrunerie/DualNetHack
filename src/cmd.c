@@ -591,11 +591,11 @@ STATIC_PTR int
 wiz_wish(VOID_ARGS) /* Unlimited wishes for debug mode by Paul Polderman */
 {
     if (wizard) {
-        boolean save_verbose = flags.verbose;
+        boolean save_verbose = uflags.verbose;
 
-        flags.verbose = FALSE;
+        uflags.verbose = FALSE;
         makewish();
-        flags.verbose = save_verbose;
+        uflags.verbose = save_verbose;
         (void) encumber_msg();
     } else
         pline("Unavailable command '%s'.",
@@ -799,7 +799,7 @@ wiz_show_seenv(VOID_ARGS)
             if (x == u.ux && y == u.uy) {
                 row[curx] = row[curx + 1] = '@';
             } else {
-                v = levl[x][y].seenv & 0xff;
+                v = levl_s[x][y].seenv & 0xff;
                 if (v == 0)
                     row[curx] = row[curx + 1] = ' ';
                 else
@@ -1434,7 +1434,7 @@ int final; /* ENL_GAMEINPROGRESS:0, ENL_GAMEOVERALIVE, ENL_GAMEOVERDEAD */
     /* as in background_enlightenment, when poly'd we need to use the saved
        gender in u.mfemale rather than the current you-as-monster gender */
     Sprintf(buf, "%s the %s's attributes:", tmpbuf,
-            ((Upolyd ? u.mfemale : flags.female) && urole.name.f)
+            ((Upolyd ? u.mfemale : uflags.female) && urole.name.f)
                 ? urole.name.f
                 : urole.name.m);
 
@@ -1476,9 +1476,9 @@ int final;
     int innategend, difgend, difalgn;
     char buf[BUFSZ], tmpbuf[BUFSZ];
 
-    /* note that if poly'd, we need to use u.mfemale instead of flags.female
+    /* note that if poly'd, we need to use u.mfemale instead of uflags.female
        to access hero's saved gender-as-human/elf/&c rather than current one */
-    innategend = (Upolyd ? u.mfemale : flags.female) ? 1 : 0;
+    innategend = (Upolyd ? u.mfemale : uflags.female) ? 1 : 0;
     role_titl = (innategend && urole.name.f) ? urole.name.f : urole.name.m;
     rank_titl = rank_of(u.ulevel, Role_switch, innategend);
 
@@ -1497,7 +1497,7 @@ int final;
         tmpbuf[0] = '\0';
         /* here we always use current gender, not saved role gender */
         if (!is_male(uasmon) && !is_female(uasmon) && !is_neuter(uasmon))
-            Sprintf(tmpbuf, "%s ", genders[flags.female ? 1 : 0].adj);
+            Sprintf(tmpbuf, "%s ", genders[uflags.female ? 1 : 0].adj);
         Sprintf(buf, "%sin %s%s form", !final ? "currently " : "", tmpbuf,
                 uasmon->mname);
         you_are(buf, "");
@@ -1507,7 +1507,7 @@ int final;
     tmpbuf[0] = '\0';
     if (!urole.name.f
         && ((urole.allow & ROLE_GENDMASK) == (ROLE_MALE | ROLE_FEMALE)
-            || innategend != flags.initgend))
+            || innategend != uflags.initgend))
         Sprintf(tmpbuf, "%s ", genders[innategend].adj);
     buf[0] = '\0';
     if (Upolyd)
@@ -1567,7 +1567,7 @@ int final;
        giving separate message for temporary alignment change bypasses need
        for tricky phrasing otherwise necessitated by possibility of having
        helm of opposite alignment mask a permanent alignment conversion */
-    difgend = (innategend != flags.initgend);
+    difgend = (innategend != uflags.initgend);
     difalgn = (((u.ualign.type != u.ualignbase[A_CURRENT]) ? 1 : 0)
                + ((u.ualignbase[A_CURRENT] != u.ualignbase[A_ORIGINAL])
                   ? 2 : 0));
@@ -1578,7 +1578,7 @@ int final;
     }
     if (difgend || difalgn) { /* sex change or perm align change or both */
         Sprintf(buf, " You started out %s%s%s.",
-                difgend ? genders[flags.initgend].adj : "",
+                difgend ? genders[uflags.initgend].adj : "",
                 (difgend && difalgn) ? " and " : "",
                 difalgn ? align_str(u.ualignbase[A_ORIGINAL]) : "");
         putstr(en_win, 0, buf);
@@ -2258,7 +2258,7 @@ int final;
             Sprintf(eos(buf), " (%d)", u.mtimedone);
         you_are(buf, "");
     }
-    if (lays_eggs(youmonst.data) && flags.female) /* Upolyd */
+    if (lays_eggs(youmonst.data) && uflags.female) /* Upolyd */
         you_can("lay eggs", "");
     if (u.ulycn >= LOW_PM) {
         /* "you are a werecreature [in beast form]" */
@@ -2349,7 +2349,7 @@ int final;
             enl_msg(buf, "is ", "was ", buf2, "");
         }
         enl_msg("The current fruit ", "is ", "was ", pl_fruit, "");
-        Sprintf(buf, "%d", flags.made_fruit);
+        Sprintf(buf, "%d", uflags.made_fruit);
         enl_msg("The made fruit flag ", "is ", "was ", buf, "");
     }
 #endif
@@ -2434,9 +2434,9 @@ minimal_enlightenment()
     Sprintf(buf, fmtstr, "race", urace.noun);
     add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
     Sprintf(buf, fmtstr, "role",
-            (flags.initgend && urole.name.f) ? urole.name.f : urole.name.m);
+            (uflags.initgend && urole.name.f) ? urole.name.f : urole.name.m);
     add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
-    Sprintf(buf, fmtstr, "gender", genders[flags.initgend].adj);
+    Sprintf(buf, fmtstr, "gender", genders[uflags.initgend].adj);
     add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 
     /* Starting alignment */
@@ -2456,12 +2456,12 @@ minimal_enlightenment()
         add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
     } else {
         Sprintf(buf, fmtstr, "role",
-                (flags.female && urole.name.f) ? urole.name.f
+                (uflags.female && urole.name.f) ? urole.name.f
                                                : urole.name.m);
         add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
     }
     /* don't want poly_gender() here; it forces `2' for non-humanoids */
-    genidx = is_neuter(youmonst.data) ? 2 : flags.female;
+    genidx = is_neuter(youmonst.data) ? 2 : uflags.female;
     Sprintf(buf, fmtstr, "gender", genders[genidx].adj);
     add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
     if (Upolyd && (int) u.mfemale != genidx) {
@@ -2935,7 +2935,7 @@ boolean *keys_used; /* boolean keys_used[256] */
 
         if (keys_used[i])
             continue;
-        if (key == ' ' && !flags.rest_on_space)
+        if (key == ' ' && !uflags.rest_on_space)
             continue;
         if ((extcmd = Cmd.commands[i]) != (struct ext_func_tab *) 0) {
             if ((cmdflags && !(extcmd->flags & cmdflags))
@@ -3949,7 +3949,7 @@ register char *cmd;
         }
         return;
     case NHKF_TRAVEL:
-        if (flags.travelcmd) {
+        if (uflags.travelcmd) {
             context.travel = 1;
             context.travel1 = 1;
             context.run = 8;
@@ -4018,7 +4018,7 @@ register char *cmd;
         /* <prefix><escape> */
         /* don't report "unknown command" for change of heart... */
         bad_command = FALSE;
-    } else if (*cmd == ' ' && !flags.rest_on_space) {
+    } else if (*cmd == ' ' && !uflags.rest_on_space) {
         bad_command = TRUE; /* skip cmdlist[] loop */
 
         /* handle all other commands */
@@ -4377,7 +4377,7 @@ int x, y, mod;
     x -= u.ux;
     y -= u.uy;
 
-    if (flags.travelcmd) {
+    if (uflags.travelcmd) {
         if (abs(x) <= 1 && abs(y) <= 1) {
             x = sgn(x), y = sgn(y);
         } else {
@@ -4644,7 +4644,7 @@ end_of_input()
 {
 #ifdef NOSAVEONHANGUP
 #ifdef INSURANCE
-    if (flags.ins_chkpt && program_state.something_worth_saving)
+    if (uflags.ins_chkpt && program_state.something_worth_saving)
         program_statue.preserve_locks = 1; /* keep files for recovery */
 #endif
     program_state.something_worth_saving = 0; /* don't save */
@@ -4719,7 +4719,7 @@ dotravel(VOID_ARGS)
     static char cmd[2];
     coord cc;
 
-    if (!flags.travelcmd)
+    if (!uflags.travelcmd)
         return 0;
     cmd[1] = 0;
     cc.x = iflags.travelcc.x;

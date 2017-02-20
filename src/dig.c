@@ -28,11 +28,11 @@ rm_waslit()
 {
     register xchar x, y;
 
-    if (levl[u.ux][u.uy].typ == ROOM && levl[u.ux][u.uy].waslit)
+    if (levl[u.ux][u.uy].typ == ROOM && levl_s[u.ux][u.uy].waslit)
         return TRUE;
     for (x = u.ux - 2; x < u.ux + 3; x++)
         for (y = u.uy - 1; y < u.uy + 2; y++)
-            if (isok(x, y) && levl[x][y].waslit)
+            if (isok(x, y) && levl_s[x][y].waslit)
                 return TRUE;
     return FALSE;
 }
@@ -48,10 +48,12 @@ int dist;
 boolean waslit, rockit;
 {
     register struct rm *lev;
+    register struct rm_sub *lev_s;
 
     if (!isok(x, y))
         return;
     lev = &levl[x][y];
+    lev_s = &levl_s[x][y];
 
     if (rockit) {
         register struct monst *mtmp;
@@ -69,12 +71,12 @@ boolean waslit, rockit;
     unblock_point(x, y); /* make sure vision knows this location is open */
 
     /* fake out saved state */
-    lev->seenv = 0;
+    lev_s->seenv = 0;
     lev->doormask = 0;
     if (dist < 3)
         lev->lit = (rockit ? FALSE : TRUE);
     if (waslit)
-        lev->waslit = (rockit ? FALSE : TRUE);
+        lev_s->waslit = (rockit ? FALSE : TRUE);
     lev->horizontal = FALSE;
     /* short-circuit vision recalc */
     viz_array[y][x] = (dist < 3) ? (IN_SIGHT | COULD_SEE) : COULD_SEE;
@@ -128,7 +130,7 @@ register boolean rockit;
     if (!rockit && levl[u.ux][u.uy].typ == CORR) {
         levl[u.ux][u.uy].typ = ROOM;
         if (waslit)
-            levl[u.ux][u.uy].waslit = TRUE;
+            levl_s[u.ux][u.uy].waslit = TRUE;
         newsym(u.ux, u.uy); /* in case player is invisible */
     }
 
@@ -246,7 +248,7 @@ dig(VOID_ARGS)
     /* perhaps a nymph stole your pick-axe while you were busy digging */
     /* or perhaps you teleported away */
     if (u.uswallow || !uwep || (!ispick && !is_axe(uwep))
-        || !on_level(&context.digging.level, &u.uz)
+        || !on_level(&context.digging.diglevel, &u.uz)
         || ((context.digging.down ? (dpx != u.ux || dpy != u.uy)
                                   : (distu(dpx, dpy) > 2))))
         return 0;
@@ -352,8 +354,8 @@ dig(VOID_ARGS)
 
         /* make pit at <u.ux,u.uy> */
         if (dighole(TRUE, FALSE, (coord *) 0)) {
-            context.digging.level.dnum = 0;
-            context.digging.level.dlevel = -1;
+            context.digging.diglevel.dnum = 0;
+            context.digging.diglevel.dlevel = -1;
         }
         return 0;
     }
@@ -463,8 +465,8 @@ dig(VOID_ARGS)
     cleanup:
         context.digging.lastdigtime = moves;
         context.digging.quiet = FALSE;
-        context.digging.level.dnum = 0;
-        context.digging.level.dlevel = -1;
+        context.digging.diglevel.dnum = 0;
+        context.digging.diglevel.dlevel = -1;
         return 0;
     } else { /* not enough effort has been spent yet */
         static const char *const d_target[6] = { "",        "rock", "statue",
@@ -612,7 +614,7 @@ int ttyp;
                 pay_for_damage("ruin", FALSE);
         } else if (!madeby_obj && canseemon(madeby))
             pline("%s digs a pit in the %s.", Monnam(madeby), surface_type);
-        else if (cansee(x, y) && flags.verbose)
+        else if (cansee(x, y) && uflags.verbose)
             pline("A pit appears in the %s.", surface_type);
 
         if (at_u) {
@@ -639,7 +641,7 @@ int ttyp;
         else if (!madeby_obj && canseemon(madeby))
             pline("%s digs a hole through the %s.", Monnam(madeby),
                   surface_type);
-        else if (cansee(x, y) && flags.verbose)
+        else if (cansee(x, y) && uflags.verbose)
             pline("A hole appears in the %s.", surface_type);
 
         if (at_u) {
@@ -1113,9 +1115,9 @@ struct obj *obj;
             did_dig_msg = FALSE;
             context.digging.quiet = FALSE;
             if (context.digging.pos.x != rx || context.digging.pos.y != ry
-                || !on_level(&context.digging.level, &u.uz)
+                || !on_level(&context.digging.diglevel, &u.uz)
                 || context.digging.down) {
-                if (flags.autodig && dig_target == DIGTYP_ROCK
+                if (uflags.autodig && dig_target == DIGTYP_ROCK
                     && !context.digging.down && context.digging.pos.x == u.ux
                     && context.digging.pos.y == u.uy
                     && (moves <= context.digging.lastdigtime + 2
@@ -1128,7 +1130,7 @@ struct obj *obj;
                 context.digging.warned = FALSE;
                 context.digging.pos.x = rx;
                 context.digging.pos.y = ry;
-                assign_level(&context.digging.level, &u.uz);
+                assign_level(&context.digging.diglevel, &u.uz);
                 context.digging.effort = 0;
                 if (!context.digging.quiet)
                     You("start %s.", d_action[dig_target]);
@@ -1164,14 +1166,14 @@ struct obj *obj;
         u_wipe_engr(3);
     } else {
         if (context.digging.pos.x != u.ux || context.digging.pos.y != u.uy
-            || !on_level(&context.digging.level, &u.uz)
+            || !on_level(&context.digging.diglevel, &u.uz)
             || !context.digging.down) {
             context.digging.chew = FALSE;
             context.digging.down = TRUE;
             context.digging.warned = FALSE;
             context.digging.pos.x = u.ux;
             context.digging.pos.y = u.uy;
-            assign_level(&context.digging.level, &u.uz);
+            assign_level(&context.digging.diglevel, &u.uz);
             context.digging.effort = 0;
             You("start %s downward.", verbing);
             if (*u.ushops)
@@ -1259,7 +1261,7 @@ register struct monst *mtmp;
                 return TRUE;
             }
         } else {
-            if (!rn2(3) && flags.verbose) /* not too often.. */
+            if (!rn2(3) && uflags.verbose) /* not too often.. */
                 draft_message(TRUE); /* "You feel an unexpected draft." */
             here->doormask = D_BROKEN;
         }
@@ -1285,7 +1287,7 @@ register struct monst *mtmp;
 
     if (IS_WALL(here->typ)) {
         /* KMH -- Okay on arboreal levels (room walls are still stone) */
-        if (flags.verbose && !rn2(5))
+        if (uflags.verbose && !rn2(5))
             You_hear("crashing rock.");
         if (*in_rooms(mtmp->mx, mtmp->my, SHOPBASE))
             add_damage(mtmp->mx, mtmp->my, 0L);
@@ -1952,7 +1954,7 @@ long timeout;
         x = obj->ox;
         y = obj->oy;
     } else if (in_invent) {
-        if (flags.verbose) {
+        if (uflags.verbose) {
             char *cname = corpse_xname(obj, (const char *) 0, CXN_NO_PFX);
 
             Your("%s%s %s away%c", obj == uwep ? "wielded " : "", cname,

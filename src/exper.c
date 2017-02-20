@@ -173,12 +173,12 @@ register int exper, rexp;
 
     if (exper
 #ifdef SCORE_ON_BOTL
-        || flags.showscore
+        || uflags.showscore
 #endif
         )
         context.botl = 1;
     if (u.urexp >= (Role_if(PM_WIZARD) ? 1000 : 2000))
-        flags.beginner = 0;
+        uflags.beginner = 0;
 }
 
 /* e.g., hit by drain life attack */

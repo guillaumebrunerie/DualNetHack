@@ -88,7 +88,7 @@ struct attack *mattk;
         pline("%s pretends to be friendly.", Monnam(mtmp));
     else
         pline("%s %smisses!", Monnam(mtmp),
-              (nearmiss && flags.verbose) ? "just " : "");
+              (nearmiss && uflags.verbose) ? "just " : "");
 
     stop_occupation();
 }
@@ -99,7 +99,7 @@ mswings(mtmp, otemp)
 struct monst *mtmp;
 struct obj *otemp;
 {
-    if (flags.verbose && !Blind && mon_visible(mtmp)) {
+    if (uflags.verbose && !Blind && mon_visible(mtmp)) {
         pline("%s %s %s%s %s.", Monnam(mtmp),
               (objects[otemp->otyp].oc_dir & PIERCE) ? "thrusts" : "swings",
               (otemp->quan > 1L) ? "one of " : "", mhis(mtmp), xname(otemp));
@@ -147,7 +147,7 @@ register struct attack *mattk;
 
     /* no map_invisible() -- no way to tell where _this_ is coming from */
 
-    if (!flags.verbose)
+    if (!uflags.verbose)
         return;
     if (!cansee(mtmp->mx, mtmp->my))
         return;
@@ -1223,7 +1223,7 @@ register struct attack *mattk;
                 if (!Deaf)
                     You_hear("%s hissing!", s_suffix(mon_nam(mtmp)));
                 if (!rn2(10)
-                    || (flags.moonphase == NEW_MOON && !have_lizard())) {
+                    || (uflags.moonphase == NEW_MOON && !have_lizard())) {
                 do_stone:
                     if (!Stoned && !Stone_resistance
                         && !(poly_when_stoned(youmonst.data)
@@ -1275,7 +1275,7 @@ register struct attack *mattk;
                     You("are being crushed.");
             } else {
                 dmg = 0;
-                if (flags.verbose)
+                if (uflags.verbose)
                     pline("%s brushes against your %s.", Monnam(mtmp),
                           body_part(LEG));
             }
@@ -1328,8 +1328,8 @@ register struct attack *mattk;
             if (!Blind)
                 pline("%s tries to %s you, but you seem %s.",
                       Adjmonnam(mtmp, "plain"),
-                      flags.female ? "charm" : "seduce",
-                      flags.female ? "unaffected" : "uninterested");
+                      uflags.female ? "charm" : "seduce",
+                      uflags.female ? "unaffected" : "uninterested");
             if (rn2(3)) {
                 if (!tele_restrict(mtmp))
                     (void) rloc(mtmp, TRUE);
@@ -1368,7 +1368,7 @@ register struct attack *mattk;
     case AD_TLPT:
         hitmsg(mtmp, mattk);
         if (uncancelled) {
-            if (flags.verbose)
+            if (uflags.verbose)
                 Your("position suddenly seems very uncertain!");
             tele();
         }
@@ -1945,7 +1945,7 @@ register struct attack *mattk;
         expels(mtmp, mtmp->data, FALSE);
     } else if (!u.uswldtim || youmonst.data->msize >= MZ_HUGE) {
         You("get %s!", is_animal(mtmp->data) ? "regurgitated" : "expelled");
-        if (flags.verbose
+        if (uflags.verbose
             && (is_animal(mtmp->data)
                 || (dmgtype(mtmp->data, AD_DGST) && Slow_digestion)))
             pline("Obviously %s doesn't like your taste.", mon_nam(mtmp));
@@ -1996,7 +1996,7 @@ boolean ufound;
                     You("duck some of the blast.");
                     tmp = (tmp + 1) / 2;
                 } else {
-                    if (flags.verbose)
+                    if (uflags.verbose)
                         You("get blasted!");
                 }
                 if (mattk->adtyp == AD_FIRE)
@@ -2016,7 +2016,7 @@ boolean ufound;
                     make_blinded((long) tmp, FALSE);
                     if (!Blind)
                         Your1(vision_clears);
-                } else if (flags.verbose)
+                } else if (uflags.verbose)
                     You("get the impression it was not terribly bright.");
             }
             break;
@@ -2470,7 +2470,7 @@ register struct monst *mon;
 
     if (uarm || uarmc) {
         verbalize("You're such a %s; I wish...",
-                  flags.female ? "sweet lady" : "nice guy");
+                  uflags.female ? "sweet lady" : "nice guy");
         if (!tele_restrict(mon))
             (void) rloc(mon, TRUE);
         return 1;

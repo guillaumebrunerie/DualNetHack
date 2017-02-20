@@ -93,6 +93,7 @@ extern char defmorestr[]; /* default --more-- prompt */
 
 /* ### getline.c ### */
 E void FDECL(xwaitforspace, (const char *));
+E int tgetch(void);
 
 /* ### termcap.c, video.c ### */
 

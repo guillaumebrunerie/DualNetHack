@@ -47,7 +47,7 @@ void
 off_msg(otmp)
 struct obj *otmp;
 {
-    if (flags.verbose)
+    if (uflags.verbose)
         You("were wearing %s.", doname(otmp));
 }
 
@@ -56,7 +56,7 @@ STATIC_OVL void
 on_msg(otmp)
 struct obj *otmp;
 {
-    if (flags.verbose) {
+    if (uflags.verbose) {
         char how[BUFSZ];
         /* call xname() before obj_is_pname(); formatting obj's name
            might set obj->dknown and that affects the pname test */
@@ -713,7 +713,7 @@ Amulet_on()
         if (orig_sex != poly_gender()) {
             makeknown(AMULET_OF_CHANGE);
             You("are suddenly very %s!",
-                flags.female ? "feminine" : "masculine");
+                uflags.female ? "feminine" : "masculine");
             context.botl = 1;
         } else
             /* already polymorphed into single-gender monster; only
@@ -1092,7 +1092,7 @@ register struct obj *otmp;
 
     if (Blind && !already_blind) {
         changed = TRUE;
-        if (flags.verbose)
+        if (uflags.verbose)
             You_cant("see any more.");
         /* set ball&chain variables before the hero goes blind */
         if (Punished)
@@ -2469,7 +2469,7 @@ doddoremarm()
     }
 
     add_valid_menu_class(0); /* reset */
-    if (flags.menu_style != MENU_TRADITIONAL
+    if (uflags.menu_style != MENU_TRADITIONAL
         || (result = ggetobj("take off", select_off, 0, FALSE,
                              (unsigned *) 0)) < -1)
         result = menu_remarm(result);
@@ -2501,7 +2501,7 @@ int retry;
 
     if (retry) {
         all_worn_categories = (retry == -2);
-    } else if (flags.menu_style == MENU_FULL) {
+    } else if (uflags.menu_style == MENU_FULL) {
         all_worn_categories = FALSE;
         n = query_category("What type of things do you want to take off?",
                            invent, WORN_TYPES | ALL_TYPES, &pick_list,
@@ -2515,7 +2515,7 @@ int retry;
                 add_valid_menu_class(pick_list[i].item.a_int);
         }
         free((genericptr_t) pick_list);
-    } else if (flags.menu_style == MENU_COMBINATION) {
+    } else if (uflags.menu_style == MENU_COMBINATION) {
         all_worn_categories = FALSE;
         if (ggetobj("take off", select_off, 0, TRUE, (unsigned *) 0) == -2)
             all_worn_categories = TRUE;
@@ -2529,7 +2529,7 @@ int retry;
         for (i = 0; i < n; i++)
             (void) select_off(pick_list[i].item.a_obj);
         free((genericptr_t) pick_list);
-    } else if (n < 0 && flags.menu_style != MENU_COMBINATION) {
+    } else if (n < 0 && uflags.menu_style != MENU_COMBINATION) {
         There("is nothing else you can remove or unwield.");
     }
     return 0;

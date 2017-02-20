@@ -307,7 +307,7 @@ int sig_unused UNUSED;
 #ifndef NO_SIGNAL
     (void) signal(SIGINT, SIG_IGN);
 #endif
-    if (flags.ignintr) {
+    if (uflags.ignintr) {
 #ifndef NO_SIGNAL
         (void) signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
@@ -642,7 +642,7 @@ char *defquery;
             *defquery = DISCLOSE_PROMPT_DEFAULT_YES;
             return TRUE;
         }
-        disclose = flags.end_disclose[idx];
+        disclose = uflags.end_disclose[idx];
         if (disclose == DISCLOSE_YES_WITHOUT_PROMPT) {
             *defquery = 'y';
             return FALSE;
@@ -1067,7 +1067,7 @@ int how;
     if (have_windows)
         display_nhwindow(WIN_MESSAGE, FALSE);
 
-    if (strcmp(flags.end_disclose, "none") && how != PANICKED)
+    if (strcmp(uflags.end_disclose, "none") && how != PANICKED)
         disclose(how, taken);
 
     /* finish_paybill should be called after disclosure but before bones */
@@ -1085,7 +1085,7 @@ int how;
              * u.umonnum is based on role, and all role monsters
              * are human.
              */
-            mnum = (flags.female && urace.femalenum != NON_PM)
+            mnum = (uflags.female && urace.femalenum != NON_PM)
                        ? urace.femalenum
                        : urace.malenum;
         }
@@ -1159,10 +1159,10 @@ int how;
 #endif
         destroy_nhwindow(WIN_MESSAGE),  WIN_MESSAGE = WIN_ERR;
 
-        if (!done_stopprint || flags.tombstone)
+        if (!done_stopprint || uflags.tombstone)
             endwin = create_nhwindow(NHW_TEXT);
 
-        if (how < GENOCIDED && flags.tombstone && endwin != WIN_ERR)
+        if (how < GENOCIDED && uflags.tombstone && endwin != WIN_ERR)
             outrip(endwin, how, endtime);
     } else
         done_stopprint = 1; /* just avoid any more output */
@@ -1180,10 +1180,10 @@ int how;
     if (!done_stopprint) {
         Sprintf(pbuf, "%s %s the %s...", Goodbye(), plname,
                 (how != ASCENDED)
-                 ? (const char *) ((flags.female && urole.name.f)
+                 ? (const char *) ((uflags.female && urole.name.f)
                                       ? urole.name.f
                                       : urole.name.m)
-                 : (const char *) (flags.female ? "Demigoddess" : "Demigod"));
+                 : (const char *) (uflags.female ? "Demigoddess" : "Demigod"));
         putstr(endwin, 0, pbuf);
         putstr(endwin, 0, "");
     }
@@ -1365,9 +1365,9 @@ boolean identified, all_containers, reportempty;
                 winid tmpwin = create_nhwindow(NHW_MENU);
 
                 sortloot(&box->cobj,
-                         (((flags.sortloot == 'l' || flags.sortloot == 'f')
+                         (((uflags.sortloot == 'l' || uflags.sortloot == 'f')
                            ? SORTLOOT_LOOT : 0)
-                          | (flags.sortpack ? SORTLOOT_PACK : 0)),
+                          | (uflags.sortpack ? SORTLOOT_PACK : 0)),
                          FALSE);
                 Sprintf(buf, "Contents of %s:", the(xname(box)));
                 putstr(tmpwin, 0, buf);

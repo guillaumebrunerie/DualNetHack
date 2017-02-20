@@ -107,6 +107,7 @@ blackout(x, y)
 int x, y;
 {
     struct rm *lev;
+    struct rm_sub *lev_s, *lev_s_o;
     int i, j;
 
     for (i = x - 1; i <= x + 1; ++i)
@@ -114,13 +115,16 @@ int x, y;
             if (!isok(i, j))
                 continue;
             lev = &levl[i][j];
+            lev_s = &levl_s[i][j];
+            lev_s_o = &levl_s_o[i][j];
             /* [possible bug: when (i != x || j != y), perhaps we ought
                to check whether the spot on the far side is lit instead
                of doing a blanket blackout of adjacent locations] */
             if (lev->typ == STONE)
-                lev->lit = lev->waslit = 0;
+                lev->lit = lev_s->waslit = lev_s_o->waslit = 0;
             /* mark <i,j> as not having been seen from <x,y> */
-            unset_seenv(lev, x, y, i, j);
+            unset_seenv(lev_s, x, y, i, j);
+            unset_seenv(lev_s_o, x, y, i, j);
         }
 }
 

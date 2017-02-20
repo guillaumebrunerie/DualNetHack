@@ -676,7 +676,7 @@ int *spell_no;
     if (rejectcasting())
         return FALSE; /* no spell chosen */
 
-    if (flags.menu_style == MENU_TRADITIONAL) {
+    if (uflags.menu_style == MENU_TRADITIONAL) {
         /* we know there is at least 1 known spell */
         for (nspells = 1; nspells < MAXSPELL && spellid(nspells) != NO_SPELL;
              nspells++)

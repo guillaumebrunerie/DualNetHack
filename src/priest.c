@@ -500,7 +500,7 @@ int roomno;
                 You("sense a presence close by!");
             mtmp->mpeaceful = 0;
             set_malign(mtmp);
-            if (flags.verbose)
+            if (uflags.verbose)
                 You("are frightened to death, and unable to move.");
             nomul(-3);
             multi_reason = "being terrified of a ghost";

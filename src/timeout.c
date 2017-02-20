@@ -243,9 +243,9 @@ nh_timeout()
     struct kinfo *kptr;
     int sleeptime;
     int m_idx;
-    int baseluck = (flags.moonphase == FULL_MOON) ? 1 : 0;
+    int baseluck = (uflags.moonphase == FULL_MOON) ? 1 : 0;
 
-    if (flags.friday13)
+    if (uflags.friday13)
         baseluck -= 1;
 
     if (u.uluck != baseluck
@@ -553,7 +553,7 @@ long timeout;
     mon = mon2 = (struct monst *) 0;
     mnum = big_to_little(egg->corpsenm);
     /* The identity of one's father is learned, not innate */
-    yours = (egg->spe || (!flags.female && carried(egg) && !rn2(2)));
+    yours = (egg->spe || (!uflags.female && carried(egg) && !rn2(2)));
     silent = (timeout != monstermoves); /* hatched while away */
 
     /* only can hatch when in INVENT, FLOOR, MINVENT */
@@ -634,7 +634,7 @@ long timeout;
             if (yours) {
                 pline("%s cries sound like \"%s%s\"",
                       siblings ? "Their" : "Its",
-                      flags.female ? "mommy" : "daddy", egg->spe ? "." : "?");
+                      uflags.female ? "mommy" : "daddy", egg->spe ? "." : "?");
             } else if (mon->data->mlet == S_DRAGON && !Deaf) {
                 verbalize("Gleep!"); /* Mything eggs :-) */
             }

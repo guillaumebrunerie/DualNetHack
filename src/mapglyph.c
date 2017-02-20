@@ -216,7 +216,7 @@ unsigned *ospecial;
 #ifdef TEXTCOLOR
             /* special case the hero for `showrace' option */
             if (iflags.use_color && x == u.ux && y == u.uy
-                && flags.showrace && !Upolyd)
+                && uflags.showrace && !Upolyd)
                 color = HI_DOMESTIC;
 #endif
             /* special case for DualNetHack’s ghost */

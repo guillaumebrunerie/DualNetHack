@@ -167,7 +167,7 @@ const char *fmt, *arg;
         u.acurr = u.macurr; /* restore old attribs */
         u.amax = u.mamax;
         u.umonnum = u.umonster;
-        flags.female = u.mfemale;
+        uflags.female = u.mfemale;
     }
     set_uasmon();
 
@@ -243,22 +243,22 @@ change_sex()
     if (!already_polyd
         || (!is_male(youmonst.data) && !is_female(youmonst.data)
             && !is_neuter(youmonst.data)))
-        flags.female = !flags.female;
+        uflags.female = !uflags.female;
     if (already_polyd) /* poly'd: also change saved sex */
         u.mfemale = !u.mfemale;
     max_rank_sz(); /* [this appears to be superfluous] */
-    if ((already_polyd ? u.mfemale : flags.female) && urole.name.f)
+    if ((already_polyd ? u.mfemale : uflags.female) && urole.name.f)
         Strcpy(pl_character, urole.name.f);
     else
         Strcpy(pl_character, urole.name.m);
-    u.umonster = ((already_polyd ? u.mfemale : flags.female)
+    u.umonster = ((already_polyd ? u.mfemale : uflags.female)
                   && urole.femalenum != NON_PM)
                      ? urole.femalenum
                      : urole.malenum;
     if (!already_polyd) {
         u.umonnum = u.umonster;
     } else if (u.umonnum == PM_SUCCUBUS || u.umonnum == PM_INCUBUS) {
-        flags.female = !flags.female;
+        uflags.female = !uflags.female;
         /* change monster type to match new sex */
         u.umonnum = (u.umonnum == PM_SUCCUBUS) ? PM_INCUBUS : PM_SUCCUBUS;
         set_uasmon();
@@ -615,14 +615,14 @@ int mntmp;
         /* Human to monster; save human stats */
         u.macurr = u.acurr;
         u.mamax = u.amax;
-        u.mfemale = flags.female;
+        u.mfemale = uflags.female;
     } else {
         /* Monster to monster; restore human stats, to be
          * immediately changed to provide stats for the new monster
          */
         u.acurr = u.macurr;
         u.amax = u.mamax;
-        flags.female = u.mfemale;
+        uflags.female = u.mfemale;
     }
 
     /* if stuck mimicking gold, stop immediately */
@@ -635,10 +635,10 @@ int mntmp;
         youmonst.m_ap_type = M_AP_NOTHING;
     }
     if (is_male(&mons[mntmp])) {
-        if (flags.female)
+        if (uflags.female)
             dochange = TRUE;
     } else if (is_female(&mons[mntmp])) {
-        if (!flags.female)
+        if (!uflags.female)
             dochange = TRUE;
     } else if (!is_neuter(&mons[mntmp]) && mntmp != u.ulycn) {
         if (sex_change_ok && !rn2(10))
@@ -647,9 +647,9 @@ int mntmp;
 
     Strcpy(buf, (u.umonnum != mntmp) ? "" : "new ");
     if (dochange) {
-        flags.female = !flags.female;
+        uflags.female = !uflags.female;
         Strcat(buf, (is_male(&mons[mntmp]) || is_female(&mons[mntmp]))
-                       ? "" : flags.female ? "female " : "male ");
+                       ? "" : uflags.female ? "female " : "male ");
     }
     Strcat(buf, mons[mntmp].mname);
     You("%s %s!", (u.umonnum != mntmp) ? "turn into" : "feel like", an(buf));
@@ -752,7 +752,7 @@ int mntmp;
             dismount_steed(DISMOUNT_POLY);
     }
 
-    if (flags.verbose) {
+    if (uflags.verbose) {
         static const char use_thec[] = "Use the command #%s to %s.";
         static const char monsterc[] = "monster";
 
@@ -781,7 +781,7 @@ int mntmp;
         if (is_vampire(youmonst.data))
             pline(use_thec, monsterc, "change shape");
 
-        if (lays_eggs(youmonst.data) && flags.female)
+        if (lays_eggs(youmonst.data) && uflags.female)
             pline(use_thec, "sit", "lay an egg");
     }
 
@@ -1301,10 +1301,10 @@ dogaze()
                        || mtmp->m_ap_type == M_AP_OBJECT) {
                 looked--;
                 continue;
-            } else if (flags.safe_dog && mtmp->mtame && !Confusion) {
+            } else if (uflags.safe_dog && mtmp->mtame && !Confusion) {
                 You("avoid gazing at %s.", y_monnam(mtmp));
             } else {
-                if (flags.confirm && mtmp->mpeaceful && !Confusion) {
+                if (uflags.confirm && mtmp->mpeaceful && !Confusion) {
                     Sprintf(qbuf, "Really %s %s?",
                             (adtyp == AD_CONF) ? "confuse" : "attack",
                             mon_nam(mtmp));
@@ -1702,11 +1702,11 @@ int
 poly_gender()
 {
     /* Returns gender of polymorphed player;
-     * 0/1=same meaning as flags.female, 2=none.
+     * 0/1=same meaning as uflags.female, 2=none.
      */
     if (is_neuter(youmonst.data) || !humanoid(youmonst.data))
         return 2;
-    return flags.female;
+    return uflags.female;
 }
 
 void

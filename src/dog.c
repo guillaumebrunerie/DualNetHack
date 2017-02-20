@@ -867,7 +867,7 @@ register struct obj *obj;
     /* worst case, at least it'll be peaceful. */
     mtmp->mpeaceful = 1;
     set_malign(mtmp);
-    if (flags.moonphase == FULL_MOON && night() && rn2(6) && obj
+    if (uflags.moonphase == FULL_MOON && night() && rn2(6) && obj
         && mtmp->data->mlet == S_DOG)
         return FALSE;
 

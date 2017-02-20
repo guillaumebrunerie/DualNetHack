@@ -309,9 +309,9 @@ E void FDECL(bury_obj, (struct obj *));
 
 /* ### display.c ### */
 
-E gbuf_entry gbuf[ROWNO][COLNO];
-E char gbuf_start[ROWNO];
-E char gbuf_stop[ROWNO];
+#define gbuf you_player->p_gbuf
+#define gbuf_start you_player->p_gbuf_start
+#define gbuf_stop you_player->p_gbuf_stop
 
 
 E void FDECL(magic_map_background, (XCHAR_P, XCHAR_P, int));
@@ -346,7 +346,7 @@ E int FDECL(back_to_glyph, (XCHAR_P, XCHAR_P));
 E int FDECL(zapdir_to_glyph, (int, int, int));
 E int FDECL(glyph_at, (XCHAR_P, XCHAR_P));
 E void NDECL(set_wall_state);
-E void FDECL(unset_seenv, (struct rm *, int, int, int, int));
+E void FDECL(unset_seenv, (struct rm_sub *, int, int, int, int));
 E int FDECL(warning_of, (struct monst *));
 
 /* ### do.c ### */
@@ -1210,6 +1210,7 @@ E void FDECL(mktrap, (int, int, struct mkroom *, coord *));
 E void FDECL(mkstairs, (XCHAR_P, XCHAR_P, CHAR_P, struct mkroom *));
 E void NDECL(mkinvokearea);
 E void FDECL(mineralize, (int, int, int, int, BOOLEAN_P));
+E void FDECL(clear_levl_s, (struct rm_sub [COLNO][ROWNO]));
 
 /* ### mkmap.c ### */
 
@@ -1666,6 +1667,7 @@ E boolean FDECL(match_optname, (const char *, const char *, int, BOOLEAN_P));
 E void NDECL(initoptions);
 E void NDECL(initoptions_init);
 E void NDECL(initoptions_finish);
+E void NDECL(initoptions_both);
 E void FDECL(parseoptions, (char *, BOOLEAN_P, BOOLEAN_P));
 E int NDECL(doset);
 E int NDECL(dotogglepickup);

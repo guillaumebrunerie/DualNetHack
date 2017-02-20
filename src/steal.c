@@ -402,7 +402,7 @@ gotobj:
                 if (Unaware)
                     unmul((char *) 0);
                 slowly = (armordelay >= 1 || multi < 0);
-                if (flags.female)
+                if (uflags.female)
                     pline("%s charms you.  You gladly %s your %s.",
                           !seen ? "She" : Monnam(mtmp),
                           curssv ? "let her take"
@@ -717,7 +717,7 @@ boolean is_pet; /* If true, pet should keep wielded/worn items */
 
     while ((otmp = (is_pet ? droppables(mtmp) : mtmp->minvent)) != 0) {
         obj_extract_self(otmp);
-        mdrop_obj(mtmp, otmp, is_pet && flags.verbose);
+        mdrop_obj(mtmp, otmp, is_pet && uflags.verbose);
     }
 
     if (show && cansee(omx, omy))

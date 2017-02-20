@@ -367,7 +367,7 @@ dofire()
         return 0;
 
     if ((obj = uquiver) == 0) {
-        if (!flags.autoquiver) {
+        if (!uflags.autoquiver) {
             You("have no ammunition readied.");
         } else {
             autoquiver();
@@ -943,7 +943,7 @@ boolean hitsroof;
                 /* helmet definitely protects you when it blocks petrification
                  */
             } else if (!petrifier) {
-                if (flags.verbose)
+                if (uflags.verbose)
                     Your("%s does not protect you.", helm_simple_name(uarmh));
             }
         } else if (petrifier && !Stone_resistance

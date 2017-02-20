@@ -570,6 +570,7 @@ int x, y;
 {
     coord cc;
     register struct rm *door;
+    register struct rm_sub *door_s;
     boolean portcullis;
     int res = 0;
 
@@ -601,13 +602,14 @@ int x, y;
         res = 1;
 
     door = &levl[cc.x][cc.y];
+    door_s = &levl_s[cc.x][cc.y];
     portcullis = (is_drawbridge_wall(cc.x, cc.y) >= 0);
     if (Blind) {
-        int oldglyph = door->glyph;
+        int oldglyph = door_s->glyph;
         schar oldlastseentyp = lastseentyp[cc.x][cc.y];
 
         feel_location(cc.x, cc.y);
-        if (door->glyph != oldglyph
+        if (door_s->glyph != oldglyph
             || lastseentyp[cc.x][cc.y] != oldlastseentyp)
             res = 1; /* learned something */
     }
@@ -712,6 +714,7 @@ doclose()
 {
     register int x, y;
     register struct rm *door;
+    register struct rm_sub *door_s;
     boolean portcullis;
     int res = 0;
 
@@ -747,13 +750,14 @@ doclose()
         res = 1;
 
     door = &levl[x][y];
+    door_s = &levl_s[x][y];
     portcullis = (is_drawbridge_wall(x, y) >= 0);
     if (Blind) {
-        int oldglyph = door->glyph;
+        int oldglyph = door_s->glyph;
         schar oldlastseentyp = lastseentyp[x][y];
 
         feel_location(x, y);
-        if (door->glyph != oldglyph || lastseentyp[x][y] != oldlastseentyp)
+        if (door_s->glyph != oldglyph || lastseentyp[x][y] != oldlastseentyp)
             res = 1; /* learned something */
     }
 
@@ -955,7 +959,7 @@ int x, y;
             if (door->doormask & D_TRAPPED) {
                 if (MON_AT(x, y))
                     (void) mb_trapped(m_at(x, y));
-                else if (flags.verbose) {
+                else if (uflags.verbose) {
                     if (cansee(x, y))
                         pline("KABOOM!!  You see a door explode.");
                     else
@@ -968,7 +972,7 @@ int x, y;
                 break;
             }
             door->doormask = D_BROKEN;
-            if (flags.verbose) {
+            if (uflags.verbose) {
                 if (cansee(x, y))
                     pline_The("door crashes open!");
                 else

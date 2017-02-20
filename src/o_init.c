@@ -435,7 +435,7 @@ dodiscovered() /* free after Robert Viduya */
     ct += disp_artifact_discoveries(tmpwin);
 
     /* several classes are omitted from packorder; one is of interest here */
-    Strcpy(classes, flags.inv_order);
+    Strcpy(classes, uflags.inv_order);
     if (!index(classes, VENOM_CLASS))
         (void) strkitten(classes, VENOM_CLASS); /* append char to string */
 
@@ -499,8 +499,8 @@ doclassdisco()
     menu_item *pick_list = 0;
 
     discosyms[0] = '\0';
-    traditional = (flags.menu_style == MENU_TRADITIONAL
-                   || flags.menu_style == MENU_COMBINATION);
+    traditional = (uflags.menu_style == MENU_TRADITIONAL
+                   || uflags.menu_style == MENU_COMBINATION);
     if (!traditional) {
         tmpwin = create_nhwindow(NHW_MENU);
         start_menu(tmpwin);
@@ -532,7 +532,7 @@ doclassdisco()
 
     /* collect classes with discoveries, in packorder ordering; several
        classes are omitted from packorder and one is of interest here */
-    Strcpy(allclasses, flags.inv_order);
+    Strcpy(allclasses, uflags.inv_order);
     if (!index(allclasses, VENOM_CLASS))
         (void) strkitten(allclasses, VENOM_CLASS); /* append char to string */
     /* construct discosyms[] */
@@ -583,7 +583,7 @@ doclassdisco()
             clear_nhwindow(WIN_MESSAGE);
     } else {
         /* menustyle:full or menustyle:partial */
-        if (!discosyms[1] && flags.menu_style == MENU_PARTIAL) {
+        if (!discosyms[1] && uflags.menu_style == MENU_PARTIAL) {
             /* only one class; menustyle:partial normally jumps past class
                filtering straight to final menu so skip class filter here */
             c = discosyms[0];
@@ -673,7 +673,7 @@ rename_disco()
      */
 
     /* for each class, show discoveries in that class */
-    for (s = flags.inv_order; *s; s++) {
+    for (s = uflags.inv_order; *s; s++) {
         oclass = *s;
         prev_class = oclass + 1; /* forced different from oclass */
         for (i = bases[(int) oclass];

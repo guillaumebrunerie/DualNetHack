@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 
 #include "wintcp.h"
+#include "decl.h"
 
 #ifdef CHDIR
 static void FDECL(chdirx, (const char *, BOOLEAN_P));
@@ -106,6 +107,7 @@ client_init()
     /* strip role,race,&c suffix; calls askname() if plname[] is empty
        or holds a generic user name like "player" or "games" */
     plnamesuffix();
+    you_player = &player1;
 }
 
 int main(argc, argv)
@@ -121,6 +123,7 @@ char *argv[];
 
   char *host = argc >= 2 ? argv[1] : "127.0.0.1";
   
+  dualnh_init_players();
   client_init();
   
   struct addrinfo hints, *res;
@@ -171,10 +174,10 @@ char *argv[];
             askname();
             tcp_send_string(plname);
             player_selection();
-            tcp_send_int(flags.initrole);
-            tcp_send_int(flags.initrace);
-            tcp_send_int(flags.initgend);
-            tcp_send_int(flags.initalign);
+            tcp_send_int(uflags.initrole);
+            tcp_send_int(uflags.initrace);
+            tcp_send_int(uflags.initgend);
+            tcp_send_int(uflags.initalign);
 
        } else if (!strcmp(buffer, "get_nh_event")) {
             get_nh_event();

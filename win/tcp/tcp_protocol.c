@@ -99,37 +99,37 @@ typedef struct {
 
 /* The references are client-side */
 int_vars common_int_vars[] = {
-     {"v:WIN_STATUS", &WIN_STATUS},
-     {"v:WIN_MESSAGE", &WIN_MESSAGE},
-     {"v:WIN_MAP", &WIN_MAP},
-     {"v:WIN_INVEN", &WIN_INVEN},
-     {"v:rndencode", &context.rndencode},
+     {"v:WIN_STATUS", &player1.p_WIN_STATUS},
+     {"v:WIN_MESSAGE", &player1.p_WIN_MESSAGE},
+     {"v:WIN_MAP", &player1.p_WIN_MAP},
+     {"v:WIN_INVEN", &player1.p_WIN_INVEN},
+     {"v:rndencode", &player1.p_context.rndencode},
      {"", NULL}};
 
 __thread xchar_vars common_xchar_vars[] = {
-     {"v:u.ux", &u.ux, -1},
-     {"v:u.uy", &u.uy, -1},
-     {"v:u.ghost_x", &u.ghost_x, -1},
-     {"v:u.ghost_y", &u.ghost_y, -1},
+     {"v:u.ux", &player1.p_u.ux, -1},
+     {"v:u.uy", &player1.p_u.uy, -1},
+     {"v:u.ghost_x", &player1.p_u.ghost_x, -1},
+     {"v:u.ghost_y", &player1.p_u.ghost_y, -1},
      {"", NULL}};
 
-void
-tcp_reset_common_xchar_vars()
-{
-     common_xchar_vars[0].actual_var = &you_player->u.ux;
-     common_xchar_vars[1].actual_var = &you_player->u.uy;
-     common_xchar_vars[2].actual_var = &u.ghost_x;
-     common_xchar_vars[3].actual_var = &u.ghost_y;
-}
+/* void */
+/* tcp_reset_common_xchar_vars() */
+/* { */
+/*      common_xchar_vars[0].actual_var = &you_player->u.ux; */
+/*      common_xchar_vars[1].actual_var = &you_player->u.uy; */
+/*      common_xchar_vars[2].actual_var = &u.ghost_x; */
+/*      common_xchar_vars[3].actual_var = &u.ghost_y; */
+/* } */
 
-void
-tcp_reset2_common_xchar_vars()
-{
-     common_xchar_vars[0].actual_var = &u.ux;
-     common_xchar_vars[1].actual_var = &u.uy;
-     common_xchar_vars[2].actual_var = &u.ghost_x;
-     common_xchar_vars[3].actual_var = &u.ghost_y;
-}
+/* void */
+/* tcp_reset2_common_xchar_vars() */
+/* { */
+/*      common_xchar_vars[0].actual_var = &u.ux; */
+/*      common_xchar_vars[1].actual_var = &u.uy; */
+/*      common_xchar_vars[2].actual_var = &u.ghost_x; */
+/*      common_xchar_vars[3].actual_var = &u.ghost_y; */
+/* } */
 
 void
 tcp_send_changed_variables()
@@ -153,24 +153,24 @@ tcp_send_changed_variables()
 void
 tcp_send_WIN()
 {
-     if (current_player->WIN_STATUS != -1) {
+     if (WIN_STATUS != -1) {
           tcp_send_string("v:WIN_STATUS");
-          tcp_send_int(current_player->WIN_STATUS);
+          tcp_send_int(WIN_STATUS);
      }
 
-     if (current_player->WIN_MESSAGE != -1) {
+     if (WIN_MESSAGE != -1) {
           tcp_send_string("v:WIN_MESSAGE");
-          tcp_send_int(current_player->WIN_MESSAGE);
+          tcp_send_int(WIN_MESSAGE);
      }
 
-     if (current_player->WIN_MAP != -1) {
+     if (WIN_MAP != -1) {
           tcp_send_string("v:WIN_MAP");
-          tcp_send_int(current_player->WIN_MAP);
+          tcp_send_int(WIN_MAP);
      }
 
-     if (current_player->WIN_INVEN != -1) {
+     if (WIN_INVEN != -1) {
           tcp_send_string("v:WIN_INVEN");
-          tcp_send_int(current_player->WIN_INVEN);
+          tcp_send_int(WIN_INVEN);
      }
 }
 
@@ -565,9 +565,9 @@ anything *any;
 {
      uint64_t m;
      tcp_recvall(sockfd, &m, 8);
-     any->a_void = m;
+     any->a_void = (genericptr_t) m;
 
-     debug("a:%d\n", m);
+     debug("a:%d\n", (int) m);
 }
 
 /* Not safe at all */

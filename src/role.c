@@ -587,29 +587,29 @@ const struct Role roles[] = {
 /* The player's role, created at runtime from initial
  * choices.  This may be munged in role_init().
  */
-struct Role urole = {
-    { "Undefined", 0 },
-    { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
-      { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
-    "L", "N", "C",
-    "Xxx", "home", "locate",
-    NON_PM, NON_PM, NON_PM, NON_PM, NON_PM, NON_PM, NON_PM, NON_PM,
-    0, 0, 0, 0,
-    /* Str Int Wis Dex Con Cha */
-    { 7, 7, 7, 7, 7, 7 },
-    { 20, 15, 15, 20, 20, 10 },
-    /* Init   Lower  Higher */
-    { 10, 0, 0, 8, 1, 0 }, /* Hit points */
-    { 2, 0, 0, 2, 0, 3 },
-    14, /* Energy */
-     0,
-    10,
-     0,
-     0,
-     4,
-    A_INT,
-     0,
-    -3
+#define DUMMY_ROLE {                                                 \
+    { "Undefined", 0 },                                              \
+    { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },              \
+      { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },                      \
+    "L", "N", "C",                                                   \
+    "Xxx", "home", "locate",                                         \
+    NON_PM, NON_PM, NON_PM, NON_PM, NON_PM, NON_PM, NON_PM, NON_PM,  \
+    0, 0, 0, 0,                                                      \
+    /* Str Int Wis Dex Con Cha */                                    \
+    { 7, 7, 7, 7, 7, 7 },                                            \
+    { 20, 15, 15, 20, 20, 10 },                                      \
+    /* Init   Lower  Higher */                                       \
+    { 10, 0, 0, 8, 1, 0 }, /* Hit points */                          \
+    { 2, 0, 0, 2, 0, 3 },                                            \
+    14, /* Energy */                                                 \
+     0,                                                              \
+    10,                                                              \
+     0,                                                              \
+     0,                                                              \
+     4,                                                              \
+    A_INT,                                                           \
+     0,                                                              \
+    -3                                                               \
 };
 
 /* Table of all races */
@@ -727,26 +727,26 @@ const struct Race races[] = {
 /* The player's race, created at runtime from initial
  * choices.  This may be munged in role_init().
  */
-struct Race urace = {
-    "something",
-    "undefined",
-    "something",
-    "Xxx",
-    { 0, 0 },
-    NON_PM,
-    NON_PM,
-    NON_PM,
-    NON_PM,
-    0,
-    0,
-    0,
-    0,
-    /*    Str     Int Wis Dex Con Cha */
-    { 3, 3, 3, 3, 3, 3 },
-    { STR18(100), 18, 18, 18, 18, 18 },
-    /* Init   Lower  Higher */
-    { 2, 0, 0, 2, 1, 0 }, /* Hit points */
-    { 1, 0, 2, 0, 2, 0 }  /* Energy */
+#define DUMMY_RACE {                         \
+    "something",                             \
+    "undefined",                             \
+    "something",                             \
+    "Xxx",                                   \
+    { 0, 0 },                                \
+    NON_PM,                                  \
+    NON_PM,                                  \
+    NON_PM,                                  \
+    NON_PM,                                  \
+    0,                                       \
+    0,                                       \
+    0,                                       \
+    0,                                       \
+    /*    Str     Int Wis Dex Con Cha */     \
+    { 3, 3, 3, 3, 3, 3 },                    \
+    { STR18(100), 18, 18, 18, 18, 18 },      \
+    /* Init   Lower  Higher */               \
+    { 2, 0, 0, 2, 1, 0 }, /* Hit points */   \
+    { 1, 0, 2, 0, 2, 0 }  /* Energy */       \
 };
 
 /* Table of all genders */
@@ -1326,39 +1326,39 @@ rigid_role_checks()
      * single possible selection, otherwise it returns ROLE_NONE.
      *
      */
-    if (flags.initrole == ROLE_RANDOM) {
+    if (uflags.initrole == ROLE_RANDOM) {
         /* If the role was explicitly specified as ROLE_RANDOM
          * via -uXXXX-@ or OPTIONS=role:random then choose the role
          * in here to narrow down later choices.
          */
-        flags.initrole = pick_role(flags.initrace, flags.initgend,
-                                   flags.initalign, PICK_RANDOM);
-        if (flags.initrole < 0)
-            flags.initrole = randrole_filtered();
+        uflags.initrole = pick_role(uflags.initrace, uflags.initgend,
+                                   uflags.initalign, PICK_RANDOM);
+        if (uflags.initrole < 0)
+            uflags.initrole = randrole_filtered();
     }
-    if (flags.initrace == ROLE_RANDOM
-        && (tmp = pick_race(flags.initrole, flags.initgend,
-                            flags.initalign, PICK_RANDOM)) != ROLE_NONE)
-        flags.initrace = tmp;
-    if (flags.initalign == ROLE_RANDOM
-        && (tmp = pick_align(flags.initrole, flags.initrace,
-                             flags.initgend, PICK_RANDOM)) != ROLE_NONE)
-        flags.initalign = tmp;
-    if (flags.initgend == ROLE_RANDOM
-        && (tmp = pick_gend(flags.initrole, flags.initrace,
-                            flags.initalign, PICK_RANDOM)) != ROLE_NONE)
-        flags.initgend = tmp;
+    if (uflags.initrace == ROLE_RANDOM
+        && (tmp = pick_race(uflags.initrole, uflags.initgend,
+                            uflags.initalign, PICK_RANDOM)) != ROLE_NONE)
+        uflags.initrace = tmp;
+    if (uflags.initalign == ROLE_RANDOM
+        && (tmp = pick_align(uflags.initrole, uflags.initrace,
+                             uflags.initgend, PICK_RANDOM)) != ROLE_NONE)
+        uflags.initalign = tmp;
+    if (uflags.initgend == ROLE_RANDOM
+        && (tmp = pick_gend(uflags.initrole, uflags.initrace,
+                            uflags.initalign, PICK_RANDOM)) != ROLE_NONE)
+        uflags.initgend = tmp;
 
-    if (flags.initrole != ROLE_NONE) {
-        if (flags.initrace == ROLE_NONE)
-            flags.initrace = pick_race(flags.initrole, flags.initgend,
-                                       flags.initalign, PICK_RIGID);
-        if (flags.initalign == ROLE_NONE)
-            flags.initalign = pick_align(flags.initrole, flags.initrace,
-                                         flags.initgend, PICK_RIGID);
-        if (flags.initgend == ROLE_NONE)
-            flags.initgend = pick_gend(flags.initrole, flags.initrace,
-                                       flags.initalign, PICK_RIGID);
+    if (uflags.initrole != ROLE_NONE) {
+        if (uflags.initrace == ROLE_NONE)
+            uflags.initrace = pick_race(uflags.initrole, uflags.initgend,
+                                       uflags.initalign, PICK_RIGID);
+        if (uflags.initalign == ROLE_NONE)
+            uflags.initalign = pick_align(uflags.initrole, uflags.initrace,
+                                         uflags.initgend, PICK_RIGID);
+        if (uflags.initgend == ROLE_NONE)
+            uflags.initgend = pick_gend(uflags.initrole, uflags.initrace,
+                                       uflags.initalign, PICK_RIGID);
     }
 }
 
@@ -1656,13 +1656,13 @@ int buflen, rolenum, racenum, gendnum, alignnum;
     if (!num_post_attribs) {
         /* some constraints might have been mutually exclusive, in which case
            some prompting that would have been omitted is needed after all */
-        if (flags.initrole == ROLE_NONE && !pa[BP_ROLE])
+        if (uflags.initrole == ROLE_NONE && !pa[BP_ROLE])
             pa[BP_ROLE] = ++post_attribs;
-        if (flags.initrace == ROLE_NONE && !pa[BP_RACE])
+        if (uflags.initrace == ROLE_NONE && !pa[BP_RACE])
             pa[BP_RACE] = ++post_attribs;
-        if (flags.initalign == ROLE_NONE && !pa[BP_ALIGN])
+        if (uflags.initalign == ROLE_NONE && !pa[BP_ALIGN])
             pa[BP_ALIGN] = ++post_attribs;
-        if (flags.initgend == ROLE_NONE && !pa[BP_GEND])
+        if (uflags.initgend == ROLE_NONE && !pa[BP_GEND])
             pa[BP_GEND] = ++post_attribs;
         num_post_attribs = post_attribs;
     }
@@ -1727,13 +1727,13 @@ plnamesuffix()
 
             /* Try to match it to something */
             if ((i = str2role(sptr)) != ROLE_NONE)
-                flags.initrole = i;
+                uflags.initrole = i;
             else if ((i = str2race(sptr)) != ROLE_NONE)
-                flags.initrace = i;
+                uflags.initrace = i;
             else if ((i = str2gend(sptr)) != ROLE_NONE)
-                flags.initgend = i;
+                uflags.initgend = i;
             else if ((i = str2align(sptr)) != ROLE_NONE)
-                flags.initalign = i;
+                uflags.initalign = i;
         }
     } while (!*plname);
 
@@ -1757,10 +1757,10 @@ winid where;
     char buf[BUFSZ];
     int r, c, g, a, allowmask;
 
-    r = flags.initrole;
-    c = flags.initrace;
-    g = flags.initgend;
-    a = flags.initalign;
+    r = uflags.initrole;
+    c = uflags.initrace;
+    g = uflags.initgend;
+    a = uflags.initalign;
     if (r >= 0) {
         allowmask = roles[r].allow;
         if ((allowmask & ROLE_RACEMASK) == MH_HUMAN)
@@ -1852,8 +1852,8 @@ boolean preselect;
     const char *what = 0, *constrainer = 0, *forcedvalue = 0;
     int f = 0, r, c, g, a, i, allowmask;
 
-    r = flags.initrole;
-    c = flags.initrace;
+    r = uflags.initrole;
+    c = uflags.initrace;
     switch (which) {
     case RS_NAME:
         what = "name";
@@ -1871,7 +1871,7 @@ boolean preselect;
         break;
     case RS_RACE:
         what = "race";
-        f = flags.initrace;
+        f = uflags.initrace;
         c = ROLE_NONE; /* override player's setting */
         if (r >= 0) {
             allowmask = roles[r].allow & ROLE_RACEMASK;
@@ -1891,7 +1891,7 @@ boolean preselect;
         break;
     case RS_GENDER:
         what = "gender";
-        f = flags.initgend;
+        f = uflags.initgend;
         g = ROLE_NONE;
         if (r >= 0) {
             allowmask = roles[r].allow & ROLE_GENDMASK;
@@ -1913,7 +1913,7 @@ boolean preselect;
         break;
     case RS_ALGNMNT:
         what = "alignment";
-        f = flags.initalign;
+        f = uflags.initalign;
         a = ROLE_NONE;
         if (r >= 0) {
             allowmask = roles[r].allow & ROLE_ALIGNMASK;
@@ -2006,42 +2006,42 @@ role_init()
      */
     plnamesuffix();
 
-    /* Check for a valid role.  Try flags.initrole first. */
-    if (!validrole(flags.initrole)) {
+    /* Check for a valid role.  Try uflags.initrole first. */
+    if (!validrole(uflags.initrole)) {
         /* Try the player letter second */
-        if ((flags.initrole = str2role(pl_character)) < 0)
+        if ((uflags.initrole = str2role(pl_character)) < 0)
             /* None specified; pick a random role */
-            flags.initrole = randrole_filtered();
+            uflags.initrole = randrole_filtered();
     }
 
     /* We now have a valid role index.  Copy the role name back. */
     /* This should become OBSOLETE */
-    Strcpy(pl_character, roles[flags.initrole].name.m);
+    Strcpy(pl_character, roles[uflags.initrole].name.m);
     pl_character[PL_CSIZ - 1] = '\0';
 
     /* Check for a valid race */
-    if (!validrace(flags.initrole, flags.initrace))
-        flags.initrace = randrace(flags.initrole);
+    if (!validrace(uflags.initrole, uflags.initrace))
+        uflags.initrace = randrace(uflags.initrole);
 
     /* Check for a valid gender.  If new game, check both initgend
-     * and female.  On restore, assume flags.female is correct. */
-    if (flags.pantheon == -1) { /* new game */
-        if (!validgend(flags.initrole, flags.initrace, flags.female))
-            flags.female = !flags.female;
+     * and female.  On restore, assume uflags.female is correct. */
+    if (uflags.pantheon == -1) { /* new game */
+        if (!validgend(uflags.initrole, uflags.initrace, uflags.female))
+            uflags.female = !uflags.female;
     }
-    if (!validgend(flags.initrole, flags.initrace, flags.initgend))
+    if (!validgend(uflags.initrole, uflags.initrace, uflags.initgend))
         /* Note that there is no way to check for an unspecified gender. */
-        flags.initgend = flags.female;
+        uflags.initgend = uflags.female;
 
     /* Check for a valid alignment */
-    if (!validalign(flags.initrole, flags.initrace, flags.initalign))
+    if (!validalign(uflags.initrole, uflags.initrace, uflags.initalign))
         /* Pick a random alignment */
-        flags.initalign = randalign(flags.initrole, flags.initrace);
-    alignmnt = aligns[flags.initalign].value;
+        uflags.initalign = randalign(uflags.initrole, uflags.initrace);
+    alignmnt = aligns[uflags.initalign].value;
 
     /* Initialize urole and urace */
-    urole = roles[flags.initrole];
-    urace = races[flags.initrace];
+    urole = roles[uflags.initrole];
+    urace = races[uflags.initrace];
 
     /* Fix up the quest leader */
     if (urole.ldrnum != NON_PM) {
@@ -2080,15 +2080,15 @@ role_init()
     }
 
     /* Fix up the god names */
-    if (flags.pantheon == -1) {             /* new game */
-        flags.pantheon = flags.initrole;    /* use own gods */
-        while (!roles[flags.pantheon].lgod) /* unless they're missing */
-            flags.pantheon = randrole();
+    if (uflags.pantheon == -1) {             /* new game */
+        uflags.pantheon = uflags.initrole;    /* use own gods */
+        while (!roles[uflags.pantheon].lgod) /* unless they're missing */
+            uflags.pantheon = randrole();
     }
     if (!urole.lgod) {
-        urole.lgod = roles[flags.pantheon].lgod;
-        urole.ngod = roles[flags.pantheon].ngod;
-        urole.cgod = roles[flags.pantheon].cgod;
+        urole.lgod = roles[uflags.pantheon].lgod;
+        urole.ngod = roles[uflags.pantheon].ngod;
+        urole.cgod = roles[uflags.pantheon].cgod;
     }
     /* 0 or 1; no gods are neuter, nor is gender randomized */
     quest_status.godgend = !strcmpi(align_gtitle(alignmnt), "goddess");

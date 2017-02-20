@@ -847,7 +847,7 @@ register struct attack *mattk;
                 You(brief_feeling, "queasy");
             return MM_AGR_DIED;
         }
-        if (flags.verbose && !Deaf)
+        if (uflags.verbose && !Deaf)
             verbalize("Burrrrp!");
         tmp = mdef->mhp;
         /* Use up amulet of life saving */
@@ -1473,7 +1473,7 @@ mswingsm(magr, mdef, otemp)
 struct monst *magr, *mdef;
 struct obj *otemp;
 {
-    if (flags.verbose && !Blind && mon_visible(magr)) {
+    if (uflags.verbose && !Blind && mon_visible(magr)) {
         pline("%s %s %s%s %s at %s.", Monnam(magr),
               (objects[otemp->otyp].oc_dir & PIERCE) ? "thrusts" : "swings",
               (otemp->quan > 1L) ? "one of " : "", mhis(magr), xname(otemp),

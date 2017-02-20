@@ -580,8 +580,8 @@ u_init()
     register int i;
     struct u_roleplay tmpuroleplay = u.uroleplay; /* set by rcfile options */
 
-    flags.female = flags.initgend;
-    flags.beginner = 1;
+    uflags.female = uflags.initgend;
+    uflags.beginner = 1;
 
     /* zero u, including pointer values --
      * necessary when aborting from a failed restore */
@@ -621,7 +621,7 @@ u_init()
     u.umortality = 0;
     u.ugrave_arise = NON_PM;
 
-    u.umonnum = u.umonster = (flags.female && urole.femalenum != NON_PM)
+    u.umonnum = u.umonster = (uflags.female && urole.femalenum != NON_PM)
                                  ? urole.femalenum
                                  : urole.malenum;
     u.ulycn = NON_PM;
@@ -639,7 +639,7 @@ u_init()
         spl_book[i].sp_id = NO_SPELL;
     u.ublesscnt = 300; /* no prayers just yet */
     u.ualignbase[A_CURRENT] = u.ualignbase[A_ORIGINAL] = u.ualign.type =
-        aligns[flags.initalign].value;
+        aligns[uflags.initalign].value;
 
 #if defined(BSD) && !defined(POSIX_TYPES)
     (void) time((long *) &ubirthday);

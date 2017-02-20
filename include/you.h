@@ -166,7 +166,7 @@ struct Role {
 };
 
 extern const struct Role roles[]; /* table of available roles */
-extern struct Role urole;
+#define urole you_player->p_urole
 #define Role_if(X) (urole.malenum == (X))
 #define Role_switch (urole.malenum)
 
@@ -218,7 +218,7 @@ struct Race {
 };
 
 extern const struct Race races[]; /* Table of available races */
-extern struct Race urace;
+#define urace you_player->p_urace
 #define Race_if(X) (urace.malenum == (X))
 #define Race_switch (urace.malenum)
 
@@ -235,9 +235,9 @@ struct Gender {
                              increment to 3 if you allow neuter roles */
 
 extern const struct Gender genders[]; /* table of available genders */
-#define uhe()      (genders[flags.female ? 1 : 0].he)
-#define uhim()     (genders[flags.female ? 1 : 0].him)
-#define uhis()     (genders[flags.female ? 1 : 0].his)
+#define uhe()      (genders[uflags.female ? 1 : 0].he)
+#define uhim()     (genders[uflags.female ? 1 : 0].him)
+#define uhis()     (genders[uflags.female ? 1 : 0].his)
 #define mhe(mtmp)  (genders[pronoun_gender(mtmp)].he)
 #define mhim(mtmp) (genders[pronoun_gender(mtmp)].him)
 #define mhis(mtmp) (genders[pronoun_gender(mtmp)].his)

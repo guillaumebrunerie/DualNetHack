@@ -368,7 +368,7 @@ int how;
             (long) urealtime.realtime, XLOG_SEP,
             (long) ubirthday, XLOG_SEP, (long) urealtime.finish_time);
     Fprintf(rfile, "%cgender0=%s%calign0=%s", XLOG_SEP,
-            genders[flags.initgend].filecode, XLOG_SEP,
+            genders[uflags.initgend].filecode, XLOG_SEP,
             aligns[1 - u.ualignbase[A_ORIGINAL]].filecode);
     Fprintf(rfile, "%cflags=0x%lx", XLOG_SEP, encodexlogflags());
     Fprintf(rfile, "\n");
@@ -546,7 +546,7 @@ time_t when;
     t0->uid = uid;
     copynchars(t0->plrole, urole.filecode, ROLESZ);
     copynchars(t0->plrace, urace.filecode, ROLESZ);
-    copynchars(t0->plgend, genders[flags.female].filecode, ROLESZ);
+    copynchars(t0->plgend, genders[uflags.female].filecode, ROLESZ);
     copynchars(t0->plalign, aligns[1 - u.ualign.type].filecode, ROLESZ);
     copynchars(t0->name, plname, NAMSZ);
     formatkiller(t0->death, sizeof t0->death, how, TRUE);
@@ -715,15 +715,15 @@ time_t when;
             writeentry(rfile, t1);
         if (done_stopprint)
             continue;
-        if (rank > flags.end_top && (rank < rank0 - flags.end_around
-                                     || rank > rank0 + flags.end_around)
-            && (!flags.end_own
+        if (rank > uflags.end_top && (rank < rank0 - uflags.end_around
+                                     || rank > rank0 + uflags.end_around)
+            && (!uflags.end_own
                 || (sysopt.pers_is_uid
                         ? t1->uid == t0->uid
                         : strncmp(t1->name, t0->name, NAMSZ) == 0)))
             continue;
-        if (rank == rank0 - flags.end_around
-            && rank0 > flags.end_top + flags.end_around + 1 && !flags.end_own)
+        if (rank == rank0 - uflags.end_around
+            && rank0 > uflags.end_top + uflags.end_around + 1 && !uflags.end_own)
             topten_print("");
         if (rank != rank0)
             outentry(rank, t1, FALSE);

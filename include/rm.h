@@ -398,18 +398,28 @@ extern struct symsetentry symset[NUM_GRAPHICS]; /* from drawing.c */
  * must be updated to consider the field.
  */
 struct rm {
-    int glyph;               /* what the hero thinks is there */
+    //int glyph;               /* what the hero thinks is there */
     schar typ;               /* what is really there */
-    uchar seenv;             /* seen vector */
+    //uchar seenv;             /* seen vector */
     Bitfield(flags, 5);      /* extra information for typ */
     Bitfield(horizontal, 1); /* wall/door/etc is horiz. (more typ info) */
     Bitfield(lit, 1);        /* speed hack for lit rooms */
-    Bitfield(waslit, 1);     /* remember if a location was lit */
+    //Bitfield(waslit, 1);     /* remember if a location was lit */
 
+    Bitfield(candig, 1); /* Exception to Can_dig_down; was a trapdoor */
     Bitfield(roomno, 6); /* room # for special rooms */
     Bitfield(edge, 1);   /* marks boundaries for special rooms*/
-    Bitfield(candig, 1); /* Exception to Can_dig_down; was a trapdoor */
 };
+
+/*
+ * The structure describing subjective characteristics of a
+ * coordinate position.
+ */
+typedef struct rm_sub {
+    int glyph;
+    uchar seenv;
+    boolean waslit;
+} rm_sub;
 
 #define SET_TYPLIT(x, y, ttyp, llit)                              \
     {                                                             \
@@ -590,10 +600,14 @@ typedef struct {
     struct levelflags flags;
 } dlevel_t;
 
-extern schar lastseentyp[COLNO][ROWNO]; /* last seen/touched dungeon typ */
+/* extern schar lastseentyp[COLNO][ROWNO]; /\* last seen/touched dungeon typ *\/ */
 
-extern dlevel_t level; /* structure describing the current level */
+/* extern dlevel_t level; /\* structure describing the current level *\/ */
 
+#define lastseentyp you_player->p_lastseentyp
+#define level (*(you_player->p_level))
+#define levl_s (you_player->p_locations_sub[playerid-1])
+#define levl_s_o (other_player->p_locations_sub[2-playerid])
 /*
  * Macros for compatibility with old code. Someday these will go away.
  */

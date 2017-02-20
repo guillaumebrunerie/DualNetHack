@@ -492,7 +492,7 @@ int what; /* should be a long */
         }
         /* no pickup if levitating & not on air or water level */
         if (!can_reach_floor(TRUE)) {
-            if ((multi && !context.run) || (autopickup && !flags.pickup)
+            if ((multi && !context.run) || (autopickup && !uflags.pickup)
                 || ((ttmp = t_at(u.ux, u.uy)) != 0
                     && uteetering_at_seen_pit(ttmp)))
                 read_engr_at(u.ux, u.uy);
@@ -502,7 +502,7 @@ int what; /* should be a long */
          * action, or possibly paralyzed, sleeping, etc.... and they just
          * teleported onto the object.  They shouldn't pick it up.
          */
-        if ((multi && !context.run) || (autopickup && !flags.pickup)) {
+        if ((multi && !context.run) || (autopickup && !uflags.pickup)) {
             check_here(FALSE);
             return 0;
         }
@@ -539,7 +539,7 @@ int what; /* should be a long */
         goto menu_pickup;
     }
 
-    if (flags.menu_style != MENU_TRADITIONAL || iflags.menu_requested) {
+    if (uflags.menu_style != MENU_TRADITIONAL || iflags.menu_requested) {
         /* use menus exclusively */
         traverse_how |= AUTOSELECT_SINGLE | INVORDER_SORT;
         if (count) { /* looking for N of something */
@@ -707,7 +707,7 @@ struct obj *otmp;
 boolean calc_costly;
 {
     static boolean costly = FALSE;
-    const char *otypes = flags.pickup_types;
+    const char *otypes = uflags.pickup_types;
     boolean pickit;
 
     /* calculate 'costly' just once for a given autopickup operation */
@@ -729,12 +729,12 @@ boolean calc_costly;
         pickit = !is_autopickup_exception(otmp, FALSE);
     /* pickup_thrown overrides pickup_types and exceptions */
     if (!pickit)
-        pickit = (flags.pickup_thrown && otmp->was_thrown);
+        pickit = (uflags.pickup_thrown && otmp->was_thrown);
     return pickit;
 }
 
 /*
- * Pick from the given list using flags.pickup_types.  Return the number
+ * Pick from the given list using uflags.pickup_types.  Return the number
  * of items picked (not counts).  Create an array that returns pointers
  * and counts of the items to be picked up.  If the number of items
  * picked is zero, the pickup list is left alone.  The caller of this
@@ -835,13 +835,13 @@ boolean FDECL((*allow), (OBJ_P)); /* allow function */
         return 1;
     }
 
-    if (sorted || flags.sortloot != 'n') {
+    if (sorted || uflags.sortloot != 'n') {
         sortloot(&olist,
-                 (((flags.sortloot == 'f'
-                    || (flags.sortloot == 'l' && !(qflags & USE_INVLET)))
+                 (((uflags.sortloot == 'f'
+                    || (uflags.sortloot == 'l' && !(qflags & USE_INVLET)))
                    ? SORTLOOT_LOOT
                    : (qflags & USE_INVLET) ? SORTLOOT_INVLET : 0)
-                  | (flags.sortpack ? SORTLOOT_PACK : 0)),
+                  | (uflags.sortpack ? SORTLOOT_PACK : 0)),
                  (qflags & BY_NEXTHERE) ? TRUE : FALSE);
         *olist_p = olist;
     }
@@ -855,7 +855,7 @@ boolean FDECL((*allow), (OBJ_P)); /* allow function */
      * each type so we can group them.  The allow function will only
      * be called once per object in the list.
      */
-    pack = flags.inv_order;
+    pack = uflags.inv_order;
     first = TRUE;
     do {
         printed_type_name = FALSE;
@@ -1018,7 +1018,7 @@ int how;               /* type of query */
 
     win = create_nhwindow(NHW_MENU);
     start_menu(win);
-    pack = flags.inv_order;
+    pack = uflags.inv_order;
     if ((qflags & ALL_TYPES) && (ccount > 1)) {
         invlet = 'a';
         any = zeroany;
@@ -1128,7 +1128,7 @@ int qflags;
     int ccount = 0;
     struct obj *curr;
 
-    pack = flags.inv_order;
+    pack = uflags.inv_order;
     do {
         counted_category = FALSE;
         for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
@@ -1331,8 +1331,8 @@ boolean telekinesis;
     } else {
         result = 1;
         prev_encumbr = near_capacity();
-        if (prev_encumbr < flags.pickup_burden)
-            prev_encumbr = flags.pickup_burden;
+        if (prev_encumbr < uflags.pickup_burden)
+            prev_encumbr = uflags.pickup_burden;
         next_encumbr = calc_capacity(new_wt - old_wt);
         if (next_encumbr > prev_encumbr) {
             if (telekinesis) {
@@ -2427,8 +2427,8 @@ boolean more_containers; /* True iff #loot multiple and this isn't last one */
             (void) safe_qbuf(qbuf, "Do what with ", "?", current_container,
                              yname, ysimple_name, "it");
         /* ask player about what to do with this container */
-        if (flags.menu_style == MENU_PARTIAL
-            || flags.menu_style == MENU_FULL) {
+        if (uflags.menu_style == MENU_PARTIAL
+            || uflags.menu_style == MENU_FULL) {
             if (!inokay && !outmaybe) {
                 /* nothing to take out, nothing to put in;
                    trying to do both will yield proper feedback */
@@ -2486,7 +2486,7 @@ boolean more_containers; /* True iff #loot multiple and this isn't last one */
             current_container->cknown = 1;
         } else {
             add_valid_menu_class(0); /* reset */
-            if (flags.menu_style == MENU_TRADITIONAL)
+            if (uflags.menu_style == MENU_TRADITIONAL)
                 used |= traditional_loot(FALSE);
             else
                 used |= (menu_loot(0, FALSE) > 0);
@@ -2506,7 +2506,7 @@ boolean more_containers; /* True iff #loot multiple and this isn't last one */
      */
     if (loot_in) {
         add_valid_menu_class(0); /* reset */
-        if (flags.menu_style == MENU_TRADITIONAL)
+        if (uflags.menu_style == MENU_TRADITIONAL)
             used |= traditional_loot(TRUE);
         else
             used |= (menu_loot(0, TRUE) > 0);
@@ -2535,7 +2535,7 @@ boolean more_containers; /* True iff #loot multiple and this isn't last one */
             current_container->cknown = 1;
         } else {
             add_valid_menu_class(0); /* reset */
-            if (flags.menu_style == MENU_TRADITIONAL)
+            if (uflags.menu_style == MENU_TRADITIONAL)
                 used |= traditional_loot(FALSE);
             else
                 used |= (menu_loot(0, FALSE) > 0);
@@ -2613,7 +2613,7 @@ boolean put_in;
 
     if (retry) {
         all_categories = (retry == -2);
-    } else if (flags.menu_style == MENU_FULL) {
+    } else if (uflags.menu_style == MENU_FULL) {
         all_categories = FALSE;
         Sprintf(buf, "%s what type of objects?", action);
         mflags = (ALL_TYPES | BUC_ALLBKNOWN | BUC_UNKNOWN);
@@ -2644,7 +2644,7 @@ boolean put_in;
         }
     } else {
         mflags = INVORDER_SORT;
-        if (put_in && flags.invlet_constant)
+        if (put_in && uflags.invlet_constant)
             mflags |= USE_INVLET;
         if (!put_in)
             current_container->cknown = 1;
@@ -2693,7 +2693,7 @@ boolean outokay, inokay, alreadyused, more_containers;
     menu_item *pick_list;
     char buf[BUFSZ];
     int n;
-    const char *menuselector = flags.lootabc ? abc_chars : lootchars;
+    const char *menuselector = uflags.lootabc ? abc_chars : lootchars;
 
     any = zeroany;
     win = create_nhwindow(NHW_MENU);
@@ -2781,9 +2781,9 @@ dotip()
     /* check floor container(s) first; at most one will be accessed */
     if ((boxes = container_at(cc.x, cc.y, TRUE)) > 0) {
         Sprintf(buf, "You can't tip %s while carrying so much.",
-                !flags.verbose ? "a container" : (boxes > 1) ? "one" : "it");
+                !uflags.verbose ? "a container" : (boxes > 1) ? "one" : "it");
         if (!check_capacity(buf) && able_to_loot(cc.x, cc.y, FALSE)) {
-            if (boxes > 1 && (flags.menu_style != MENU_TRADITIONAL
+            if (boxes > 1 && (uflags.menu_style != MENU_TRADITIONAL
                               || iflags.menu_requested)) {
                 /* use menu to pick a container to tip */
                 int n, i;
@@ -2811,7 +2811,7 @@ dotip()
                     any.a_obj = &dummyobj;
                     /* use 'i' for inventory unless there are so many
                        containers that it's already being used */
-                    i = (i <= 'i' - 'a' && !flags.lootabc) ? 'i' : 0;
+                    i = (i <= 'i' - 'a' && !uflags.lootabc) ? 'i' : 0;
                     add_menu(win, NO_GLYPH, &any, i, 0, ATR_NONE,
                              "tip something being carried", MENU_SELECTED);
                 }

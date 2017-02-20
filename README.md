@@ -253,13 +253,21 @@ one goes to a different level to get him food. Similarly for everything else tha
 turn counter. It just wouldn’t make sense that the turn counter works differently depending on
 whether the players are on the same level or not.
 
-### Monster generation :+1:
+### Monster generation
 
 Monster generation depends on dungeon level and player level. In our case, I think it should depend
 on dungeon level and the higher of the two player levels (to give an incentive to both to level up
 and to compensate with the fact that they can both attack monsters together). Otherwise it would
 incite the players to have different levels so that the monsters would be easy for the high-level
 one.
+
+What about the rate of generation? It would make sense to say that the rate stays the same: there
+would be as many monsters as in Nethack, but two players. What about when the two players are on
+different dungeon levels? If the monster generation rate is the same on both levels than it is on a
+single one, it would give good incentive to split up, in order to get more food, experience, loot,
+and so on, so it might not be a good idea. On the other hand, if the monster generation rate is half
+when players are at different levels, it would give also good incentive to split up so that one
+player can go further down being less bothered by monsters.
 
 ### Discoveries :question:
 

@@ -7,7 +7,7 @@
 
 #define E extern
 
-E int NDECL((*occupation));
+#define occupation you_player->p_occupation
 E int NDECL((*afternmv));
 
 E const char *hname;
@@ -26,11 +26,11 @@ E char SAVEP[];
 
 E NEARDATA int bases[MAXOCLASSES];
 
-E NEARDATA int multi;
-E const char *multi_reason;
-E NEARDATA int nroom;
-E NEARDATA int nsubroom;
-E NEARDATA int occtime;
+#define multi you_player->p_multi
+#define multi_reason you_player->p_multi_reason
+#define nroom you_player->p_nroom
+#define nsubroom you_player->p_nsubroom
+#define occtime you_player->p_occtime
 
 #define WARNCOUNT 6 /* number of different warning levels */
 E nhsym warnsyms[WARNCOUNT];
@@ -39,7 +39,7 @@ E NEARDATA int warn_obj_cnt; /* count of monsters meeting criteria */
 E int x_maze_max, y_maze_max;
 E int otg_temp;
 
-E NEARDATA int in_doagain;
+#define in_doagain you_player->p_in_doagain
 
 E struct dgn_topology { /* special dungeon levels for speed */
     d_level d_oracle_level;
@@ -104,21 +104,29 @@ E struct dgn_topology { /* special dungeon levels for speed */
 #define sokoend_level           (dungeon_topology.d_sokoend_level)
 /* clang-format on */
 
-E NEARDATA stairway dnstair, upstair; /* stairs up and down */
+/* stairs up and down */
+#define dnstair you_player->p_dnstair
+#define upstair you_player->p_upstair
+
 #define xdnstair (dnstair.sx)
 #define ydnstair (dnstair.sy)
 #define xupstair (upstair.sx)
 #define yupstair (upstair.sy)
 
-E NEARDATA stairway dnladder, upladder; /* ladders up and down */
+/* ladders up and down */
+#define dnladder you_player->p_dnladder
+#define upladder you_player->p_upladder
+
 #define xdnladder (dnladder.sx)
 #define ydnladder (dnladder.sy)
 #define xupladder (upladder.sx)
 #define yupladder (upladder.sy)
 
-E NEARDATA stairway sstairs;
+#define sstairs you_player->p_sstairs
 
-E NEARDATA dest_area updest, dndest; /* level-change destination areas */
+/* level-change destination areas */
+#define updest you_player->p_updest
+#define dndest you_player->p_dndest
 
 E NEARDATA coord inv_pos;
 E NEARDATA dungeon dungeons[];
@@ -126,9 +134,9 @@ E NEARDATA s_level *sp_levchn;
 #define dunlev_reached(x) (dungeons[(x)->dnum].dunlev_ureached)
 
 #include "quest.h"
-E struct q_score quest_status;
+#define quest_status you_player->p_quest_status
 
-E NEARDATA char pl_character[PL_CSIZ];
+#define pl_character you_player->p_pl_character
 E NEARDATA char pl_race; /* character's race */
 
 E NEARDATA char pl_fruit[PL_FSIZ];
@@ -185,7 +193,7 @@ E NEARDATA struct kinfo {
 } killer;
 
 E long done_money;
-E NEARDATA char plname[PL_NSIZ];
+#define plname you_player->p_plname
 E NEARDATA char dogname[];
 E NEARDATA char catname[];
 E NEARDATA char horsename[];
@@ -218,7 +226,7 @@ E NEARDATA boolean in_steed_dismounting;
 E const int shield_static[];
 
 #include "spell.h"
-E NEARDATA struct spell spl_book[]; /* sized in decl.c */
+#define spl_book you_player->p_spl_book
 
 #include "color.h"
 #ifdef TEXTCOLOR
@@ -231,12 +239,25 @@ E const struct class_sym def_monsyms[MAXMCLASSES]; /* default class symbols */
 E uchar monsyms[MAXMCLASSES];                      /* current class symbols */
 
 #include "obj.h"
-E NEARDATA struct obj *invent, *uarm, *uarmc, *uarmh, *uarms, *uarmg, *uarmf,
-    *uarmu, /* under-wear, so to speak */
-    *uskin, *uamul, *uleft, *uright, *ublindf, *uwep, *uswapwep, *uquiver;
+#define invent you_player->p_invent
+#define uarm you_player->p_uarm
+#define uarmc you_player->p_uarmc
+#define uarmh you_player->p_uarmh
+#define uarms you_player->p_uarms
+#define uarmg you_player->p_uarmg
+#define uarmf you_player->p_uarmf
+#define uarmu you_player->p_uarmu  /* under-wear, so to speak */
+#define uskin you_player->p_uskin
+#define uamul you_player->p_uamul
+#define uleft you_player->p_uleft
+#define uright you_player->p_uright
+#define ublindf you_player->p_ublindf
+#define uwep you_player->p_uwep
+#define uswapwep you_player->p_uswapwep
+#define uquiver you_player->p_uquiver
+#define uchain you_player->p_uchain  /* defined only when punished */
+#define uball you_player->p_uball
 
-E NEARDATA struct obj *uchain; /* defined only when punished */
-E NEARDATA struct obj *uball;
 E NEARDATA struct obj *migrating_objs;
 E NEARDATA struct obj *billobjs;
 E NEARDATA struct obj *current_wand, *thrownobj, *kickedobj;
@@ -246,7 +267,8 @@ E NEARDATA struct obj zeroobj; /* for init; &zeroobj used as special value */
 E NEARDATA anything zeroany;   /* init'd and defined in decl.c */
 
 #include "you.h"
-E NEARDATA struct you u;
+#define u you_player->p_u
+#define o_u other_player->p_u
 E NEARDATA time_t ubirthday;
 E NEARDATA struct u_realtime urealtime;
 
@@ -256,7 +278,7 @@ E NEARDATA struct u_realtime urealtime;
 #endif
 
 E NEARDATA struct monst zeromonst; /* for init of new or temp monsters */
-E NEARDATA struct monst youmonst; /* monster details when hero is poly'd */
+#define youmonst you_player->p_youmonst  /* monster details when hero is poly'd */
 E NEARDATA struct monst *mydogs, *migrating_mons;
 
 E NEARDATA struct mvitals {
@@ -323,11 +345,12 @@ E __thread NEARDATA boolean vision_full_recalc; /* TRUE if need vision recalc */
 E __thread NEARDATA char **viz_array;           /* could see/in sight row pointers */
 
 /* Window system stuff */
-E NEARDATA winid WIN_MESSAGE;
+#define WIN_MESSAGE you_player->p_WIN_MESSAGE
 #ifndef STATUS_VIA_WINDOWPORT
-E NEARDATA winid WIN_STATUS;
+#define WIN_STATUS you_player->p_WIN_STATUS
 #endif
-E NEARDATA winid WIN_MAP, WIN_INVEN;
+#define WIN_MAP you_player->p_WIN_MAP
+#define WIN_INVEN you_player->p_WIN_INVEN
 
 /* pline (et al) for a single string argument (suppress compiler warning) */
 #define pline1(cstr) pline("%s", cstr)

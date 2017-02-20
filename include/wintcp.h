@@ -7,8 +7,10 @@ extern void tcp_init_connection();
 extern void tcp_set_sockfd(int);
 extern int  tcp_get_sockfd();
 
-extern void tcp_block();
+extern void tcp_lock();
+extern void tcp_unlock();
 
+extern void tcp_send_changed_variables();
 extern void tcp_send_WIN();
 extern void tcp_send_gbuf();
 extern void tcp_send_rndencode();
@@ -26,7 +28,7 @@ extern void tcp_send_anything(anything);
 extern void tcp_send_long(long);
 
 extern void tcp_send_list_menu_item(menu_item*, int);
-
+extern void tcp_transfer_all(int);
 extern int     tcp_recv_string_from(int, char*);
 extern int     tcp_recv_string(char*);
 extern int     tcp_recv_int();

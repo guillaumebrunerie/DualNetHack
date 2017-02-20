@@ -397,7 +397,7 @@ register struct obj *obj;
             }
             seemimic(mtmp);
             pline("That %s is really %s.", what, mnm);
-        } else if (flags.verbose && !canspotmon(mtmp)) {
+        } else if (uflags.verbose && !canspotmon(mtmp)) {
             There("is %s there.", mnm);
         }
 
@@ -406,7 +406,7 @@ register struct obj *obj;
             map_invisible(rx, ry);
         return res;
     }
-    if (glyph_is_invisible(levl[rx][ry].glyph)) {
+    if (glyph_is_invisible(levl_s[rx][ry].glyph)) {
         unmap_object(rx, ry);
         newsym(rx, ry);
         pline_The("invisible monster must have moved.");
@@ -2700,7 +2700,7 @@ struct obj *obj;
             pline1(msg_snap);
 
     } else if (mtmp) {
-        if (!canspotmon(mtmp) && !glyph_is_invisible(levl[rx][ry].glyph)) {
+        if (!canspotmon(mtmp) && !glyph_is_invisible(levl_s[rx][ry].glyph)) {
             pline("A monster is there that you couldn't see.");
             map_invisible(rx, ry);
         }
@@ -3136,12 +3136,12 @@ struct obj *obj;
         if ((mtmp = m_at(cc.x, cc.y)) == (struct monst *) 0)
             break;
         notonhead = (bhitpos.x != mtmp->mx || bhitpos.y != mtmp->my);
-        save_confirm = flags.confirm;
+        save_confirm = uflags.confirm;
         if (verysmall(mtmp->data) && !rn2(4)
             && enexto(&cc, u.ux, u.uy, (struct permonst *) 0)) {
-            flags.confirm = FALSE;
+            uflags.confirm = FALSE;
             (void) attack_checks(mtmp, uwep);
-            flags.confirm = save_confirm;
+            uflags.confirm = save_confirm;
             check_caitiff(mtmp); /* despite fact there's no damage */
             You("pull in %s!", mon_nam(mtmp));
             mtmp->mundetected = 0;
@@ -3149,9 +3149,9 @@ struct obj *obj;
             return 1;
         } else if ((!bigmonst(mtmp->data) && !strongmonst(mtmp->data))
                    || rn2(4)) {
-            flags.confirm = FALSE;
+            uflags.confirm = FALSE;
             (void) attack_checks(mtmp, uwep);
-            flags.confirm = save_confirm;
+            uflags.confirm = save_confirm;
             check_caitiff(mtmp);
             (void) thitmonst(mtmp, uwep);
             return 1;

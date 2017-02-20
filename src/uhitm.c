@@ -117,7 +117,7 @@ struct obj *wep; /* uwep for attack(), null for kick_monster() */
          * not stay there, so the player will have suddenly forgotten
          * the square's contents for no apparent reason.
         if (!canspotmon(mtmp)
-            && !glyph_is_invisible(levl[bhitpos.x][bhitpos.y].glyph))
+            && !glyph_is_invisible(levl_s[bhitpos.x][bhitpos.y].glyph))
             map_invisible(bhitpos.x, bhitpos.y);
          */
         return FALSE;
@@ -132,7 +132,7 @@ struct obj *wep; /* uwep for attack(), null for kick_monster() */
      * the screen, so you know something is there.
      */
     if (!canspotmon(mtmp) && !glyph_is_warning(glyph_at(bhitpos.x, bhitpos.y))
-        && !glyph_is_invisible(levl[bhitpos.x][bhitpos.y].glyph)
+        && !glyph_is_invisible(levl_s[bhitpos.x][bhitpos.y].glyph)
         && !(!Blind && mtmp->mundetected && hides_under(mtmp->data))) {
         pline("Wait!  There's %s there you can't see!", something);
         map_invisible(bhitpos.x, bhitpos.y);
@@ -155,7 +155,7 @@ struct obj *wep; /* uwep for attack(), null for kick_monster() */
          * some (probably different) unseen monster, the player is in
          * luck--he attacks it even though it's hidden.
          */
-        if (glyph_is_invisible(levl[mtmp->mx][mtmp->my].glyph)) {
+        if (glyph_is_invisible(levl_s[mtmp->mx][mtmp->my].glyph)) {
             seemimic(mtmp);
             return FALSE;
         }
@@ -168,7 +168,7 @@ struct obj *wep; /* uwep for attack(), null for kick_monster() */
         && (hides_under(mtmp->data) || mtmp->data->mlet == S_EEL)) {
         mtmp->mundetected = mtmp->msleeping = 0;
         newsym(mtmp->mx, mtmp->my);
-        if (glyph_is_invisible(levl[mtmp->mx][mtmp->my].glyph)) {
+        if (glyph_is_invisible(levl_s[mtmp->mx][mtmp->my].glyph)) {
             seemimic(mtmp);
             return FALSE;
         }
@@ -193,7 +193,7 @@ struct obj *wep; /* uwep for attack(), null for kick_monster() */
         wakeup(mtmp, TRUE);
     }
 
-    if (flags.confirm && mtmp->mpeaceful && !Confusion && !Hallucination
+    if (uflags.confirm && mtmp->mpeaceful && !Confusion && !Hallucination
         && !Stunned) {
         /* Intelligent chaotic weapons (Stormbringer) want blood */
         if (wep && wep->oartifact == ART_STORMBRINGER) {
@@ -389,7 +389,7 @@ register struct monst *mtmp;
 
     if (unweapon) {
         unweapon = FALSE;
-        if (flags.verbose) {
+        if (uflags.verbose) {
             if (uwep)
                 You("begin bashing monsters with %s.",
                     yobjnam(uwep, (char *) 0));
@@ -425,7 +425,7 @@ atk_done:
      * evade.
      */
     if (context.forcefight && mtmp->mhp > 0 && !canspotmon(mtmp)
-        && !glyph_is_invisible(levl[u.ux + u.dx][u.uy + u.dy].glyph)
+        && !glyph_is_invisible(levl_s[u.ux + u.dx][u.uy + u.dy].glyph)
         && !(u.uswallow && mtmp == u.ustuck))
         map_invisible(u.ux + u.dx, u.uy + u.dy);
 
@@ -446,7 +446,7 @@ struct attack *uattk;
     if (override_confirmation) {
         /* this may need to be generalized if weapons other than
            Stormbringer acquire similar anti-social behavior... */
-        if (flags.verbose)
+        if (uflags.verbose)
             Your("bloodthirsty blade attacks!");
     }
 
@@ -1105,7 +1105,7 @@ int thrown; /* HMON_xxx (0 => hand-to-hand, other => ranged) */
             || (thrown && m_shot.n > 1 && m_shot.o == obj->otyp))) {
         if (thrown)
             hit(mshot_xname(obj), mon, exclam(tmp));
-        else if (!flags.verbose)
+        else if (!uflags.verbose)
             You("hit it.");
         else
             You("%s %s%s", Role_if(PM_BARBARIAN) ? "smite" : "hit",
@@ -1705,7 +1705,7 @@ register struct attack *mattk;
                     pline("%s is being crushed.", Monnam(mdef));
             } else {
                 tmp = 0;
-                if (flags.verbose)
+                if (uflags.verbose)
                     You("brush against %s %s.", s_suffix(mon_nam(mdef)),
                         mbodypart(mdef, LEG));
             }
@@ -1775,7 +1775,7 @@ register struct attack *mattk;
             You_feel("embarrassed for a moment.");
             if (tmp)
                 xkilled(mdef, XKILL_NOMSG); /* !tmp but hp<1: already killed */
-        } else if (!flags.verbose) {
+        } else if (!uflags.verbose) {
             You("destroy it!");
             if (tmp)
                 xkilled(mdef, XKILL_NOMSG);
@@ -2092,7 +2092,7 @@ boolean wouldhavehit;
 
     if (could_seduce(&youmonst, mdef, mattk))
         You("pretend to be friendly to %s.", mon_nam(mdef));
-    else if (canspotmon(mdef) && flags.verbose)
+    else if (canspotmon(mdef) && uflags.verbose)
         You("miss %s.", mon_nam(mdef));
     else
         You("miss it.");
@@ -2340,7 +2340,7 @@ boolean wep_was_destroyed;
         break;
     case AD_ACID:
         if (mhit && rn2(2)) {
-            if (Blind || !flags.verbose)
+            if (Blind || !uflags.verbose)
                 You("are splashed!");
             else
                 You("are splashed by %s %s!", s_suffix(mon_nam(mon)),
@@ -2619,7 +2619,7 @@ struct monst *mtmp;
         else if (mtmp->m_ap_type == M_AP_MONSTER)
             what = a_monnam(mtmp); /* differs from what was sensed */
     } else {
-        int glyph = levl[u.ux + u.dx][u.uy + u.dy].glyph;
+        int glyph = levl_s[u.ux + u.dx][u.uy + u.dy].glyph;
 
         if (glyph_is_cmap(glyph) && (glyph_to_cmap(glyph) == S_hcdoor
                                      || glyph_to_cmap(glyph) == S_vcdoor))
@@ -2641,7 +2641,7 @@ struct monst *mtmp;
     /* if hero is blind, wakeup() won't display the monster even though
        it's no longer concealed */
     if (!canspotmon(mtmp)
-        && !glyph_is_invisible(levl[mtmp->mx][mtmp->my].glyph))
+        && !glyph_is_invisible(levl_s[mtmp->mx][mtmp->my].glyph))
         map_invisible(mtmp->mx, mtmp->my);
 }
 

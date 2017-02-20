@@ -537,9 +537,9 @@ unsigned int *stuckid, *steedid;
     /* we want to be able to revert to command line/environment/config
        file option values instead of keeping old save file option values
        if partial restore fails and we resort to starting a new game */
-    newgameflags = flags;
-    mread(fd, (genericptr_t) &flags, sizeof(struct flag));
-    /* wizard and discover are actually flags.debug and flags.explore;
+    newgameflags = uflags;
+    mread(fd, (genericptr_t) &uflags, sizeof(struct flag));
+    /* wizard and discover are actually uflags.debug and uflags.explore;
        player might be overriding the save file values for them;
        in the discover case, we don't want to set that for a normal
        game until after the save file has been removed */
@@ -588,7 +588,7 @@ unsigned int *stuckid, *steedid;
         u.uz.dlevel = 1;
         /* revert to pre-restore option settings */
         iflags.deferred_X = FALSE;
-        flags = newgameflags;
+        uflags = newgameflags;
 #ifdef SYSFLAGS
         sysflags = newgamesysflags;
 #endif
@@ -804,8 +804,8 @@ register int fd;
     clear_nhwindow(WIN_MESSAGE);
     You("return to level %d in %s%s.", depth(&u.uz),
         dungeons[u.uz.dnum].dname,
-        flags.debug ? " while in debug mode"
-                    : flags.explore ? " while in explore mode" : "");
+        uflags.debug ? " while in debug mode"
+                    : uflags.explore ? " while in explore mode" : "");
     curs(WIN_MAP, 1, 1);
     dotcnt = 0;
     dotrow = 2;
@@ -923,6 +923,7 @@ rest_levl(fd, rlecomp)
 int fd;
 boolean rlecomp;
 {
+    char trash[sizeof player1.p_locations_sub];
 #ifdef RLECOMP
     short i, j;
     uchar len;
@@ -953,6 +954,7 @@ boolean rlecomp;
     nhUse(rlecomp);
 #endif /* ?RLECOMP */
     mread(fd, (genericptr_t) levl, sizeof levl);
+    mread(fd, (genericptr_t) you_player->p_locations_sub, sizeof you_player->p_locations_sub);
 }
 
 void

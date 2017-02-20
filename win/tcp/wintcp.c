@@ -18,6 +18,12 @@ tcp_lock()
      dualnh_switch_to_myself();
 }
 
+void
+tcp_unlock()
+{
+     pthread_mutex_unlock(&mutex);
+}
+
 /* Functions from the protocol */
 
 void
@@ -35,19 +41,19 @@ void
 tcp_player_selection()
 {
      tcp_send_name_command("player_selection");
-     tcp_recv_string(you_player->plname);
-     you_player->flags.initrole = tcp_recv_int();
-     you_player->flags.initrace = tcp_recv_int();
-     you_player->flags.initgend = tcp_recv_int();
-     you_player->flags.initalign = tcp_recv_int();
+     tcp_recv_string(plname);
+     uflags.initrole = tcp_recv_int();
+     uflags.initrace = tcp_recv_int();
+     uflags.initgend = tcp_recv_int();
+     uflags.initalign = tcp_recv_int();
 
-     if (you_player == &player2) {
-          flags.initrole = you_player->flags.initrole;
-          flags.initrace = you_player->flags.initrace;
-          flags.initgend = you_player->flags.initgend;
-          flags.initalign = you_player->flags.initalign;
-          strcpy(plname, you_player->plname);
-     }
+     /* if (you_player == &player2) { */
+     /*      flags.initrole = you_player->flags.initrole; */
+     /*      flags.initrace = you_player->flags.initrace; */
+     /*      flags.initgend = you_player->flags.initgend; */
+     /*      flags.initalign = you_player->flags.initalign; */
+     /*      strcpy(plname, you_player->plname); */
+     /* } */
 }
 
 void
@@ -117,8 +123,8 @@ boolean blocking;
 
      static __thread int window_inited_received = 0;
      if (!window_inited_received) {
-          you_player->iflags.window_inited = tcp_recv_boolean();
-          if (you_player->iflags.window_inited)
+          iflags.window_inited = tcp_recv_boolean();
+          if (iflags.window_inited)
                window_inited_received = 1;
      }
 }
@@ -249,7 +255,7 @@ menu_item **menu_list;
      tcp_send_name_command("select_menu");
      tcp_send_int(window);
      tcp_send_int(how);
-     pthread_mutex_unlock(&mutex);
+     tcp_unlock();
      int res = tcp_recv_int();
      if (res > 0)
        tcp_recv_list_menu_item(menu_list, res);
@@ -268,7 +274,7 @@ const char *mesg;
      tcp_send_char(let);
      tcp_send_int(how);
      tcp_send_string(mesg);
-     pthread_mutex_unlock(&mutex);
+     tcp_unlock();
      char res = tcp_recv_char();
      tcp_lock();
      return res;
@@ -357,30 +363,46 @@ tcp_nhgetch()
      int result;
      char queue[1000];
      int x, y;
+     struct timeval tv;
+     int ret;
      
      tcp_send_name_command("nhgetch");
      fprintf(stderr, "(%d) Listening %d and %d\n", playerid, you_player->server_socket, you_player->sockfd);
+
+     tv.tv_sec = 0L;
+     tv.tv_usec = 0L;
 
      FD_ZERO(&set);
      FD_SET(you_player->server_socket, &set);
      FD_SET(you_player->sockfd, &set);
      nfds = max(you_player->server_socket, you_player->sockfd) + 1;
 
-     pthread_mutex_unlock(&mutex);
-
-     if (select(nfds, &set, NULL, NULL, NULL) == -1) {
-          fprintf(stderr, "Error %i\n", errno);
+     fprintf(stderr, "(%i) Trying without delay…\n", playerid);
+     ret = select(nfds, &set, NULL, NULL, &tv);
+     if (ret == 0) {
+         FD_ZERO(&set);
+         FD_SET(you_player->server_socket, &set);
+         FD_SET(you_player->sockfd, &set);
+         nfds = max(you_player->server_socket, you_player->sockfd) + 1;
+         
+         tcp_unlock();
+         fprintf(stderr, "(%i) Did not work, we release the lock and wait…\n", playerid);
+         ret = select(nfds, &set, NULL, NULL, NULL);
+         fprintf(stderr, "(%i) Done waiting, taking the lock…\n", playerid);
+         tcp_lock();
      }
-     // We’re done waiting, we take the lock.
-     tcp_lock();
-     fprintf(stderr, "(%i) Done waiting, taking the lock…\n", playerid);
+     if (ret == -1) {
+         fprintf(stderr, "Error %i\n", errno);
+     }
      
      if (FD_ISSET(you_player->server_socket, &set)) {
           // We have been interrupted. First send the queue, then the commands.
           fprintf(stderr, "(%i) We have been interrupted\n", playerid);
-          char* q = dualnh_queue_tosend();
-          tcp_send_string("QUEUE");
-          tcp_send_string(q);
+          /* if (!dualnh_is_empty()) { */
+              char* q = dualnh_queue_tosend();
+              tcp_send_string("QUEUE");
+              tcp_send_string(q);
+          /* } */
           tcp_transfer_all(you_player->server_socket);
           for (x = 0; x < COLNO; x++)
                for (y = 0; y < ROWNO; y++)
@@ -423,7 +445,7 @@ int *x, *y, *mod;
      /* We do not support the arguments here */
      tcp_send_name_command("nh_poskey");
 
-     pthread_mutex_unlock(&mutex);
+     tcp_unlock();
      int result = tcp_recv_int();
      tcp_lock();
 
@@ -454,7 +476,7 @@ CHAR_P c;
      tcp_send_string(a);
      tcp_send_string(b);
      tcp_send_xchar(c);
-     pthread_mutex_unlock(&mutex);
+     tcp_unlock();
      char res = tcp_recv_char();
      tcp_lock();
      return res;
@@ -467,7 +489,7 @@ char * b;
 {
      tcp_send_name_command("getlin");
      tcp_send_string(a);
-     pthread_mutex_unlock(&mutex);
+     tcp_unlock();
      tcp_recv_string(b);
      tcp_lock();
 }
@@ -476,7 +498,7 @@ int
 tcp_get_ext_cmd()
 {
      tcp_send_name_command("get_ext_cmd");
-     pthread_mutex_unlock(&mutex);
+     tcp_unlock();
      int res = tcp_recv_int();
      tcp_lock();
      return res;

@@ -811,22 +811,22 @@ register struct monst *mtmp;
         if (is_metallic(otmp) && !obj_resists(otmp, 5, 95)
             && touch_artifact(otmp, mtmp)) {
             if (mtmp->data == &mons[PM_RUST_MONSTER] && otmp->oerodeproof) {
-                if (canseemon(mtmp) && flags.verbose) {
+                if (canseemon(mtmp) && uflags.verbose) {
                     pline("%s eats %s!", Monnam(mtmp),
                           distant_name(otmp, doname));
                 }
                 /* The object's rustproofing is gone now */
                 otmp->oerodeproof = 0;
                 mtmp->mstun = 1;
-                if (canseemon(mtmp) && flags.verbose) {
+                if (canseemon(mtmp) && uflags.verbose) {
                     pline("%s spits %s out in disgust!", Monnam(mtmp),
                           distant_name(otmp, doname));
                 }
             } else {
-                if (cansee(mtmp->mx, mtmp->my) && flags.verbose)
+                if (cansee(mtmp->mx, mtmp->my) && uflags.verbose)
                     pline("%s eats %s!", Monnam(mtmp),
                           distant_name(otmp, doname));
-                else if (flags.verbose)
+                else if (uflags.verbose)
                     You_hear("a crunching sound.");
                 mtmp->meating = otmp->owt / 2 + 1;
                 /* Heal up to the object's weight in hp */
@@ -949,7 +949,7 @@ struct monst *mtmp;
             /* devour */
             ++count;
             if (cansee(mtmp->mx, mtmp->my)) {
-                if (flags.verbose)
+                if (uflags.verbose)
                     pline("%s eats %s!", Monnam(mtmp),
                           distant_name(otmp, doname));
                 /* give this one even if !verbose */
@@ -957,7 +957,7 @@ struct monst *mtmp;
                     && !strcmpi(OBJ_DESCR(objects[otmp->otyp]), "YUM YUM"))
                     pline("Yum%c", otmp->blessed ? '!' : '.');
             } else {
-                if (flags.verbose)
+                if (uflags.verbose)
                     You_hear("a slurping sound.");
             }
             /* Heal up to the object's weight in hp */
@@ -1004,9 +1004,9 @@ struct monst *mtmp;
     }
 
     if (ecount > 0) {
-        if (cansee(mtmp->mx, mtmp->my) && flags.verbose && buf[0])
+        if (cansee(mtmp->mx, mtmp->my) && uflags.verbose && buf[0])
             pline1(buf);
-        else if (flags.verbose)
+        else if (uflags.verbose)
             You_hear("%s slurping sound%s.",
                      (ecount == 1) ? "a" : "several", plur(ecount));
     }
@@ -1025,7 +1025,7 @@ register struct monst *mtmp;
         obj_extract_self(gold);
         add_to_minv(mtmp, gold);
         if (cansee(mtmp->mx, mtmp->my)) {
-            if (flags.verbose && !mtmp->isgd)
+            if (uflags.verbose && !mtmp->isgd)
                 pline("%s picks up some %s.", Monnam(mtmp),
                       mat_idx == GOLD ? "gold" : "money");
             newsym(mtmp->mx, mtmp->my);
@@ -1068,7 +1068,7 @@ register const char *str;
             if (carryamt != otmp->quan) {
                 otmp3 = splitobj(otmp, carryamt);
             }
-            if (cansee(mtmp->mx, mtmp->my) && flags.verbose)
+            if (cansee(mtmp->mx, mtmp->my) && uflags.verbose)
                 pline("%s picks up %s.", Monnam(mtmp),
                       (distu(mtmp->mx, mtmp->my) <= 5)
                           ? doname(otmp3)
@@ -1930,7 +1930,7 @@ register struct monst *mtmp;
         nemdead();
     if (mtmp->data == &mons[PM_MEDUSA])
         u.uachieve.killed_medusa = 1;
-    if (glyph_is_invisible(levl[mtmp->mx][mtmp->my].glyph))
+    if (glyph_is_invisible(levl_s[mtmp->mx][mtmp->my].glyph))
         unmap_object(mtmp->mx, mtmp->my);
     m_detach(mtmp, mptr);
 }
@@ -2108,7 +2108,7 @@ struct monst *mdef;
 
     stackobj(otmp);
     /* mondead() already does this, but we must do it before the newsym */
-    if (glyph_is_invisible(levl[x][y].glyph))
+    if (glyph_is_invisible(levl_s[x][y].glyph))
         unmap_object(x, y);
     if (cansee(x, y))
         newsym(x, y);
@@ -2630,7 +2630,7 @@ boolean via_attack;
     if (couldsee(mtmp->mx, mtmp->my)) {
         if (humanoid(mtmp->data) || mtmp->isshk || mtmp->isgd)
             pline("%s gets angry!", Monnam(mtmp));
-        else if (flags.verbose && !Deaf)
+        else if (uflags.verbose && !Deaf)
             growl(mtmp);
     }
 

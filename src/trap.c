@@ -200,13 +200,13 @@ int ef_flags;
     } else if (!erosion_matters(otmp)) {
         return ER_NOTHING;
     } else if (!vulnerable || (otmp->oerodeproof && otmp->rknown)) {
-        if (flags.verbose && print && (uvictim || vismon))
+        if (uflags.verbose && print && (uvictim || vismon))
             pline("%s %s %s not affected by %s.",
                   uvictim ? "Your" : s_suffix(Monnam(victim)),
                   ostr, vtense(ostr, "are"), bythe[type]);
         return ER_NOTHING;
     } else if (otmp->oerodeproof || (otmp->blessed && !rnl(4))) {
-        if (flags.verbose && (print || otmp->oerodeproof)
+        if (uflags.verbose && (print || otmp->oerodeproof)
             && (uvictim || vismon || visobj))
             pline("Somehow, %s %s %s not affected by the %s.",
                   uvictim ? "your"
@@ -264,7 +264,7 @@ int ef_flags;
         delobj(otmp);
         return ER_DESTROYED;
     } else {
-        if (flags.verbose && print) {
+        if (uflags.verbose && print) {
             if (uvictim)
                 Your("%s %s completely %s.",
                      ostr, vtense(ostr, Blind ? "feel" : "look"), msg[type]);
@@ -981,7 +981,7 @@ unsigned trflags;
                 if (is_metallic(uarmh)) {
                     pline("Fortunately, you are wearing a hard helmet.");
                     dmg = 2;
-                } else if (flags.verbose) {
+                } else if (uflags.verbose) {
                     pline("%s does not protect you.", Yname2(uarmh));
                 }
             }
@@ -2978,7 +2978,7 @@ climb_pit()
                 : u.usteed ? "ride" : "crawl");
         fill_pit(u.ux, u.uy);
         vision_full_recalc = 1; /* vision limits change */
-    } else if (u.dz || flags.verbose) {
+    } else if (u.dz || uflags.verbose) {
         if (u.usteed)
             Norep("%s is still in a pit.", upstart(y_monnam(u.usteed)));
         else
@@ -3114,7 +3114,7 @@ domagictrap()
             if (on_level(&u.uz, &qstart_level))
                 You_feel(
                     "%slike the prodigal son.",
-                    (flags.female || (Upolyd && is_neuter(youmonst.data)))
+                    (uflags.female || (Upolyd && is_neuter(youmonst.data)))
                         ? "oddly "
                         : "");
             else
@@ -3596,7 +3596,7 @@ drown()
 
     if (Amphibious || Swimming) {
         if (Amphibious) {
-            if (flags.verbose)
+            if (uflags.verbose)
                 pline("But you aren't drowning.");
             if (!Is_waterlevel(&u.uz)) {
                 if (Hallucination)

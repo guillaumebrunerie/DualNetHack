@@ -10,7 +10,7 @@ extern const char *hu_stat[]; /* defined in eat.c */
 const char *const enc_stat[] = { "",         "Burdened",  "Stressed",
                                  "Strained", "Overtaxed", "Overloaded" };
 
-STATIC_OVL NEARDATA int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
+STATIC_OVL __thread NEARDATA int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
 STATIC_DCL const char *NDECL(rank);
 
 #ifndef STATUS_VIA_WINDOWPORT
@@ -45,11 +45,6 @@ bot1()
         Strcpy(nb = eos(nb), mbot);
     } else
         Strcpy(nb = eos(nb), rank());
-
-    if (you_player == current_player)
-         Sprintf(nb = eos(nb), " X");
-    else
-         Sprintf(nb = eos(nb), "  ");
     
     i = mrank_sz + 15;
     j = (int) ((nb + 2) - newbot1); /* strlen(newbot1) but less computation */
@@ -72,7 +67,7 @@ bot1()
                 ? "  Chaotic"
                 : (u.ualign.type == A_NEUTRAL) ? "  Neutral" : "  Lawful");
 #ifdef SCORE_ON_BOTL
-    if (flags.showscore)
+    if (uflags.showscore)
         Sprintf(nb = eos(nb), " S:%ld", botl_score());
 #endif
     curs(WIN_STATUS, 1, 0);
@@ -124,14 +119,14 @@ bot2()
     /* experience */
     if (Upolyd)
         Sprintf(expr, "HD:%d", mons[u.umonnum].mlevel);
-    else if (flags.showexp)
+    else if (uflags.showexp)
         Sprintf(expr, "Xp:%u/%-1ld", u.ulevel, u.uexp);
     else
         Sprintf(expr, "Exp:%u", u.ulevel);
     xln = strlen(expr);
 
     /* time/move counter */
-    if (flags.time)
+    if (uflags.time)
         Sprintf(tmmv, "T:%ld", moves);
     else
         tmmv[0] = '\0';
@@ -279,7 +274,7 @@ boolean female;
 STATIC_OVL const char *
 rank()
 {
-    return rank_of(u.ulevel, Role_switch, flags.female);
+    return rank_of(u.ulevel, Role_switch, uflags.female);
 }
 
 int
@@ -615,9 +610,9 @@ bot()
      *  Now pass the changed values to window port.
      */
     for (i = 0; i < MAXBLSTATS; i++) {
-        if (((i == BL_SCORE) && !flags.showscore)
-            || ((i == BL_EXP) && !flags.showexp)
-            || ((i == BL_TIME) && !flags.time)
+        if (((i == BL_SCORE) && !uflags.showscore)
+            || ((i == BL_EXP) && !uflags.showexp)
+            || ((i == BL_TIME) && !uflags.time)
             || ((i == BL_HD) && !Upolyd)
             || ((i == BL_XP || i == BL_EXP) && Upolyd))
             continue;
@@ -728,7 +723,7 @@ boolean
             fieldfmt = " S:%s";
             fieldname = "score";
             status_enablefield(fld, fieldname, fieldfmt,
-                               (!flags.showscore) ? FALSE : TRUE);
+                               (!uflags.showscore) ? FALSE : TRUE);
             break;
         case BL_CAP:
             fieldfmt = " %s";
@@ -771,7 +766,7 @@ boolean
             fieldfmt = " T:%s";
             fieldname = "time";
             status_enablefield(fld, fieldname, fieldfmt,
-                                   (!flags.time) ? FALSE : TRUE);
+                                   (!uflags.time) ? FALSE : TRUE);
             break;
         case BL_HUNGER:
             fieldfmt = " %s";
@@ -797,7 +792,7 @@ boolean
             fieldfmt = "/%s";
             fieldname = "experience";
             status_enablefield(fld, fieldname, fieldfmt,
-                                  (!flags.showexp || Upolyd) ? FALSE : TRUE);
+                                  (!uflags.showexp || Upolyd) ? FALSE : TRUE);
             break;
         case BL_CONDITION:
             fieldfmt = "%s";

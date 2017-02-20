@@ -69,8 +69,8 @@ const genericptr vptr2;
 
     /* order by object class like inventory display */
     if ((sortlootmode & SORTLOOT_PACK) != 0) {
-        cls1 = index(flags.inv_order, obj1->oclass);
-        cls2 = index(flags.inv_order, obj2->oclass);
+        cls1 = index(uflags.inv_order, obj1->oclass);
+        cls2 = index(uflags.inv_order, obj2->oclass);
         if (cls1 != cls2)
             return (int) (cls1 - cls2);
 
@@ -587,10 +587,10 @@ struct obj *obj;
         }
     /* didn't merge, so insert into chain */
     assigninvlet(obj);
-    if (flags.invlet_constant || !prev) {
+    if (uflags.invlet_constant || !prev) {
         obj->nobj = invent; /* insert at beginning */
         invent = obj;
-        if (flags.invlet_constant)
+        if (uflags.invlet_constant)
             reorder_invent();
     } else {
         prev->nobj = obj; /* insert at end */
@@ -599,7 +599,7 @@ struct obj *obj;
     obj->where = OBJ_INVENT;
 
     /* fill empty quiver if obj was thrown */
-    if (flags.pickup_thrown && !uquiver && obj_was_thrown
+    if (uflags.pickup_thrown && !uquiver && obj_was_thrown
         && (throwing_weapon(obj) || is_ammo(obj)))
         setuqwep(obj);
 added:
@@ -699,7 +699,7 @@ const char *drop_fmt, *drop_arg, *hold_msg;
                 obj = splitobj(obj, oquan);
             dropx(obj);
         } else {
-            if (flags.autoquiver && !uquiver && !obj->owornmask
+            if (uflags.autoquiver && !uquiver && !obj->owornmask
                 && (is_missile(obj) || ammo_and_launcher(obj, uwep)
                     || ammo_and_launcher(obj, uswapwep)))
                 setuqwep(obj);
@@ -1126,7 +1126,7 @@ register const char *let, *word;
         *bp++ = HANDS_SYM, *bp++ = ' '; /* '-' */
     ap = altlets;
 
-    if (!flags.invlet_constant)
+    if (!uflags.invlet_constant)
         reassign();
     else
         /* in case invent is in packorder, force it to be in invlet
@@ -1322,7 +1322,7 @@ register const char *let, *word;
             }
         }
         if (index(quitchars, ilet)) {
-            if (flags.verbose)
+            if (uflags.verbose)
                 pline1(Never_mind);
             return (struct obj *) 0;
         }
@@ -1374,7 +1374,7 @@ register const char *let, *word;
             if (ilet == HANDS_SYM)
                 return &zeroobj;
             if (ilet == '\033') {
-                if (flags.verbose)
+                if (uflags.verbose)
                     pline1(Never_mind);
                 return (struct obj *) 0;
             }
@@ -1722,7 +1722,7 @@ unsigned *resultflags;
         return (allflag
                 || (!oletct && ckfn != ckunpaid && ckfn != ckvalidcat))
                ? -2 : -3;
-    } else if (flags.menu_style != MENU_TRADITIONAL && combo && !allflag) {
+    } else if (uflags.menu_style != MENU_TRADITIONAL && combo && !allflag) {
         return 0;
 #if 0
     /* !!!! test gold dropping */
@@ -1772,7 +1772,7 @@ int FDECL((*fn), (OBJ_P)), FDECL((*ckfn), (OBJ_P));
     ininv = (*objchn == invent);
 
     /* someday maybe we'll sort by 'olets' too (temporarily replace
-       flags.packorder and pass SORTLOOT_PACK), but not yet... */
+       uflags.packorder and pass SORTLOOT_PACK), but not yet... */
     sortloot(objchn, SORTLOOT_INVLET, FALSE);
 
     first = TRUE;
@@ -1989,7 +1989,7 @@ boolean learning_id; /* true if we just read unknown identify scroll */
     } else {
         /* identify up to `id_limit' items */
         n = 0;
-        if (flags.menu_style == MENU_TRADITIONAL)
+        if (uflags.menu_style == MENU_TRADITIONAL)
             do {
                 n = ggetobj("identify", identify, id_limit, FALSE,
                             (unsigned *) 0);
@@ -2030,7 +2030,7 @@ STATIC_OVL char
 obj_to_let(obj)
 struct obj *obj;
 {
-    if (!flags.invlet_constant) {
+    if (!uflags.invlet_constant) {
         obj->invlet = NOINVSYM;
         reassign();
     }
@@ -2067,7 +2067,7 @@ long quan;       /* if non-0, print this quantity, not obj->quan */
 #else
     static char li[BUFSZ];
 #endif
-    boolean use_invlet = (flags.invlet_constant
+    boolean use_invlet = (uflags.invlet_constant
                           && let != CONTAINED_SYM && let != HANDS_SYM);
     long savequan = 0;
 
@@ -2168,7 +2168,7 @@ long *out_cnt;
 {
     struct obj *otmp;
     char ilet, ret;
-    char *invlet = flags.inv_order;
+    char *invlet = uflags.inv_order;
     int n, classcount;
     winid win;                        /* windows being used */
     anything any;
@@ -2177,7 +2177,7 @@ long *out_cnt;
     if (lets && !*lets)
         lets = 0; /* simplify tests: (lets) instead of (lets && *lets) */
 
-    if (flags.perm_invent && (lets || xtra_choice)) {
+    if (uflags.perm_invent && (lets || xtra_choice)) {
         /* partial inventory in perm_invent setting; don't operate on
            full inventory window, use an alternate one instead; create
            the first time needed and keep it for re-use as needed later */
@@ -2202,7 +2202,7 @@ long *out_cnt;
      * more than 1; for the last one, we don't need a precise number.
      * For perm_invent update we force 'more than 1'.
      */
-    n = (flags.perm_invent && !lets && !want_reply) ? 2
+    n = (uflags.perm_invent && !lets && !want_reply) ? 2
         : lets ? (int) strlen(lets)
                : !invent ? 0 : !invent->nobj ? 1 : 2;
     /* for xtra_choice, there's another 'item' not included in initial 'n';
@@ -2217,7 +2217,7 @@ long *out_cnt;
     }
 
     /* oxymoron? temporarily assign permanent inventory letters */
-    if (!flags.invlet_constant)
+    if (!uflags.invlet_constant)
         reassign();
 
     if (n == 1) {
@@ -2247,8 +2247,8 @@ long *out_cnt;
     }
 
     sortloot(&invent,
-             (((flags.sortloot == 'f') ? SORTLOOT_LOOT : SORTLOOT_INVLET)
-              | (flags.sortpack ? SORTLOOT_PACK : 0)),
+             (((uflags.sortloot == 'f') ? SORTLOOT_LOOT : SORTLOOT_INVLET)
+              | (uflags.sortpack ? SORTLOOT_PACK : 0)),
              FALSE);
 
     start_menu(win);
@@ -2265,7 +2265,7 @@ long *out_cnt;
                  prompt, MENU_UNSELECTED);
     } else if (xtra_choice) {
         /* wizard override ID and xtra_choice are mutually exclusive */
-        if (flags.sortpack)
+        if (uflags.sortpack)
             add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
                      "Miscellaneous", MENU_UNSELECTED);
         any.a_char = HANDS_SYM; /* '-' */
@@ -2277,10 +2277,10 @@ nextclass:
     for (otmp = invent; otmp; otmp = otmp->nobj) {
         if (lets && !index(lets, otmp->invlet))
             continue;
-        if (!flags.sortpack || otmp->oclass == *invlet) {
+        if (!uflags.sortpack || otmp->oclass == *invlet) {
             any = zeroany; /* all bits zero */
             ilet = otmp->invlet;
-            if (flags.sortpack && !classcount) {
+            if (uflags.sortpack && !classcount) {
                 add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
                          let_to_name(*invlet, FALSE,
                                      (want_reply && iflags.menu_head_objsym)),
@@ -2292,7 +2292,7 @@ nextclass:
                      doname(otmp), MENU_UNSELECTED);
         }
     }
-    if (flags.sortpack) {
+    if (uflags.sortpack) {
         if (*++invlet)
             goto nextclass;
         if (--invlet != venom_inv) {
@@ -2339,7 +2339,7 @@ char avoidlet;
 {
     struct obj *otmp;
     char ilet, ret = 0;
-    char *invlet = flags.inv_order;
+    char *invlet = uflags.inv_order;
     int n, classcount, invdone = 0;
     winid win;
     anything any;
@@ -2355,8 +2355,8 @@ char avoidlet;
                 ilet = otmp->invlet;
                 if (ilet == avoidlet)
                     continue;
-                if (!flags.sortpack || otmp->oclass == *invlet) {
-                    if (flags.sortpack && !classcount) {
+                if (!uflags.sortpack || otmp->oclass == *invlet) {
+                    if (uflags.sortpack && !classcount) {
                         any = zeroany; /* zero */
                         add_menu(win, NO_GLYPH, &any, 0, 0,
                                  iflags.menu_headings,
@@ -2369,7 +2369,7 @@ char avoidlet;
                              doname(otmp), MENU_UNSELECTED);
                 }
             }
-            if (flags.sortpack && *++invlet)
+            if (uflags.sortpack && *++invlet)
                 continue;
             invdone = 1;
         }
@@ -2492,7 +2492,7 @@ dounpaid()
     winid win;
     struct obj *otmp, *marker;
     register char ilet;
-    char *invlet = flags.inv_order;
+    char *invlet = uflags.inv_order;
     int classcount, count, num_so_far;
     long cost, totcost;
 
@@ -2513,7 +2513,7 @@ dounpaid()
     win = create_nhwindow(NHW_MENU);
     cost = totcost = 0;
     num_so_far = 0; /* count of # printed so far */
-    if (!flags.invlet_constant)
+    if (!uflags.invlet_constant)
         reassign();
 
     do {
@@ -2521,8 +2521,8 @@ dounpaid()
         for (otmp = invent; otmp; otmp = otmp->nobj) {
             ilet = otmp->invlet;
             if (otmp->unpaid) {
-                if (!flags.sortpack || otmp->oclass == *invlet) {
-                    if (flags.sortpack && !classcount) {
+                if (!uflags.sortpack || otmp->oclass == *invlet) {
+                    if (uflags.sortpack && !classcount) {
                         putstr(win, 0, let_to_name(*invlet, TRUE, FALSE));
                         classcount++;
                     }
@@ -2536,11 +2536,11 @@ dounpaid()
                 }
             }
         }
-    } while (flags.sortpack && (*++invlet));
+    } while (uflags.sortpack && (*++invlet));
 
     if (count > num_so_far) {
         /* something unpaid is contained */
-        if (flags.sortpack)
+        if (uflags.sortpack)
             putstr(win, 0, let_to_name(CONTAINED_SYM, TRUE, FALSE));
         /*
          * Search through the container objects in the inventory for
@@ -2634,9 +2634,9 @@ dotypeinv()
     unpaid_count = count_unpaid(invent);
     tally_BUCX(invent, &bcnt, &ucnt, &ccnt, &xcnt, &ocnt);
 
-    if (flags.menu_style != MENU_TRADITIONAL) {
-        if (flags.menu_style == MENU_FULL
-            || flags.menu_style == MENU_PARTIAL) {
+    if (uflags.menu_style != MENU_TRADITIONAL) {
+        if (uflags.menu_style == MENU_FULL
+            || uflags.menu_style == MENU_PARTIAL) {
             traditional = FALSE;
             i = UNPAID_TYPES;
             if (billx)
@@ -2769,7 +2769,7 @@ dotypeinv()
         this_type = oclass;
     }
     if (query_objlist((char *) 0, &invent,
-                      ((flags.invlet_constant ? USE_INVLET : 0)
+                      ((uflags.invlet_constant ? USE_INVLET : 0)
                        | INVORDER_SORT),
                       &pick_list, PICK_NONE, this_type_only) > 0)
         free((genericptr_t) pick_list);
@@ -2872,7 +2872,7 @@ boolean picked_some;
 
     /* default pile_limit is 5; a value of 0 means "never skip"
        (and 1 effectively forces "always skip") */
-    skip_objects = (flags.pile_limit > 0 && obj_cnt >= flags.pile_limit);
+    skip_objects = (uflags.pile_limit > 0 && obj_cnt >= uflags.pile_limit);
     if (u.uswallow && u.ustuck) {
         struct monst *mtmp = u.ustuck;
 
@@ -3512,7 +3512,7 @@ doorganize() /* inventory organizer by Del Lamb */
         return 0;
     }
 
-    if (!flags.invlet_constant)
+    if (!uflags.invlet_constant)
         reassign();
     /* get object the user wants to organize (the 'from' slot) */
     allowall[0] = ALLOW_COUNT;
@@ -3537,7 +3537,7 @@ doorganize() /* inventory organizer by Del Lamb */
         alphabet[ix++] = let++;
     alphabet[ix] = '\0';
     /* for floating inv letters, truncate list after the first open slot */
-    if (!flags.invlet_constant && (ix = inv_cnt(FALSE)) < 52)
+    if (!uflags.invlet_constant && (ix = inv_cnt(FALSE)) < 52)
         alphabet[ix + (splitting ? 0 : 1)] = '\0';
 
     /* blank out all the letters currently in use in the inventory */

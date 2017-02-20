@@ -31,7 +31,7 @@ dosounds()
 #endif
     struct monst *mtmp;
 
-    if (Deaf || !flags.acoustics || u.uswallow || Underwater)
+    if (Deaf || !uflags.acoustics || u.uswallow || Underwater)
         return;
 
     hallu = Hallucination ? 1 : 0;
@@ -557,7 +557,7 @@ register struct monst *mtmp;
             (Upolyd && (u.umonnum == PM_WOLF || u.umonnum == PM_WINTER_WOLF
                         || u.umonnum == PM_WINTER_WOLF_CUB));
         const char *racenoun =
-            (flags.female && urace.individual.f)
+            (uflags.female && urace.individual.f)
                 ? urace.individual.f
                 : (urace.individual.m) ? urace.individual.m : urace.noun;
 
@@ -580,7 +580,7 @@ register struct monst *mtmp;
         } else if (mtmp->mpeaceful) {
             if (kindred && isnight) {
                 Sprintf(verbuf, "Good feeding %s!",
-                        flags.female ? "sister" : "brother");
+                        uflags.female ? "sister" : "brother");
                 verbl_msg = verbuf;
             } else if (nightchild && isnight) {
                 Sprintf(verbuf, "How nice to hear you, child of the night!");
@@ -622,7 +622,7 @@ register struct monst *mtmp;
         }
     } break;
     case MS_WERE:
-        if (flags.moonphase == FULL_MOON && (night() ^ !rn2(13))) {
+        if (uflags.moonphase == FULL_MOON && (night() ^ !rn2(13))) {
             pline("%s throws back %s head and lets out a blood curdling %s!",
                   Monnam(mtmp), mhis(mtmp),
                   ptr == &mons[PM_HUMAN_WERERAT] ? "shriek" : "howl");
@@ -632,7 +632,7 @@ register struct monst *mtmp;
                 "whispers inaudibly.  All you can make out is \"moon\".";
         break;
     case MS_BARK:
-        if (flags.moonphase == FULL_MOON && night()) {
+        if (uflags.moonphase == FULL_MOON && night()) {
             pline_msg = "howls.";
         } else if (mtmp->mpeaceful) {
             if (mtmp->mtame
@@ -847,7 +847,7 @@ register struct monst *mtmp;
     } break;
     case MS_ARREST:
         if (mtmp->mpeaceful)
-            verbalize("Just the facts, %s.", flags.female ? "Ma'am" : "Sir");
+            verbalize("Just the facts, %s.", uflags.female ? "Ma'am" : "Sir");
         else {
             static const char *const arrest_msg[3] = {
                 "Anything you say can be used against you.",

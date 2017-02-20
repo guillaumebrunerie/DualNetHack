@@ -121,7 +121,7 @@
  * definition here is convenient.
  */
 #define is_safepet(mon)                                                   \
-    (mon && mon->mtame && canspotmon(mon) && flags.safe_dog && !Confusion \
+    (mon && mon->mtame && canspotmon(mon) && uflags.safe_dog && !Confusion \
      && !Hallucination && !Stunned)
 
 /*
@@ -152,8 +152,8 @@
 /*      && !(mon->mburied || u.uburied)) /\* AND 3. neither you nor it is buried *\/ */
 
 #define canseeother()                                                  \
-  (cansee(other_player->u.ux, other_player->u.uy) || see_with_infrared((&other_player->youmonst)) \
-    && mon_visible((&other_player->youmonst)))
+  (cansee(o_u.ux, o_u.uy) || see_with_infrared((&other_player->p_youmonst)) \
+    && mon_visible((&other_player->p_youmonst)))
 
 #define canspotother() (canseeother())
 
@@ -346,9 +346,9 @@
 /* The hero's glyph when seen as a monster.
  */
 #define hero_glyph                                                    \
-    monnum_to_glyph((Upolyd || !flags.showrace)                       \
+    monnum_to_glyph((Upolyd || !uflags.showrace)                       \
                         ? u.umonnum                                   \
-                        : (flags.female && urace.femalenum != NON_PM) \
+                        : (uflags.female && urace.femalenum != NON_PM) \
                               ? urace.femalenum                       \
                               : urace.malenum)
 

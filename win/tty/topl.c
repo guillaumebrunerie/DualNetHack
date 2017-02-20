@@ -192,10 +192,10 @@ more()
             topl_putsym('\n');
     }
 
-    if (flags.standout)
+    if (uflags.standout)
         standoutbeg();
     putsyms(defmorestr);
-    if (flags.standout)
+    if (uflags.standout)
         standoutend();
 
     xwaitforspace("\033 ");

@@ -59,13 +59,13 @@ const char *name; /* if null, then format `obj' */
     is_acid = (obj && obj->otyp == ACID_VENOM);
 
     if (u.uac + tlev <= rnd(20)) {
-        if (Blind || !flags.verbose)
+        if (Blind || !uflags.verbose)
             pline("It misses.");
         else
             You("are almost hit by %s.", onm);
         return 0;
     } else {
-        if (Blind || !flags.verbose)
+        if (Blind || !uflags.verbose)
             You("are hit%s", exclam(dam));
         else
             You("are hit by %s%s", onm, exclam(dam));
@@ -489,7 +489,7 @@ struct obj *obj;         /* missile (or stack providing it) */
     singleobj->owornmask = 0; /* threw one of multiple weapons in hand? */
 
     if ((singleobj->cursed || singleobj->greased) && (dx || dy) && !rn2(7)) {
-        if (canseemon(mon) && flags.verbose) {
+        if (canseemon(mon) && uflags.verbose) {
             if (is_ammo(singleobj))
                 pline("%s misfires!", Monnam(mon));
             else

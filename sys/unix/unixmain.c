@@ -58,6 +58,7 @@ char *argv[];
 #ifdef CHDIR
     register char *dir;
 #endif
+    dualnh_init_players();
 
     sys_early_init();
 
@@ -142,7 +143,7 @@ char *argv[];
                 chdirx(dir, 0);
 #endif
 #ifdef SYSCF
-                initoptions();
+                initoptions_both();
 #endif
 #ifdef PANICTRACE
                 ARGV0 = argv[0]; /* save for possible stack trace */
@@ -170,7 +171,9 @@ char *argv[];
 #ifdef __linux__
     check_linux_console();
 #endif
-    initoptions();
+    initoptions_both();
+
+
 #ifdef PANICTRACE
     ARGV0 = argv[0]; /* save for possible stack trace */
 #ifndef NO_SIGNAL
@@ -181,7 +184,8 @@ char *argv[];
     /*
      * It seems you really want to play.
      */
-    u.uhp = 1; /* prevent RIP on early quits */
+    player1.p_u.uhp = 1; /* prevent RIP on early quits */
+    player2.p_u.uhp = 1; /* prevent RIP on early quits */
     program_state.preserve_locks = 1;
 #ifndef NO_SIGNAL
     sethanguphandler((SIG_RET_TYPE) hangup);
@@ -193,7 +197,6 @@ char *argv[];
     commit_windowchain();
 #endif
 
-    dualnh_save_options();
     current_player = &player1;
 
     tcp_init_connection(&player1.sockfd, &player2.sockfd);
@@ -209,7 +212,6 @@ char *argv[];
     player2.server_socket = server_sockets_fd[1];
 
     fprintf(stderr,"Server socket of p1: %d and of p2: %d\n", player1.server_socket, player2.server_socket);
-    fprintf(stderr,"%d\n", sizeof (player));
     
     pthread_t p1;
     int n1 = 1;
@@ -294,27 +296,15 @@ void *pid;
 
     display_gamewindows();
 
-    dualnh_save_WIN();
     tcp_send_WIN();
     dualnh_p1_wait();
 
     dualnh_wait();
 
-    /* if (playerid == 1) { */
-    /*      dualnh_save_WIN_p1(); */
-    /*      tcp_send_WIN(); */
-    /* } else { */
-    /*      dualnh_save_WIN_p2(); */
-    /*      tcp_send_WIN(); */
-    /*      pthread_barrier_wait(&barrier); */
-    /* } */
-
-    /* pthread_barrier_wait(&barrier); */
-
     /* Mega hack for now, because I don’t know why it doesn’t work */
     
-    player1.iflags.window_inited = TRUE;
-    player2.iflags.window_inited = TRUE;
+    player1.p_iflags.window_inited = TRUE;
+    player2.p_iflags.window_inited = TRUE;
     iflags.window_inited = TRUE;
 
 /*
@@ -389,7 +379,7 @@ attempt_restore:
         dualnh_wait();
     }
 
-    fprintf(stderr, "Starting the game ! %s %s %s\n", player1.urole.name.m, player2.urole.name.m, urole.name.m);
+    fprintf(stderr, "Starting the game ! %s %s %s\n", player1.p_urole.name.m, player2.p_urole.name.m, urole.name.m);
     
     moveloop(resuming);
     exit(EXIT_SUCCESS);
@@ -460,34 +450,34 @@ char *argv[];
         case 'p': /* profession (role) */
             if (argv[0][2]) {
                 if ((i = str2role(&argv[0][2])) >= 0)
-                    flags.initrole = i;
+                    uflags.initrole = i;
             } else if (argc > 1) {
                 argc--;
                 argv++;
                 if ((i = str2role(argv[0])) >= 0)
-                    flags.initrole = i;
+                    uflags.initrole = i;
             }
             break;
         case 'r': /* race */
             if (argv[0][2]) {
                 if ((i = str2race(&argv[0][2])) >= 0)
-                    flags.initrace = i;
+                    uflags.initrace = i;
             } else if (argc > 1) {
                 argc--;
                 argv++;
                 if ((i = str2race(argv[0])) >= 0)
-                    flags.initrace = i;
+                    uflags.initrace = i;
             }
             break;
         case 'w': /* windowtype */
             choose_windows(&argv[0][2]);
             break;
         case '@':
-            flags.randomall = 1;
+            uflags.randomall = 1;
             break;
         default:
             if ((i = str2role(&argv[0][1])) >= 0) {
-                flags.initrole = i;
+                uflags.initrole = i;
                 break;
             }
             /* else raw_printf("Unknown option: %s", *argv); */

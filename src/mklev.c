@@ -569,6 +569,20 @@ makevtele()
     makeniche(TELEP_TRAP);
 }
 
+void
+clear_levl_s(levls)
+rm_sub levls[COLNO][ROWNO];
+{
+    static struct rm_sub zerorm_s = { cmap_to_glyph(S_stone), 0, 0 };
+    register struct rm_sub *lev_s;
+    for (int x = 0; x < COLNO; x++) {
+        lev_s = &levls[x][0];
+        for (int y = 0; y < ROWNO; y++) {
+            *lev_s++ = zerorm_s;
+        }
+    }
+}
+
 /* clear out various globals that keep information on the current level.
  * some of this is only necessary for some types of levels (maze, normal,
  * special) but it's easier to put it all in one place than make sure
@@ -577,15 +591,18 @@ makevtele()
 STATIC_OVL void
 clear_level_structures()
 {
-    static struct rm zerorm = { cmap_to_glyph(S_stone),
-                                0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    static struct rm zerorm = { 0, 0, 0, 0, 0, 0, 0 };
+    static struct rm_sub zerorm_s = { cmap_to_glyph(S_stone), 0, 0 };
     register int x, y;
     register struct rm *lev;
+    register struct rm_sub *lev_s;
 
     for (x = 0; x < COLNO; x++) {
         lev = &levl[x][0];
+        lev_s = &levl_s[x][0];
         for (y = 0; y < ROWNO; y++) {
             *lev++ = zerorm;
+            *lev_s++ = zerorm_s;
             /*
              * These used to be '#if MICROPORT_BUG',
              * with use of memset(0) for '#if !MICROPORT_BUG' below,
@@ -1589,6 +1606,7 @@ int dist;
     struct obj *otmp;
     boolean make_rocks;
     register struct rm *lev = &levl[x][y];
+    register struct rm_sub *lev_s = &levl_s[x][y];
 
     /* clip at existing map borders if necessary */
     if (!within_bounded_area(x, y, x_maze_min + 1, y_maze_min + 1,
@@ -1618,11 +1636,11 @@ int dist;
     unblock_point(x, y); /* make sure vision knows this location is open */
 
     /* fake out saved state */
-    lev->seenv = 0;
+    lev_s->seenv = 0;
     lev->doormask = 0;
     if (dist < 6)
         lev->lit = TRUE;
-    lev->waslit = TRUE;
+    lev_s->waslit = TRUE;
     lev->horizontal = FALSE;
     /* short-circuit vision recalc */
     viz_array[y][x] = (dist < 6) ? (IN_SIGHT | COULD_SEE) : COULD_SEE;

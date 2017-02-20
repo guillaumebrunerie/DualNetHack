@@ -160,7 +160,7 @@ moverock()
                     You_hear("a monster behind %s.", the(xname(otmp)));
                     map_invisible(rx, ry);
                 }
-                if (flags.verbose)
+                if (uflags.verbose)
                     pline("Perhaps that's why %s cannot move it.",
                           u.usteed ? y_monnam(u.usteed) : "you");
                 goto cannot_push;
@@ -295,7 +295,7 @@ moverock()
             }
 
             /* Move the boulder *after* the message. */
-            if (glyph_is_invisible(levl[rx][ry].glyph))
+            if (glyph_is_invisible(levl_s[rx][ry].glyph))
                 unmap_object(rx, ry);
             movobj(otmp, rx, ry); /* does newsym(rx,ry) */
             if (Blind) {
@@ -317,11 +317,11 @@ moverock()
             if (throws_rocks(youmonst.data)) {
                 if (u.usteed && P_SKILL(P_RIDING) < P_BASIC) {
                     You("aren't skilled enough to %s %s from %s.",
-                        (flags.pickup && !Sokoban) ? "pick up" : "push aside",
+                        (uflags.pickup && !Sokoban) ? "pick up" : "push aside",
                         the(xname(otmp)), y_monnam(u.usteed));
                 } else {
                     pline("However, you can easily %s.",
-                          (flags.pickup && !Sokoban) ? "pick it up"
+                          (uflags.pickup && !Sokoban) ? "pick it up"
                                                      : "push it aside");
                     sokoban_guilt();
                     break;
@@ -373,13 +373,13 @@ xchar x, y;
         nomul(0);
         return 1;
     } else if (context.digging.pos.x != x || context.digging.pos.y != y
-               || !on_level(&context.digging.level, &u.uz)) {
+               || !on_level(&context.digging.diglevel, &u.uz)) {
         context.digging.down = FALSE;
         context.digging.chew = TRUE;
         context.digging.warned = FALSE;
         context.digging.pos.x = x;
         context.digging.pos.y = y;
-        assign_level(&context.digging.level, &u.uz);
+        assign_level(&context.digging.diglevel, &u.uz);
         /* solid rock takes more work & time to dig through */
         context.digging.effort =
             (IS_ROCK(lev->typ) && !IS_TREE(lev->typ) ? 30 : 60) + u.udaminc;
@@ -399,7 +399,7 @@ xchar x, y;
         watch_dig((struct monst *) 0, x, y, FALSE);
         return 1;
     } else if ((context.digging.effort += (30 + u.udaminc)) <= 100) {
-        if (flags.verbose)
+        if (uflags.verbose)
             You("%s chewing on the %s.",
                 context.digging.chew ? "continue" : "begin",
                 boulder
@@ -707,7 +707,7 @@ int mode;
             /* Eat the rock. */
             if (mode == DO_MOVE && still_chewing(x, y))
                 return FALSE;
-        } else if (flags.autodig && !context.run && !context.nopick && uwep
+        } else if (uflags.autodig && !context.run && !context.nopick && uwep
                    && is_pick(uwep)) {
             /* MRKR: Automatic digging when wielding the appropriate tool */
             if (mode == DO_MOVE)
@@ -750,7 +750,7 @@ int mode;
                     if (amorphous(youmonst.data))
                         You(
    "try to ooze under the door, but can't squeeze your possessions through.");
-                    if (flags.autoopen && !context.run && !Confusion
+                    if (uflags.autoopen && !context.run && !Confusion
                         && !Stunned && !Fumbling) {
                         context.door_opened = context.move =
                             doopen_indir(x, y);
@@ -820,7 +820,7 @@ int mode;
 
         if ((t && t->tseen)
             || (!Levitation && !Flying && !is_clinger(youmonst.data)
-                && is_pool_or_lava(x, y) && levl[x][y].seenv))
+                && is_pool_or_lava(x, y) && levl_s[x][y].seenv))
             return (mode == TEST_TRAP);
     }
 
@@ -1016,7 +1016,7 @@ int mode;
                         }
                     }
                     if (test_move(x, y, nx - x, ny - y, TEST_TRAV)
-                        && (levl[nx][ny].seenv
+                        && (levl_s[nx][ny].seenv
                             || (!Blind && couldsee(nx, ny)))) {
                         if (nx == ux && ny == uy) {
                             if (mode == TRAVP_TRAVEL || mode == TRAVP_VALID) {
@@ -1049,7 +1049,7 @@ int mode;
                     tmp_at(travelstepx[1 - set][i], travelstepy[1 - set][i]);
                 }
                 delay_output();
-                if (flags.runmode == RUN_CRAWL) {
+                if (uflags.runmode == RUN_CRAWL) {
                     delay_output();
                     delay_output();
                 }
@@ -1103,7 +1103,7 @@ int mode;
                 tmp_at(DISP_ALL, warning_to_glyph(2));
                 tmp_at(px, py);
                 delay_output();
-                if (flags.runmode == RUN_CRAWL) {
+                if (uflags.runmode == RUN_CRAWL) {
                     delay_output();
                     delay_output();
                     delay_output();
@@ -1142,7 +1142,7 @@ int x,y;
     if (x == u.ux && y == u.uy)
         return TRUE;
     if (isok(x,y) && glyph_is_cmap(g) && S_stone == glyph_to_cmap(g)
-        && !levl[x][y].seenv)
+        && !levl_s[x][y].seenv)
         return FALSE;
     u.tx = x;
     u.ty = y;
@@ -1169,7 +1169,7 @@ struct trap *desttrap; /* nonnull if another trap at <x,y> */
 
     switch (u.utraptype) {
     case TT_BEARTRAP:
-        if (flags.verbose) {
+        if (uflags.verbose) {
             predicament = "caught in a bear trap";
             if (u.usteed)
                 Norep("%s is %s.", upstart(steedname), predicament);
@@ -1194,7 +1194,7 @@ struct trap *desttrap; /* nonnull if another trap at <x,y> */
             break; /* escape trap but don't move */
         }
         if (--u.utrap) {
-            if (flags.verbose) {
+            if (uflags.verbose) {
                 predicament = "stuck to the web";
                 if (u.usteed)
                     Norep("%s is %s.", upstart(steedname), predicament);
@@ -1209,7 +1209,7 @@ struct trap *desttrap; /* nonnull if another trap at <x,y> */
         }
         break;
     case TT_LAVA:
-        if (flags.verbose) {
+        if (uflags.verbose) {
             predicament = "stuck in the lava";
             if (u.usteed)
                 Norep("%s is %s.", upstart(steedname), predicament);
@@ -1245,13 +1245,13 @@ struct trap *desttrap; /* nonnull if another trap at <x,y> */
                    our next attempt to move out of tether range
                    after this successful move would have its
                    can't-do-that message suppressed by Norep */
-                if (flags.verbose)
+                if (uflags.verbose)
                     Norep("You move within the chain's reach.");
                 return TRUE;
             }
         }
         if (--u.utrap) {
-            if (flags.verbose) {
+            if (uflags.verbose) {
                 if (anchored) {
                     predicament = "chained to the";
                     culprit = "buried ball";
@@ -1411,14 +1411,14 @@ domove()
         }
         if (((trap = t_at(x, y)) && trap->tseen)
             || (Blind && !Levitation && !Flying && !is_clinger(youmonst.data)
-                && is_pool_or_lava(x, y) && levl[x][y].seenv)) {
+                && is_pool_or_lava(x, y) && levl_s[x][y].seenv)) {
             if (context.run >= 2) {
                 if (iflags.mention_walls) {
                     if (trap && trap->tseen) {
                         int tt = what_trap(trap->ttyp);
                         You("stop in front of %s.",
                             an(defsyms[trap_to_defsym(tt)].explanation));
-                    } else if (is_pool_or_lava(x,y) && levl[x][y].seenv) {
+                    } else if (is_pool_or_lava(x,y) && levl_s[x][y].seenv) {
                         You("stop at the edge of the %s.",
                             hliquid(is_pool(x,y) ? "water" : "lava"));
                     }
@@ -1521,7 +1521,7 @@ domove()
          * different message and makes the player remember the monster.
          */
         if (context.nopick && !context.travel
-            && (canspotmon(mtmp) || glyph_is_invisible(levl[x][y].glyph))) {
+            && (canspotmon(mtmp) || glyph_is_invisible(levl_s[x][y].glyph))) {
             if (mtmp->m_ap_type && !Protection_from_shape_changers
                 && !sensemon(mtmp))
                 stumble_onto_mimic(mtmp);
@@ -1558,7 +1558,7 @@ domove()
     /* specifying 'F' with no monster wastes a turn */
     if (context.forcefight
         /* remembered an 'I' && didn't use a move command */
-        || (glyph_is_invisible(levl[x][y].glyph) && !context.nopick)) {
+        || (glyph_is_invisible(levl_s[x][y].glyph) && !context.nopick)) {
         struct obj *boulder = 0;
         boolean explo = (Upolyd && attacktype(youmonst.data, AT_EXPL)),
                 solid = !accessible(x, y);
@@ -1630,7 +1630,7 @@ domove()
         }
         return;
     }
-    if (glyph_is_invisible(levl[x][y].glyph)) {
+    if (glyph_is_invisible(levl_s[x][y].glyph)) {
         unmap_object(x, y);
         newsym(x, y);
     }
@@ -1828,14 +1828,14 @@ domove()
         nomovemsg = "";
     }
 
-    if (context.run && flags.runmode != RUN_TPORT) {
+    if (context.run && uflags.runmode != RUN_TPORT) {
         /* display every step or every 7th step depending upon mode */
-        if (flags.runmode != RUN_LEAP || !(moves % 7L)) {
-            if (flags.time)
+        if (uflags.runmode != RUN_LEAP || !(moves % 7L)) {
+            if (uflags.time)
                 context.botl = 1;
             curs_on_u();
             delay_output();
-            if (flags.runmode == RUN_CRAWL) {
+            if (uflags.runmode == RUN_CRAWL) {
                 delay_output();
                 delay_output();
                 delay_output();

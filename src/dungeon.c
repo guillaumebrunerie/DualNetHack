@@ -2497,7 +2497,7 @@ recalc_mapseen()
                 break;
             case ALTAR:
                 atmp = (Is_astralevel(&u.uz)
-                        && (levl[x][y].seenv & SVALL) != SVALL)
+                        && (levl_s[x][y].seenv & SVALL) != SVALL)
                          ? MSA_NONE
                          : Amask2msa(levl[x][y].altarmask);
                 if (!mptr->feat.naltar)

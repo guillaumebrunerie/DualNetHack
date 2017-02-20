@@ -40,7 +40,7 @@ STATIC_DCL boolean FDECL(md_stop, (coord *, coord *));
 STATIC_DCL boolean FDECL(md_rush, (struct monst *, int, int));
 STATIC_DCL void FDECL(newmail, (struct mail_info *));
 
-extern char *viz_rmin, *viz_rmax; /* line-of-sight limits (vision.c) */
+extern __thread char *viz_rmin, *viz_rmax; /* line-of-sight limits (vision.c) */
 
 #if !defined(UNIX) && !defined(VMS)
 int mustgetmail = -1;
@@ -424,7 +424,7 @@ give_up:
 void
 ckmailstatus()
 {
-    if (u.uswallow || !flags.biff)
+    if (u.uswallow || !uflags.biff)
         return;
     if (mustgetmail < 0) {
 #if defined(AMIGA) || defined(MSDOS) || defined(TOS)
@@ -484,7 +484,7 @@ ckmailstatus()
 {
     ck_server_admin_msg();
 
-    if (!mailbox || u.uswallow || !flags.biff
+    if (!mailbox || u.uswallow || !uflags.biff
 #ifdef MAILCKFREQ
         || moves < laststattime + MAILCKFREQ
 #endif
@@ -667,7 +667,7 @@ ckmailstatus()
 {
     struct mail_info *brdcst;
 
-    if (u.uswallow || !flags.biff)
+    if (u.uswallow || !uflags.biff)
         return;
 
     while (broadcasts > 0) { /* process all trapped broadcasts [until] */

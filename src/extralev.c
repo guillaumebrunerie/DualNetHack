@@ -13,7 +13,7 @@ struct rogueroom {
     xchar dx, dy;
     boolean real;
     uchar doortable;
-    int nroom; /* Only meaningful for "real" rooms */
+    int r_nroom; /* Only meaningful for "real" rooms */
 };
 #define UP 1
 #define DOWN 2
@@ -72,7 +72,7 @@ int x, y, dir;
             fromy += 7 * y;
             if (!IS_WALL(levl[fromx][fromy].typ))
                 impossible("down: no wall at %d,%d?", fromx, fromy);
-            dodoor(fromx, fromy, &rooms[r[x][y].nroom]);
+            dodoor(fromx, fromy, &rooms[r[x][y].r_nroom]);
             levl[fromx][fromy].doormask = D_NODOOR;
             fromy++;
         }
@@ -94,7 +94,7 @@ int x, y, dir;
             toy += 7 * y;
             if (!IS_WALL(levl[tox][toy].typ))
                 impossible("up: no wall at %d,%d?", tox, toy);
-            dodoor(tox, toy, &rooms[r[x][y].nroom]);
+            dodoor(tox, toy, &rooms[r[x][y].r_nroom]);
             levl[tox][toy].doormask = D_NODOOR;
             toy--;
         }
@@ -114,7 +114,7 @@ int x, y, dir;
             fromy += 7 * y;
             if (!IS_WALL(levl[fromx][fromy].typ))
                 impossible("down: no wall at %d,%d?", fromx, fromy);
-            dodoor(fromx, fromy, &rooms[r[x][y].nroom]);
+            dodoor(fromx, fromy, &rooms[r[x][y].r_nroom]);
             levl[fromx][fromy].doormask = D_NODOOR;
             fromx++;
         }
@@ -136,7 +136,7 @@ int x, y, dir;
             toy += 7 * y;
             if (!IS_WALL(levl[tox][toy].typ))
                 impossible("left: no wall at %d,%d?", tox, toy);
-            dodoor(tox, toy, &rooms[r[x][y].nroom]);
+            dodoor(tox, toy, &rooms[r[x][y].r_nroom]);
             levl[tox][toy].doormask = D_NODOOR;
             tox--;
         }
@@ -256,7 +256,7 @@ makeroguerooms()
             if (here.real) { /* Make a room */
                 int lowx, lowy, hix, hiy;
 
-                r[x][y].nroom = nroom;
+                r[x][y].r_nroom = nroom;
                 smeq[nroom] = nroom;
 
                 lowx = 1 + 26 * x + here.rlx;

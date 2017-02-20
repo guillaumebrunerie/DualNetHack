@@ -299,7 +299,7 @@ boolean devour;
             costly_alteration(obj, COST_DEGRD);
         obj->oerodeproof = 0;
         mtmp->mstun = 1;
-        if (canseemon(mtmp) && flags.verbose) {
+        if (canseemon(mtmp) && uflags.verbose) {
             pline("%s spits %s out in disgust!", Monnam(mtmp),
                   distant_name(obj, doname));
         }
@@ -445,7 +445,7 @@ int udist;
                         otmp = obj;
                         if (carryamt != obj->quan)
                             otmp = splitobj(obj, carryamt);
-                        if (cansee(omx, omy) && flags.verbose)
+                        if (cansee(omx, omy) && uflags.verbose)
                             pline("%s picks up %s.", Monnam(mtmp),
                                   distant_name(otmp, doname));
                         obj_extract_self(otmp);
@@ -1187,7 +1187,7 @@ newdogpos:
                don't use glyph_at() here--it would return the pet but we want
                to know whether an object is remembered at this map location */
             struct obj *o = (!Hallucination && level.flags.hero_memory
-                             && glyph_is_object(levl[nix][niy].glyph))
+                             && glyph_is_object(levl_s[nix][niy].glyph))
                                ? vobj_at(nix, niy) : 0;
             const char *what = o ? distant_name(o, doname) : something;
 

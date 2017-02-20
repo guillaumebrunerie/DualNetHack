@@ -54,7 +54,7 @@ STATIC_OVL void
 hack_artifacts()
 {
     struct artifact *art;
-    int alignmnt = aligns[flags.initalign].value;
+    int alignmnt = aligns[uflags.initalign].value;
 
     /* Fix up the alignments of "gift" artifacts */
     for (art = artilist + 1; art->otyp; art++)
@@ -1111,7 +1111,7 @@ char *hittee;              /* target's name: "you" or mon_nam(mdef) */
             shieldeff(youdefend ? u.ux : mdef->mx,
                       youdefend ? u.uy : mdef->my);
         }
-        if ((do_stun || do_confuse) && flags.verbose) {
+        if ((do_stun || do_confuse) && uflags.verbose) {
             char buf[BUFSZ];
 
             buf[0] = '\0';
@@ -1304,7 +1304,7 @@ int dieroll; /* needed for Magicbane and vorpal blades */
                 *dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
                 pline(behead_msg[rn2(SIZE(behead_msg))], wepdesc,
                       mon_nam(mdef));
-                if (Hallucination && !flags.female)
+                if (Hallucination && !uflags.female)
                     pline("Good job Henry, but that wasn't Anne.");
                 otmp->dknown = TRUE;
                 return TRUE;
@@ -1755,26 +1755,26 @@ abil_to_spfx(abil)
 long *abil;
 {
     static const struct abil2spfx_tag {
-        long *abil;
+        long *abil[2];
         unsigned long spfx;
     } abil2spfx[] = {
-        { &ESearching, SPFX_SEARCH },
-        { &EHalluc_resistance, SPFX_HALRES },
-        { &ETelepat, SPFX_ESP },
-        { &EStealth, SPFX_STLTH },
-        { &ERegeneration, SPFX_REGEN },
-        { &ETeleport_control, SPFX_TCTRL },
-        { &EWarn_of_mon, SPFX_WARN },
-        { &EWarning, SPFX_WARN },
-        { &EEnergy_regeneration, SPFX_EREGEN },
-        { &EHalf_spell_damage, SPFX_HSPDAM },
-        { &EHalf_physical_damage, SPFX_HPHDAM },
-        { &EReflecting, SPFX_REFLECT },
+        { &player1.p_u.uprops[SEARCHING].extrinsic, &player2.p_u.uprops[SEARCHING].extrinsic, SPFX_SEARCH },
+        { &player1.p_u.uprops[HALLUC_RES].extrinsic, &player2.p_u.uprops[HALLUC_RES].extrinsic, SPFX_HALRES },
+        { &player1.p_u.uprops[TELEPAT].extrinsic, &player2.p_u.uprops[TELEPAT].extrinsic, SPFX_ESP },
+        { &player1.p_u.uprops[STEALTH].extrinsic, &player2.p_u.uprops[STEALTH].extrinsic, SPFX_STLTH },
+        { &player1.p_u.uprops[REGENERATION].extrinsic, &player2.p_u.uprops[REGENERATION].extrinsic, SPFX_REGEN },
+        { &player1.p_u.uprops[TELEPORT_CONTROL].extrinsic, &player2.p_u.uprops[TELEPORT_CONTROL].extrinsic, SPFX_TCTRL },
+        { &player1.p_u.uprops[WARN_OF_MON].extrinsic, &player2.p_u.uprops[WARN_OF_MON].extrinsic, SPFX_WARN },
+        { &player1.p_u.uprops[WARNING].extrinsic, &player2.p_u.uprops[WARNING].extrinsic, SPFX_WARN },
+        { &player1.p_u.uprops[ENERGY_REGENERATION].extrinsic, &player2.p_u.uprops[ENERGY_REGENERATION].extrinsic, SPFX_EREGEN },
+        { &player1.p_u.uprops[HALF_SPDAM].extrinsic, &player2.p_u.uprops[HALF_SPDAM].extrinsic, SPFX_HSPDAM },
+        { &player1.p_u.uprops[HALF_PHDAM].extrinsic, &player2.p_u.uprops[HALF_PHDAM].extrinsic, SPFX_HPHDAM },
+        { &player1.p_u.uprops[REFLECTING].extrinsic, &player2.p_u.uprops[REFLECTING].extrinsic, SPFX_REFLECT },
     };
     int k;
 
     for (k = 0; k < SIZE(abil2spfx); k++) {
-        if (abil2spfx[k].abil == abil)
+        if (abil2spfx[k].abil[playerid-1] == abil)
             return abil2spfx[k].spfx;
     }
     return 0L;
