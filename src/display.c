@@ -680,14 +680,6 @@ xchar x, y;
 }
 
 
-/* /\* Applies (delayed) newsym() for the other player *\/ */
-/* void */
-/* newsym_other(x, y) */
-/* int x, y; */
-/* { */
-/*     newsym_table[x][y] = 1; */
-/* } */
-
 /*
  * newsym()
  *
@@ -723,6 +715,12 @@ register int x, y;
            adjacent water or lava or ice position */
         if (!(is_pool_or_lava(x, y) || is_ice(x, y)) || distu(x, y) > 2)
             return;
+    }
+    if (x == u.ghost_x && y == u.ghost_y && current_player != you_player) {
+        /* TODO decide on whether this is ok or whether we should take example on the macro
+           [display_self] */
+        show_glyph(u.ghost_x, u.ghost_y, hero_glyph);
+        return;
     }
 
     /* Can physically see the location. */

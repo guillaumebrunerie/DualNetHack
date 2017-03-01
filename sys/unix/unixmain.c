@@ -368,7 +368,6 @@ attempt_restore:
         }
 
         dualnh_p2_wait();
-        dualnh_switch_to_myself();
 
         fprintf(stderr, "Player %d here, window_inited: %d\n", playerid, iflags.window_inited);
         newgame();

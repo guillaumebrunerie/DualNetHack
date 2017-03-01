@@ -6,7 +6,8 @@
 
 #ifdef TCP_GRAPHICS
 
-/* The activity mutex. This is locked by a thread whenever it is doing something
+/*
+ * The activity mutex. This is locked by a thread whenever it is doing something
  * and unlocked just before waiting for input.
  */
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; 
@@ -15,7 +16,6 @@ void
 tcp_lock()
 {
      pthread_mutex_lock(&mutex);
-     dualnh_switch_to_myself();
 }
 
 void
@@ -31,7 +31,6 @@ tcp_init_nhwindows(argcp, argv)
 int *argcp UNUSED;
 char **argv UNUSED;
 {
-     /* tcp_init_connection(); */
      tcp_send_name_command("init_nhwindows");
      tcp_recv_void();
 }
@@ -46,14 +45,6 @@ tcp_player_selection()
      uflags.initrace = tcp_recv_int();
      uflags.initgend = tcp_recv_int();
      uflags.initalign = tcp_recv_int();
-
-     /* if (you_player == &player2) { */
-     /*      flags.initrole = you_player->flags.initrole; */
-     /*      flags.initrace = you_player->flags.initrace; */
-     /*      flags.initgend = you_player->flags.initgend; */
-     /*      flags.initalign = you_player->flags.initalign; */
-     /*      strcpy(plname, you_player->plname); */
-     /* } */
 }
 
 void
@@ -385,52 +376,53 @@ tcp_nhgetch()
          FD_SET(you_player->sockfd, &set);
          nfds = max(you_player->server_socket, you_player->sockfd) + 1;
          
-         tcp_unlock();
-         fprintf(stderr, "(%i) Did not work, we release the lock and wait…\n", playerid);
+         /* tcp_unlock(); */
+         /* fprintf(stderr, "(%i) Did not work, we release the lock and wait…\n", playerid); */
          ret = select(nfds, &set, NULL, NULL, NULL);
-         fprintf(stderr, "(%i) Done waiting, taking the lock…\n", playerid);
-         tcp_lock();
+         /* fprintf(stderr, "(%i) Done waiting, taking the lock…\n", playerid); */
+         /* tcp_lock(); */
      }
      if (ret == -1) {
          fprintf(stderr, "Error %i\n", errno);
      }
      
-     if (FD_ISSET(you_player->server_socket, &set)) {
-          // We have been interrupted. First send the queue, then the commands.
-          fprintf(stderr, "(%i) We have been interrupted\n", playerid);
-          /* if (!dualnh_is_empty()) { */
-              char* q = dualnh_queue_tosend();
-              tcp_send_string("QUEUE");
-              tcp_send_string(q);
-          /* } */
-          tcp_transfer_all(you_player->server_socket);
-          for (x = 0; x < COLNO; x++)
-               for (y = 0; y < ROWNO; y++)
-                    if (newsym_table[x][y]) {
-                         newsym(x,y);
-                         newsym_table[x][y] = 0;
-                         fprintf(stderr, "Done newsym at %d %d\n", x, y);
-                    }
-          /* tcp_recv_string_from(you_player->server_socket, queue); */
-          /* tcp_send_string(queue); */
-          dualnh_zero_queue();
-          result = 0;
-     } else if (FD_ISSET(you_player->sockfd, &set)) {
-          // The player did something
-          fprintf(stderr, "(%i) The player did something\n", playerid);
-          result = tcp_recv_int();
+     if (FD_ISSET(you_player->sockfd, &set)) {
+         // The player did something
+         fprintf(stderr, "(%i) The player did something\n", playerid);
+         result = tcp_recv_int();
+     } else if (FD_ISSET(you_player->server_socket, &set)) {
+         // We have been interrupted. First send the queue, then the commands.
+         fprintf(stderr, "(%i) We have been interrupted\n", playerid);
+         /* if (!dualnh_is_empty()) { */
+         char* q = dualnh_queue_tosend();
+         tcp_send_string("QUEUE");
+         tcp_send_string(q);
+         /* } */
+         tcp_transfer_all(you_player->server_socket);
+         for (x = 0; x < COLNO; x++)
+             for (y = 0; y < ROWNO; y++)
+                 if (newsym_table[x][y]) {
+                     newsym(x,y);
+                     newsym_table[x][y] = 0;
+                     fprintf(stderr, "Done newsym at %d %d\n", x, y);
+                 }
+         /* tcp_recv_string_from(you_player->server_socket, queue); */
+         /* tcp_send_string(queue); */
+         dualnh_zero_queue();
+         result = 0;
      } else
-          fprintf(stderr, "Impossible, no input.\n");
-          
+         fprintf(stderr, "Impossible, no input.\n");
+
      return result;
 }
 
 int
 tcp_nhgetch_queue_length()
 {
-     tcp_send_name_command("nhgetch_queue_length");
-     return tcp_recv_int();
+    tcp_send_name_command("nhgetch_queue_length");
+    return tcp_recv_int();
 }
+
 
 /*
  * return a key, or 0, in which case a mouse button was pressed

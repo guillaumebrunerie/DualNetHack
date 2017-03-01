@@ -1,7 +1,5 @@
 #include <pthread.h>
 
-/* #include "hack.h" */
-
 typedef struct {
     int sockfd;  /* Socket */
     int server_socket;
@@ -120,8 +118,6 @@ typedef struct {
      .finished_turn = 0                      \
    }
 
-/* #define same_level(l1, l2) (l1.dnum == l2.dnum && l1.dlevel == l2.dlevel) */
-
 boolean newsym_table[COLNO][ROWNO];
 
 extern player player1;
@@ -137,13 +133,6 @@ extern pthread_barrier_t barrier;
 
 void dualnh_init_players();
 
-void dualnh_save_options();
-void dualnh_save_WIN();
-void dualnh_save_stairs();
-void dualnh_save_glyphmap();
-
-void dualnh_switch_to_myself();
-
 void dualnh_p1_wait();
 void dualnh_p2_wait();
 void dualnh_wait();
@@ -157,4 +146,3 @@ void dualnh_zero_queue();
 int dualnh_queue_length();
 
 void dualnh_process_and_queue(int);
-void dualnh_copy_level();

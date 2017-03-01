@@ -827,9 +827,11 @@ skip:
      * vision_recalc(2) -> newsym() -> crash!  u.ux and u.uy are 0 and
      * program_state.panicking == 1 under those circumstances
      */
-    if (!program_state.panicking)
+    if (!program_state.panicking) {
         newsym(u.ux, u.uy); /* Make sure the hero shows up! */
-
+        newsym(u.ghost_x, u.ghost_y); /* Make sure the hero shows up! */
+    }
+    
     /* Set the new min and max pointers. */
     viz_rmin = next_rmin;
     viz_rmax = next_rmax;

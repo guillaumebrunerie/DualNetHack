@@ -425,7 +425,7 @@ char *argv[];
             tcp_recv_string(queue);
             fprintf(stderr, "Queue received : %s\n", queue);
             for (i = 0; queue[i]; i++)
-                 dualnh_push(queue[i]);
+                dualnh_push(queue[i]);
 
        } else if (!strcmp(buffer, "")) {
             
@@ -440,7 +440,7 @@ char *argv[];
 
 
 
-/* /\*** Functions copied from unixmain.c ***\/ */
+/*** Functions copied from unixmain.c ***/
 
 #ifdef CHDIR
 static void

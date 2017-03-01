@@ -19,10 +19,6 @@ STATIC_DCL void NDECL(do_positionbar);
 STATIC_DCL void FDECL(interrupt_multi, (const char *));
 
 
-/* pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; */
-/* pthread_cond_t cond = PTHREAD_COND_INITIALIZER; */
-
-
 void
 moveloop(resuming)
 boolean resuming;
@@ -49,7 +45,6 @@ boolean resuming;
         (void) enter_explore_mode();
 
     dualnh_p2_wait();
-    dualnh_switch_to_myself();
     fprintf(stderr, "Starting the game 2 ! %d %s %s\n", playerid, player1.p_urole.name.m, player2.p_urole.name.m);
 
     /* side-effects from the real world */
@@ -106,8 +101,6 @@ boolean resuming;
     dualnh_p2_wait();
     tcp_lock(); /* p2 will stay blocked here until p1 is done doing its initialization */
     dualnh_p1_wait();
-
-    /* dualnh_switch_to_myself(); */
 
     program_state.in_moveloop = 1;
 
@@ -456,35 +449,51 @@ boolean resuming;
         tcp_send_string_to(you_player->server_socket, "");
         int cmdx = 0;
         int cmd;
-        boolean hasghost;
-        tmp_at(DISP_ALWAYS, hero_glyph);
+        boolean already_locked = TRUE;
+        /* tmp_at(DISP_ALWAYS, hero_glyph); */
+        /* newsym(u.ghost_x, u.ghost_y); */
+        newsym(u.ux, u.uy);
         while (you_player != current_player) {
 
              if (cmdx < 1024) {
-                  /* if (u.ux != u.ghost_x || u.uy != u.ghost_y) { */
-                       tmp_at(u.ghost_x, u.ghost_y);
-                  /* } */
+                 dualnh_ghost_update();
+                 /* newsym(u.old_ghost_x, u.old_ghost_y); */
+                 /* show_glyph(u.ghost_x, u.ghost_y, hero_glyph); */
+                 /* u.old_ghost_x = u.ghost_x; */
+                 /* u.old_ghost_y = u.ghost_y; */
+                 /* if (u.ux != u.ghost_x || u.uy != u.ghost_y) { */
+                 /* tmp_at(u.ghost_x, u.ghost_y); */
+                 /* } */
                   
-                  curs(WIN_MAP, 1, ROWNO-1);
-                  putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
-                  curs_on_u();
+                 curs(WIN_MAP, 1, ROWNO-1);
+                 putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
+                 curs_on_u();
+                 /* We are going to wait, so we unlock */
+                 tcp_unlock();
+                 already_locked = FALSE;
              }
 
              fprintf(stderr, "Queueing (player %i)…\n", playerid);
-             /* fprintf(stderr, "glyphs : %d, %d, %d\n", player1.locations[10][5].glyph, player2.locations[10][5].glyph, levl[10][5].glyph); */
+
              /* This pushes all chars to a queue, which should be:
               * - displayed immediately on change
               * - used subsequently by [tgetchar] in the client
               */
              cmdx = nhgetch();
              cmd = cmdx % 1024;
+             if (!already_locked) {
+                 tcp_lock();
+                 already_locked = TRUE;
+             }
 
              if (cmd)
                   dualnh_process_and_queue(cmd);
 
              fprintf(stderr, "New queue (player %i) : %s\n", playerid, dualnh_queue_str());
         }
-        tmp_at(DISP_END, 0);
+        dualnh_ghost_update();
+        /* newsym(u.old_ghost_x, u.old_ghost_y); */
+        /* tmp_at(DISP_END, 0); */
         newsym(o_u.ux, o_u.uy);
         newsym(u.ux, u.uy);
 
@@ -684,13 +693,14 @@ newgame()
         nsubroom = 0;
         subrooms[0].hx = -1;
         doorindex = 0;
-        xdnstair = ydnstair = xupstair = yupstair = 0;
-        sstairs.sx = sstairs.sy = 0;
-        xdnladder = ydnladder = xupladder = yupladder = 0;
+        upstair = player1.p_upstair;
+        dnstair = player1.p_dnstair;
+        dnladder = player1.p_dnladder;
+        upladder = player1.p_upladder;
+        sstairs = player1.p_sstairs;
         clear_regions();
     }
 
-    dualnh_save_stairs();
     u_on_upstairs();
     if (wizard)
         obj_delivery(FALSE); /* finish wizkit */

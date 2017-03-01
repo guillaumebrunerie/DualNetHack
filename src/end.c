@@ -128,7 +128,7 @@ void panictrace_handler(
 int sig_unused UNUSED;
 {
 #define SIG_MSG "\nSignal received.\n"
-    (void) write(2, SIG_MSG, sizeof(SIG_MSG) - 1);
+    if (write(2, SIG_MSG, sizeof(SIG_MSG) - 1));
     NH_abort();
 }
 

@@ -1243,8 +1243,6 @@ boolean at_stairs, falling, portal;
              */
             memcpy(&other_player->p_level_actual, &you_player->p_level_actual, sizeof you_player->p_level_actual);
             other_player->p_level = &other_player->p_level_actual;
-        } else {
-            you_player->p_level = &you_player->p_level_actual;
         }
         memcpy(&other_player->p_locations_sub[playerid-1], levl_s, sizeof levl_s);
     } else {
@@ -1328,6 +1326,7 @@ boolean at_stairs, falling, portal;
             (void) nhclose(fd);
             oinit(); /* reassign level dependent obj probabilities */
         }
+        you_player->p_level = &you_player->p_level_actual;
     }
     reglyph_darkroom();
     /* do this prior to level-change pline messages */

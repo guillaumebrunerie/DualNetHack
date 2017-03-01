@@ -19,75 +19,6 @@ dualnh_init_players()
     clear_levl_s(player2.p_locations_sub[1]);
 }
 
-/* To get rid of */
-void
-dualnh_save_stairs()
-{
-     player2.p_upstair = player1.p_upstair;
-     player2.p_dnstair = player1.p_dnstair;
-     player2.p_dnladder = player1.p_dnladder;
-     player2.p_upladder = player1.p_upladder;
-     player2.p_sstairs = player1.p_sstairs;
-}
-
-void
-dualnh_save_glyphmap()
-{
-     int i, j;
-     /* memcpy(player2.locations, player1.locations, sizeof player1.locations); */
-
-     /* for (i=0; i<COLNO; i++) { */
-     /*      for (j=0; j<ROWNO; j++) { */
-     /*           levl[i][j].glyph = player2.locations[i][j].glyph; */
-     /*           levl[i][j].waslit = player2.locations[i][j].waslit; */
-     /*      } */
-     /* } */
-}
-
-void
-dualnh_save_player(p)
-player *p;
-{
-     int i, j;
-     
-     /* for (i=0; i<COLNO; i++) { */
-     /*      for (j=0; j<ROWNO; j++) { */
-     /*           p->locations[i][j].glyph = levl[i][j].glyph; */
-     /*           p->locations[i][j].waslit = levl[i][j].waslit; */
-     /*      } */
-     /* } */
-}
-
-void
-dualnh_load_player(p)
-player p;
-{
-     int i, j;
-     
-     /* for (i=0; i<COLNO; i++) { */
-     /*      for (j=0; j<ROWNO; j++) { */
-     /*           levl[i][j].glyph = p.locations[i][j].glyph; */
-     /*           levl[i][j].waslit = p.locations[i][j].waslit; */
-     /*      } */
-     /* } */
-}
-
-void
-dualnh_copy_level()
-{
-    /* memcpy(&(you_player->p_level_actual), &(other_player->p_level_actual), sizeof &(you_player->p_level_actual)); */
-}
-
-void
-dualnh_switch_to_myself()
-{
-     /* if (loaded_player == you_player) */
-     /*      return; */
-     /* dualnh_save_player(other_player); */
-     /* dualnh_load_player(*you_player); */
-     /* loaded_player = you_player; */
-}
-
 void
 dualnh_p1_wait()
 {
@@ -196,17 +127,14 @@ dualnh_pop_from_end()
 {
     if (queue_start == queue_end)
         return -1; /* Empty */
-    queue_end = (queue_end - 1) % QUEUE_SIZE;
+    queue_end = (queue_end + QUEUE_SIZE - 1) % QUEUE_SIZE;
     return (queue[queue_end]);
 }
 
 int
 dualnh_queue_length()
 {
-    if (queue_end >= queue_start)
-        return (queue_end - queue_start);
-    else
-        return (queue_end - queue_start + QUEUE_SIZE);
+    return ((queue_end - queue_start + QUEUE_SIZE) % QUEUE_SIZE);
 }
 
 void
@@ -232,7 +160,7 @@ int cmd;
         u.dist_from_mv_queue += dir;
         return;
     }
-
+    
     if (lcmd == 'h' || lcmd == 'y' || lcmd == 'b') {
         u.ghost_x -= dir;
         movement = TRUE;
@@ -254,4 +182,30 @@ int cmd;
 
     if (dir == 1 && !movement)
         u.dist_from_mv_queue = 1;
+}
+
+static __thread struct tmp_glyph {
+    int savedx;
+    int savedy;
+    boolean ispresent;
+} tg = {0};
+
+void
+dualnh_ghost_update()
+{
+    int x = u.ghost_x;
+    int y = u.ghost_y;
+    if (!isok(x, y))
+        return;
+    if (tg.ispresent) { /* not first call, so reset previous pos */
+        newsym(tg.savedx, tg.savedy);
+        tg.ispresent = 0; /* display is presently up to date */
+    }
+    if (current_player == you_player)
+        return;
+    tg.savedx = x;
+    tg.savedy = y;
+    tg.ispresent = 1;
+    show_glyph(x, y, hero_glyph); /* show it */
+    flush_screen(0);                 /* make sure it shows up */
 }

@@ -113,29 +113,20 @@ __thread xchar_vars common_xchar_vars[] = {
      {"v:u.ghost_y", &player1.p_u.ghost_y, -1},
      {"", NULL}};
 
-/* void */
-/* tcp_reset_common_xchar_vars() */
-/* { */
-/*      common_xchar_vars[0].actual_var = &you_player->u.ux; */
-/*      common_xchar_vars[1].actual_var = &you_player->u.uy; */
-/*      common_xchar_vars[2].actual_var = &u.ghost_x; */
-/*      common_xchar_vars[3].actual_var = &u.ghost_y; */
-/* } */
-
-/* void */
-/* tcp_reset2_common_xchar_vars() */
-/* { */
-/*      common_xchar_vars[0].actual_var = &u.ux; */
-/*      common_xchar_vars[1].actual_var = &u.uy; */
-/*      common_xchar_vars[2].actual_var = &u.ghost_x; */
-/*      common_xchar_vars[3].actual_var = &u.ghost_y; */
-/* } */
+void
+tcp_reset_common_xchar_vars()
+{
+     common_xchar_vars[0].actual_var = &u.ux;
+     common_xchar_vars[1].actual_var = &u.uy;
+     common_xchar_vars[2].actual_var = &u.ghost_x;
+     common_xchar_vars[3].actual_var = &u.ghost_y;
+}
 
 void
 tcp_send_changed_variables()
 {
      xchar_vars *var;
-     /* tcp_reset_common_xchar_vars(); */
+     tcp_reset_common_xchar_vars();
 
      fprintf(stderr, "Sending changed variables\n");
      for (var = common_xchar_vars; var->name[0]; var++) {
@@ -182,11 +173,6 @@ tcp_send_gbuf()
      int rend = -1;
      int cstart[ROWNO];
      int cend[ROWNO];
-
-     if (you_player != current_player) {
-       fprintf(stderr, "!!!!!!!!!!!!!!!\n");
-       return;
-     }
 
      for (i = 0; i < ROWNO; i++) {
           cstart[i] = -1;
