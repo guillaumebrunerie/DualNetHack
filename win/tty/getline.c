@@ -320,76 +320,49 @@ dualnh_show_queueing()
 int
 tgetch()
 {
-     fd_set set;
-     int nfds;
      int result;
-     char queue[1000];
-     int i;
-     int sockfd = tcp_get_sockfd();
 
-     if (!can_use_queue)
+     if (!can_use_queue || dualnh_is_empty()) {
           return getchar();
-     
-     // We use the dualnh queue
-     if (!dualnh_is_empty()) {
+     } else {
           result = dualnh_pop();
-          i = (dualnh_is_empty() ? 0 : 1024);
-          fprintf(stderr, "Using the queue : %c (%d), i=%d\n", result, result, i);
-          return (i + result);
-     }
-     
-     FD_ZERO(&set);
-     FD_SET(STDIN_FILENO, &set);
-     FD_SET(sockfd, &set);
-     nfds = max(STDIN_FILENO, sockfd) + 1;
-
-     if (select(nfds, &set, NULL, NULL, NULL) == -1) {
-          fprintf(stderr, "Error %i\n", errno);
-     }
-
-     if (FD_ISSET(sockfd, &set)) {
-          /* We don’t do anything here, we leave it to the main loop */
-          return -42;
-     } else if (FD_ISSET(STDIN_FILENO, &set)) {
-          return getchar();
+          fprintf(stderr, "Using the queue : %c (%d)\n", result, result);
+          return result;
      }
 }
 
-/* Probably to get rid of, or at least clean-up */
-int
-tty_nhgetch_queue_length()
+void
+tty_listen_getch(outbuf)
+char *outbuf;
 {
-     return dualnh_queue_length();
-     /* fd_set set; */
-     /* int nfds; */
-     /* int result; */
-     /* char queue[1000]; */
-     /* int i; */
-     /* int sockfd = tcp_get_sockfd(); */
+    fd_set set;
+    int nfds;
+    int result;
+    int i;
+    int sockfd = tcp_get_sockfd();
 
-     /* if (!can_use_queue) */
-     /*      return 1; */
-     
-     /* // We use the dualnh queue */
-     /* if (!dualnh_is_empty()) { */
-     /*      return 0; */
-     /* } */
-     
-     /* /\* FD_ZERO(&set); *\/ */
-     /* /\* FD_SET(STDIN_FILENO, &set); *\/ */
-     /* /\* FD_SET(sockfd, &set); *\/ */
-     /* /\* nfds = max(STDIN_FILENO, sockfd) + 1; *\/ */
+    if (!dualnh_is_empty()) {
+        dualnh_queue_tosend_to(outbuf);
+        dualnh_zero_queue();
+    } else {
+        FD_ZERO(&set);
+        FD_SET(STDIN_FILENO, &set);
+        FD_SET(sockfd, &set);
+        nfds = max(STDIN_FILENO, sockfd) + 1;
 
-     /* /\* if (select(nfds, &set, NULL, NULL, NULL) == -1) { *\/ */
-     /* /\*      fprintf(stderr, "Error %i\n", errno); *\/ */
-     /* /\* } *\/ */
+        if (select(nfds, &set, NULL, NULL, NULL) == -1) {
+            fprintf(stderr, "Error %i\n", errno);
+        }
 
-     /* /\* if (FD_ISSET(sockfd, &set)) { *\/ */
-     /* /\*      /\\* We don’t do anything here, we leave it to the main loop *\\/ *\/ */
-     /* /\*      return -42; *\/ */
-     /* /\* } else if (FD_ISSET(STDINFILE, &set)) { *\/ */
-     /* /\*      return getchar(); *\/ */
-     /* /\* } *\/ */
+        if (FD_ISSET(sockfd, &set)) {
+            /* We don’t do anything here, we leave it to the main loop */
+            *outbuf = '\0';
+        } else if (FD_ISSET(STDIN_FILENO, &set)) {
+            *outbuf = getchar();
+            outbuf++;
+            *outbuf = '\0';
+        }
+    }
 }
 
 #endif /* TTY_GRAPHICS */

@@ -449,47 +449,21 @@ boolean resuming;
         tcp_send_string_to(you_player->server_socket, "");
         int cmdx = 0;
         int cmd;
+        char queue[BUFSZ];
         boolean already_locked = TRUE;
         /* tmp_at(DISP_ALWAYS, hero_glyph); */
         /* newsym(u.ghost_x, u.ghost_y); */
         newsym(u.ux, u.uy);
         while (you_player != current_player) {
+            dualnh_ghost_update();
+            curs(WIN_MAP, 1, ROWNO-1);
+            putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
+            curs_on_u();
 
-             if (cmdx < 1024) {
-                 dualnh_ghost_update();
-                 /* newsym(u.old_ghost_x, u.old_ghost_y); */
-                 /* show_glyph(u.ghost_x, u.ghost_y, hero_glyph); */
-                 /* u.old_ghost_x = u.ghost_x; */
-                 /* u.old_ghost_y = u.ghost_y; */
-                 /* if (u.ux != u.ghost_x || u.uy != u.ghost_y) { */
-                 /* tmp_at(u.ghost_x, u.ghost_y); */
-                 /* } */
-                  
-                 curs(WIN_MAP, 1, ROWNO-1);
-                 putstr(WIN_MAP, ATR_BOLD, dualnh_queue_str());
-                 curs_on_u();
-                 /* We are going to wait, so we unlock */
-                 tcp_unlock();
-                 already_locked = FALSE;
-             }
+            listen_getch(queue);
+            dualnh_process_and_queue(queue);
 
-             fprintf(stderr, "Queueing (player %i)…\n", playerid);
-
-             /* This pushes all chars to a queue, which should be:
-              * - displayed immediately on change
-              * - used subsequently by [tgetchar] in the client
-              */
-             cmdx = nhgetch();
-             cmd = cmdx % 1024;
-             if (!already_locked) {
-                 tcp_lock();
-                 already_locked = TRUE;
-             }
-
-             if (cmd)
-                  dualnh_process_and_queue(cmd);
-
-             fprintf(stderr, "New queue (player %i) : %s\n", playerid, dualnh_queue_str());
+            fprintf(stderr, "New queue (player %i) : %s\n", playerid, dualnh_queue_str());
         }
         dualnh_ghost_update();
         /* newsym(u.old_ghost_x, u.old_ghost_y); */

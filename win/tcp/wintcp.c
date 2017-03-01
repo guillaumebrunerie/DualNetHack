@@ -349,78 +349,68 @@ const char *str;
 int
 tcp_nhgetch()
 {
-     fd_set set;
-     int nfds;
-     int result;
-     char queue[1000];
-     int x, y;
-     struct timeval tv;
-     int ret;
-     
-     tcp_send_name_command("nhgetch");
-     fprintf(stderr, "(%d) Listening %d and %d\n", playerid, you_player->server_socket, you_player->sockfd);
-
-     tv.tv_sec = 0L;
-     tv.tv_usec = 0L;
-
-     FD_ZERO(&set);
-     FD_SET(you_player->server_socket, &set);
-     FD_SET(you_player->sockfd, &set);
-     nfds = max(you_player->server_socket, you_player->sockfd) + 1;
-
-     fprintf(stderr, "(%i) Trying without delay…\n", playerid);
-     ret = select(nfds, &set, NULL, NULL, &tv);
-     if (ret == 0) {
-         FD_ZERO(&set);
-         FD_SET(you_player->server_socket, &set);
-         FD_SET(you_player->sockfd, &set);
-         nfds = max(you_player->server_socket, you_player->sockfd) + 1;
-         
-         /* tcp_unlock(); */
-         /* fprintf(stderr, "(%i) Did not work, we release the lock and wait…\n", playerid); */
-         ret = select(nfds, &set, NULL, NULL, NULL);
-         /* fprintf(stderr, "(%i) Done waiting, taking the lock…\n", playerid); */
-         /* tcp_lock(); */
-     }
-     if (ret == -1) {
-         fprintf(stderr, "Error %i\n", errno);
-     }
-     
-     if (FD_ISSET(you_player->sockfd, &set)) {
-         // The player did something
-         fprintf(stderr, "(%i) The player did something\n", playerid);
-         result = tcp_recv_int();
-     } else if (FD_ISSET(you_player->server_socket, &set)) {
-         // We have been interrupted. First send the queue, then the commands.
-         fprintf(stderr, "(%i) We have been interrupted\n", playerid);
-         /* if (!dualnh_is_empty()) { */
-         char* q = dualnh_queue_tosend();
-         tcp_send_string("QUEUE");
-         tcp_send_string(q);
-         /* } */
-         tcp_transfer_all(you_player->server_socket);
-         for (x = 0; x < COLNO; x++)
-             for (y = 0; y < ROWNO; y++)
-                 if (newsym_table[x][y]) {
-                     newsym(x,y);
-                     newsym_table[x][y] = 0;
-                     fprintf(stderr, "Done newsym at %d %d\n", x, y);
-                 }
-         /* tcp_recv_string_from(you_player->server_socket, queue); */
-         /* tcp_send_string(queue); */
-         dualnh_zero_queue();
-         result = 0;
-     } else
-         fprintf(stderr, "Impossible, no input.\n");
-
-     return result;
+    fprintf(stderr, "nhgetch called\n");
+    exit(2);
 }
 
-int
-tcp_nhgetch_queue_length()
+/* Returns a string read from the client socket. Abort if some data arrives in the server socket. */
+void
+tcp_listen_getch(a)
+char *a;
 {
-    tcp_send_name_command("nhgetch_queue_length");
-    return tcp_recv_int();
+    fd_set set;
+    int nfds;
+    int result;
+    char queue[1000];
+    int x, y;
+    int ret;
+     
+    tcp_send_name_command("listen_getch");
+    fprintf(stderr, "(%d) Listening %d and %d\n", playerid, you_player->server_socket, you_player->sockfd);
+
+    FD_ZERO(&set);
+    FD_SET(you_player->server_socket, &set);
+    FD_SET(you_player->sockfd, &set);
+    nfds = max(you_player->server_socket, you_player->sockfd) + 1;
+
+    tcp_unlock();
+    fprintf(stderr, "(%i) We release the lock and wait…\n", playerid);
+    ret = select(nfds, &set, NULL, NULL, NULL);
+    fprintf(stderr, "(%i) Done waiting, taking the lock…\n", playerid);
+    tcp_lock();
+
+    if (ret == -1) {
+        fprintf(stderr, "Error %i\n", errno);
+        exit(2);
+    }
+     
+    if (FD_ISSET(you_player->sockfd, &set)) {
+        // The player did something
+        fprintf(stderr, "(%i) The player did something\n", playerid);
+        tcp_recv_string(a);
+    } else if (FD_ISSET(you_player->server_socket, &set)) {
+        // We have been interrupted. First send the queue, then the commands.
+        fprintf(stderr, "(%i) We have been interrupted\n", playerid);
+        /* if (!dualnh_is_empty()) { */ /* TODO */
+        char* q = dualnh_queue_tosend();
+        tcp_send_string("QUEUE");
+        tcp_send_string(q);
+        /* } */
+        tcp_transfer_all(you_player->server_socket);
+        for (x = 0; x < COLNO; x++)
+            for (y = 0; y < ROWNO; y++)
+                if (newsym_table[x][y]) {
+                    newsym(x,y);
+                    newsym_table[x][y] = 0;
+                    fprintf(stderr, "Done newsym at %d %d\n", x, y);
+                }
+        /* tcp_recv_string_from(you_player->server_socket, queue); */
+        /* tcp_send_string(queue); */
+        dualnh_zero_queue();
+        *a = '\0';
+    } else {
+        fprintf(stderr, "Impossible, no input.\n");
+    }
 }
 
 
@@ -708,7 +698,7 @@ struct window_procs tcp_procs = {
 #ifdef POSITIONBAR
     tcp_update_positionbar,
 #endif
-    tcp_print_glyph, tcp_raw_print, tcp_raw_print_bold, tcp_nhgetch, tcp_nhgetch_queue_length,
+    tcp_print_glyph, tcp_raw_print, tcp_raw_print_bold, tcp_nhgetch, tcp_listen_getch,
     tcp_nh_poskey, tcp_nhbell, tcp_doprev_message, tcp_yn_function,
     tcp_getlin, tcp_get_ext_cmd, tcp_number_pad, tcp_delay_output,
 #ifdef CHANGE_COLOR /* the Mac uses a palette device */

@@ -99,15 +99,22 @@ dualnh_queue_str()
 
 char __thread queue_ints[QUEUE_SIZE + 1] = DUMMY;
 
+void
+dualnh_queue_tosend_to(outbuf)
+char *outbuf;
+{
+    int i, j;
+    for (i = queue_start, j = 0; i != queue_end; (i++) % QUEUE_SIZE, j++) {
+        outbuf[j] = queue[i];
+    }
+    outbuf[j] = '\0';
+}
+
 char*
 dualnh_queue_tosend()
 {
-     int i, j;
-     for (i = queue_start, j = 0; i != queue_end; (i++) % QUEUE_SIZE, j++) {
-          queue_ints[j] = queue[i];
-     }
-     queue_ints[j] = '\0';
-     return queue_ints;
+    dualnh_queue_tosend_to(queue_ints);
+    return queue_ints;
 }
 
 void
@@ -131,57 +138,58 @@ dualnh_pop_from_end()
     return (queue[queue_end]);
 }
 
-int
-dualnh_queue_length()
-{
-    return ((queue_end - queue_start + QUEUE_SIZE) % QUEUE_SIZE);
-}
-
 void
-dualnh_process_and_queue(cmd)
-int cmd;
+dualnh_process_and_queue(cmds)
+char *cmds;
 {
-    int lcmd = tolower(cmd);
-    boolean movement = FALSE;
-    int dir = 0;
+    int cmd, lcmd;
+    boolean movement;
+    int dir;
 
-    if (cmd == 27) { /* ESC */
-        dualnh_zero_queue();
-        return;
-    } else if (cmd == 127) { /* DEL */
-        lcmd = dualnh_pop_from_end();
-        dir = -1;
-    } else if (cmd) {
-        dualnh_push(cmd);
-        dir = 1;
-    }
+    for (; *cmds; cmds++) {
+        cmd = *cmds;
+        lcmd = tolower(cmd);
+        movement = FALSE;
+        dir = 0;
 
-    if (u.dist_from_mv_queue > 0) {
-        u.dist_from_mv_queue += dir;
-        return;
-    }
+        if (cmd == 27) { /* ESC */
+            dualnh_zero_queue();
+            return; /* I guess it has to be the last character */
+        } else if (cmd == 127) { /* DEL */
+            lcmd = dualnh_pop_from_end();
+            dir = -1;
+        } else if (cmd) {
+            dualnh_push(cmd);
+            dir = 1;
+        }
+
+        if (u.dist_from_mv_queue > 0) {
+            u.dist_from_mv_queue += dir;
+            continue;
+        }
     
-    if (lcmd == 'h' || lcmd == 'y' || lcmd == 'b') {
-        u.ghost_x -= dir;
-        movement = TRUE;
-    }
-    if (lcmd == 'j' || lcmd == 'b' || lcmd == 'n') {
-        u.ghost_y += dir;
-        movement = TRUE;
-    }
-    if (lcmd == 'k' || lcmd == 'y' || lcmd == 'u') {
-        u.ghost_y -= dir;
-        movement = TRUE;
-    }
-    if (lcmd == 'l' || lcmd == 'u' || lcmd == 'n') {
-        u.ghost_x += dir;
-        movement = TRUE;
-    }
-    if (cmd == '.' || cmd == 's')
-        movement = TRUE;
+        if (lcmd == 'h' || lcmd == 'y' || lcmd == 'b') {
+            u.ghost_x -= dir;
+            movement = TRUE;
+        }
+        if (lcmd == 'j' || lcmd == 'b' || lcmd == 'n') {
+            u.ghost_y += dir;
+            movement = TRUE;
+        }
+        if (lcmd == 'k' || lcmd == 'y' || lcmd == 'u') {
+            u.ghost_y -= dir;
+            movement = TRUE;
+        }
+        if (lcmd == 'l' || lcmd == 'u' || lcmd == 'n') {
+            u.ghost_x += dir;
+            movement = TRUE;
+        }
+        if (cmd == '.' || cmd == 's')
+            movement = TRUE;
 
-    if (dir == 1 && !movement)
-        u.dist_from_mv_queue = 1;
+        if (dir == 1 && !movement)
+            u.dist_from_mv_queue = 1;
+    }
 }
 
 static __thread struct tmp_glyph {

@@ -337,18 +337,18 @@ char *argv[];
 
        } else if (!strcmp(buffer, "nhgetch")) {
             int result = nhgetch();
-            if (result != -42)
-              tcp_send_int(result);
-
-       } else if (!strcmp(buffer, "nhgetch_queue_length")) {
-            int result = nhgetch_queue_length();
             tcp_send_int(result);
+
+       } else if (!strcmp(buffer, "listen_getch")) {
+            char a[BUFSZ];
+            listen_getch(a);
+            if (*a)
+                tcp_send_string(a);
 
        } else if (!strcmp(buffer, "nh_poskey")) {
             /* Mice are not supported */
             int result = nh_poskey(0, 0, 0);
-            if (result != -42)
-                 tcp_send_int(result);
+            tcp_send_int(result);
 
        } else if (!strcmp(buffer, "nhbell")) {
             nhbell();

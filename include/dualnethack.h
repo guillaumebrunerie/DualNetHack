@@ -143,6 +143,6 @@ int dualnh_pop();
 char* dualnh_queue_str();
 char* dualnh_queue_tosend();
 void dualnh_zero_queue();
-int dualnh_queue_length();
 
-void dualnh_process_and_queue(int);
+void dualnh_process_and_queue(char *);
+void dualnh_ghost_update();
