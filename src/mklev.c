@@ -575,9 +575,10 @@ rm_sub levls[COLNO][ROWNO];
 {
     static struct rm_sub zerorm_s = { cmap_to_glyph(S_stone), 0, 0 };
     register struct rm_sub *lev_s;
-    for (int x = 0; x < COLNO; x++) {
+    int x, y;
+    for (x = 0; x < COLNO; x++) {
         lev_s = &levls[x][0];
-        for (int y = 0; y < ROWNO; y++) {
+        for (y = 0; y < ROWNO; y++) {
             *lev_s++ = zerorm_s;
         }
     }
